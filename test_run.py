@@ -12,7 +12,7 @@ import numpy as np
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 50
+num_flights = 35
 num_airlines = 4
 
 for i in range(0, 1):

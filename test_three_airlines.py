@@ -1,4 +1,4 @@
-from Istop import istopThreeAirlines
+from Istop import istop
 from ModelStructure.ScheduleMaker import scheduleMaker
 
 from ModelStructure.Costs.costFunctionDict import CostFuns
@@ -23,7 +23,7 @@ udpp_model_xp = udppModel.UDPPmodel(df, costFun)
 udpp_model_xp.run(optimised=True)
 print("done")
 
-xpModel = istopThreeAirlines.IstopThree(udpp_model_xp.get_new_df(), costFun)
+xpModel = istop.IstopThree(udpp_model_xp.get_new_df(), costFun)
 xpModel.run(True)
 xpModel.print_performance()
 

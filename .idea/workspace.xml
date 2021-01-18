@@ -3,7 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Istop/istop.py" beforeDir="false" afterPath="$PROJECT_DIR$/Istop/istop.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkOffers.py" beforeDir="false" afterPath="$PROJECT_DIR$/checkOffers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,11 +73,19 @@
       <option name="project" value="LOCAL" />
       <updated>1610909819008</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="pre multiprocess">
+      <created>1610959574610</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1610959574610</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="prima sistemazione" />
-    <option name="LAST_COMMIT_MESSAGE" value="prima sistemazione" />
+    <MESSAGE value="pre multiprocess" />
+    <option name="LAST_COMMIT_MESSAGE" value="pre multiprocess" />
   </component>
 </project>

@@ -91,6 +91,10 @@ class Istop(mS.ModelStructure):
                         self.matches.append([pairA, pairB])
         print("nuovo", time.time() - t, "couples ", len(self.matches))
 
+        t = time.perf_counter()
+        checkOffers.run_check(self.airlines_pairs, [], True)
+        print("parallel", time.perf_counter()-t)
+
         if self.triples:
             t = time.time()
             counter = 0

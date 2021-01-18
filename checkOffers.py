@@ -56,15 +56,14 @@ def condition(pairs_list):
     flights = [flight for pair in pairs_list for flight in pair]
     return get_combinations(flights, initial_costs)
 
-def check_couples(airlines_pairs, matches):
-    for airl_pair in airlines_pairs:
-        fl_pair_a = airl_pair[0].flight_pairs
-        fl_pair_b = airl_pair[1].flight_pairs
-        for pairA in fl_pair_a:
-            for pairB in fl_pair_b:
-                if condition([pairA, pairB]):
-                    #matches.append([pairA, pairB])
-                    print("trovata")
+def check_couples(airl_pair, matches):
+    fl_pair_a = airl_pair[0].flight_pairs
+    fl_pair_b = airl_pair[1].flight_pairs
+    for pairA in fl_pair_a:
+        for pairB in fl_pair_b:
+            if condition([pairA, pairB]):
+                #matches.append([pairA, pairB])
+                print("trovata")
 
 def run_check(airlines_pairs, matches, parallel=False):
     if parallel:

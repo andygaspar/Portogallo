@@ -62,6 +62,7 @@ class Istop(mS.ModelStructure):
         for airline in self.airlines:
             airline.set_preferences(self.preference_function)
 
+        self.airDict = dict(zip([airline.name for airline in self.airlines], range(len(self.airlines))))
         self.airlines_pairs = np.array(list(combinations(self.airlines, 2)))
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
@@ -91,9 +92,9 @@ class Istop(mS.ModelStructure):
                         self.matches.append([pairA, pairB])
         print("nuovo", time.time() - t, "couples ", len(self.matches))
 
-        t = time.perf_counter()
-        checkOffers.run_check(self.airlines_pairs, [], True)
-        print("parallel", time.perf_counter()-t)
+        # t = time.perf_counter()
+        # checkOffers.run_check(self.flights, self.airlines_pairs, self.airDict, True)
+        # print("parallel", time.perf_counter()-t)
 
         if self.triples:
             t = time.time()
@@ -218,7 +219,8 @@ class Istop(mS.ModelStructure):
             self.assign_flights(xpSolution)
 
         else:
-            self.assign_flights([flight.slot for flight in self.flights])
+            for flight in self.flights:
+                flight.newSlot = flight.slot
 
         solution.make_solution(self)
 

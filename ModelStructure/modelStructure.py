@@ -80,6 +80,7 @@ class ModelStructure:
         if isinstance(costFun, Callable):
             for flight in self.flights:
                 flight.set_cost_fun(costFun)
+                flight.costs = [flight.costFun(flight, slot) for slot in self.slots]
         else:
             i = 0
             for flight in self.flights:

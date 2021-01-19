@@ -1,6 +1,9 @@
 import numpy as np
 import copy
 import concurrent.futures
+from multiprocessing import Pool, RawArray, Array
+from itertools import combinations
+import time
 
 
 def recursive_calls(flight, flights, free, initial_costs,  airlines, comb):
@@ -39,7 +42,7 @@ def recursive_calls(flight, flights, free, initial_costs,  airlines, comb):
 
 def get_combinations(flights, initial_costs):
     combs = dict(zip(np.unique([flight.airline.name for flight in flights]).tolist(),
-                     [[] for i in range(int(len(flights ) /2))]))
+                     [[] for i in range(int(len(flights)/2))]))
     free = copy.copy(flights)
     return recursive_calls(flights[0], flights, free, initial_costs, [], combs)
 
@@ -56,18 +59,56 @@ def condition(pairs_list):
     flights = [flight for pair in pairs_list for flight in pair]
     return get_combinations(flights, initial_costs)
 
-def check_couples(airl_pair, matches):
+def check_couples(airl_pair):
+    matches = []
     fl_pair_a = airl_pair[0].flight_pairs
     fl_pair_b = airl_pair[1].flight_pairs
     for pairA in fl_pair_a:
         for pairB in fl_pair_b:
             if condition([pairA, pairB]):
-                #matches.append([pairA, pairB])
-                print("trovata")
+                matches.append([pairA, pairB])
+    return matches
 
-def run_check(airlines_pairs, matches, parallel=False):
-    if parallel:
-        with concurrent.futures.ProcessPoolExecutor() as exe:
-            exe.map(check_couples, airlines_pairs)
-    else:
-        pass
+def comb(airl_pair):
+    matches = []
+    fl_pair_a = airl_pair[0].flight_pairs
+    fl_pair_b = airl_pair[1].flight_pairs
+    for pairA in fl_pair_a:
+        for pairB in fl_pair_b:
+
+            if condition([pairA, pairB]):
+                matches.append([pairA, pairB])
+    return matches
+
+
+def run_check(flights, airlines_pairs, air_dict, parallel=False):
+    arr =  []
+    for flight in flights:
+        arr.append([flight.slot.time]+[flight.eta]+[air_dict[flight.airline.name]]+flight.costs)
+    arr = np.array(arr)
+    arr = [l for sublist in arr for l in sublist]
+    data = Array('d', len(arr))
+    mat = np.frombuffer(data)
+
+    mat.reshape(arr.shape)
+    print(mat)
+    # d = copy.deepcopy(airlines_pairs[0][0])
+    # if parallel:
+    #     with concurrent.futures.ProcessPoolExecutor() as exe:
+    #         results = [exe.submit(check_couples, air_pair) for air_pair in airlines_pairs]
+    #         print(len([match for f in concurrent.futures.as_completed(results)
+    #                    for match in f.result() if len(f.result()) > 0]))
+    # else:
+    #     pass
+    t = time.perf_counter()
+    print([comb(i) for i in range(20)])
+    print("seq ", time.perf_counter() -t )
+
+    t = time.perf_counter()
+    with concurrent.futures.ProcessPoolExecutor() as exe:
+        results = [exe.submit(comb, i) for i in range(20)]
+
+        print([f.result() for f in concurrent.futures.as_completed(results)])
+    print("par", time.perf_counter()-t)
+
+

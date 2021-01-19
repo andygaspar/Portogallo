@@ -3,9 +3,9 @@ from ModelStructure.Flight import flight as fl
 
 class IstopFlight(fl.Flight):
 
-    def __init__(self, line, airline, model):
+    def __init__(self, line, airline, slots):
 
-        super().__init__(line, airline, model)
+        super().__init__(line, airline, slots)
 
         self.priority = line["priority"]
 

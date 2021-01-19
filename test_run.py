@@ -12,11 +12,11 @@ import numpy as np
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 25
+num_flights = 15
 num_airlines = 5
 
 for i in range(0, 1):
-    df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[3])
+    df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[0])
 
 
     df_max = df.copy(deep=True)

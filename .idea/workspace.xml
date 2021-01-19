@@ -2,6 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/RL/rl.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Istop/AirlineAndFlight/istopFlight.py" beforeDir="false" afterPath="$PROJECT_DIR$/Istop/AirlineAndFlight/istopFlight.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Istop/istop.py" beforeDir="false" afterPath="$PROJECT_DIR$/Istop/istop.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ModelStructure/Flight/flight.py" beforeDir="false" afterPath="$PROJECT_DIR$/ModelStructure/Flight/flight.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ModelStructure/modelStructure.py" beforeDir="false" afterPath="$PROJECT_DIR$/ModelStructure/modelStructure.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/checkOffers.py" beforeDir="false" afterPath="$PROJECT_DIR$/checkOffers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_run.py" afterDir="false" />
     </list>
@@ -30,7 +36,7 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/test_run.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Scrivania/Hotspot" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunManager">
@@ -94,5 +100,16 @@
     <MESSAGE value="pre multiprocess" />
     <MESSAGE value="first multiprocess attempt" />
     <option name="LAST_COMMIT_MESSAGE" value="first multiprocess attempt" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/checkOffers.py</url>
+          <line>90</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

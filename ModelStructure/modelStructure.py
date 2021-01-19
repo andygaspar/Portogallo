@@ -28,6 +28,10 @@ class ModelStructure:
 
         self.initialTotalCosts = self.compute_costs(self.flights, "initial")
 
+        self.airDict = dict(zip([airline.name for airline in self.airlines], range(len(self.airlines))))
+
+        self.scheduleMatrix = self.make_schedule_matrix()
+
         self.emptySlots = self.df[self.df["flight"] == "Empty"]["slot"].to_numpy()
 
         # self.mipSolution = None
@@ -45,6 +49,12 @@ class ModelStructure:
             return sum([flight.costFun(flight, flight.slot) for flight in flights])
         if which == "final":
             return sum([flight.costFun(flight, flight.newSlot) for flight in flights])
+
+    def make_schedule_matrix(self):
+        arr = []
+        for flight in self.flights:
+            arr.append([flight.slot.time] + [flight.eta] + flight.costs)
+        return np.array(arr)
 
     @staticmethod
     def compute_delays(flights, which):

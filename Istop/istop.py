@@ -62,7 +62,6 @@ class Istop(mS.ModelStructure):
         for airline in self.airlines:
             airline.set_preferences(self.preference_function)
 
-        self.airDict = dict(zip([airline.name for airline in self.airlines], range(len(self.airlines))))
         self.airlines_pairs = np.array(list(combinations(self.airlines, 2)))
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
@@ -82,19 +81,31 @@ class Istop(mS.ModelStructure):
 
     def check_and_set_matches(self):
 
-        t = time.time()
-        for airl_pair in self.airlines_pairs:
-            fl_pair_a = airl_pair[0].flight_pairs
-            fl_pair_b = airl_pair[1].flight_pairs
-            for pairA in fl_pair_a:
-                for pairB in fl_pair_b:
-                    if checkOffers.condition([pairA, pairB]):
-                        self.matches.append([pairA, pairB])
-        print("nuovo", time.time() - t, "couples ", len(self.matches))
+        # t = time.time()
+        # for airl_pair in self.airlines_pairs:
+        #     fl_pair_a = airl_pair[0].flight_pairs
+        #     fl_pair_b = airl_pair[1].flight_pairs
+        #     for pairA in fl_pair_a:
+        #         for pairB in fl_pair_b:
+        #             if checkOffers.condition([pairA, pairB]):
+        #                 self.matches.append([pairA, pairB])
+        # print("vecchio", time.time() - t, "couples ", len(self.matches))
+        # print(self.matches, "\n\n")
+
+        t = time.perf_counter()
+        self.matches = checkOffers.run_couples_check(self.scheduleMatrix, self.airlines_pairs)
+        print("nuovo", time.perf_counter()-t)
+        print("\n\n")
+
+        t = time.perf_counter()
+        triples = checkOffers.run_triples_check(self.scheduleMatrix, self.airlines_triples)
+        print("triples", time.perf_counter()-t, len(triples))
+        print("\n\n")
 
         # t = time.perf_counter()
-        # checkOffers.run_check(self.flights, self.airlines_pairs, self.airDict, True)
-        # print("parallel", time.perf_counter()-t)
+        # triples = checkOffers.run_triples_check(self.scheduleMatrix, self.airlines_triples, parallel=True)
+        # print("triples parallel", time.perf_counter()-t)
+        # print("\n\n")
 
         if self.triples:
             t = time.time()

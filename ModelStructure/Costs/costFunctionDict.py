@@ -11,6 +11,7 @@ def get_interval(time):
     for i in range(len(delay_range)-1):
         if delay_range[i] <= time < delay_range[i+1]:
             return i
+    return i
 
 def compute(flight, slot):
     i = get_interval(slot.time)

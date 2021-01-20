@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/parallel_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RL/rl.py" beforeDir="false" afterPath="$PROJECT_DIR$/RL/rl.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rl_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/offer_eval.cc" beforeDir="false" afterPath="$PROJECT_DIR$/offer_eval.cc" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,10 +39,31 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/rl_test.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/parallel_test.py" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.rl_test">
+  <component name="RunManager" selected="Python.parallel">
+    <configuration name="parallel" type="PythonConfigurationType" factoryName="Python">
+      <module name="Portogallo" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="$PROJECT_DIR$/venv/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/parallel_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="rl_test" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="Portogallo" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -88,6 +109,7 @@
     <list>
       <item itemvalue="Python.run" />
       <item itemvalue="Python.rl_test" />
+      <item itemvalue="Python.parallel" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -155,7 +177,14 @@
       <option name="project" value="LOCAL" />
       <updated>1611134174115</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="fixed little issues,&#10;&#10;implemented internal optimisation in the rl costr">
+      <created>1611139494332</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1611139494332</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -167,7 +196,8 @@
     <MESSAGE value="single couple in pairs and triples implemented" />
     <MESSAGE value="rl first speed up completed" />
     <MESSAGE value="rl first speed up completed, print added" />
-    <option name="LAST_COMMIT_MESSAGE" value="rl first speed up completed, print added" />
+    <MESSAGE value="fixed little issues,&#10;&#10;implemented internal optimisation in the rl costr" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed little issues,&#10;&#10;implemented internal optimisation in the rl costr" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -191,6 +221,11 @@
           <url>file://$PROJECT_DIR$/checkOffers.py</url>
           <line>128</line>
           <option name="timeStamp" value="21" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/parallel_test.py</url>
+          <line>33</line>
+          <option name="timeStamp" value="22" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

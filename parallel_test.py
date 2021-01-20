@@ -1,4 +1,5 @@
 from ctypes import cdll, pointer
+import ctypes
 import numpy as np
 from RL import rl
 from ModelStructure.ScheduleMaker import scheduleMaker
@@ -14,8 +15,8 @@ lib = cdll.LoadLibrary('./liboffers.so')
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 15
-num_airlines = 5
+num_flights = 20
+num_airlines = 3
 
 
 schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[0])
@@ -92,8 +93,25 @@ class OfferChecker(object):
                                      coup.ctypes.data, coup.shape[0], coup.shape[1],
                                      trip.ctypes.data, trip.shape[0], trip.shape[1])
 
-    def print_vect(self):
-        lib.print_vect_(self.obj)
+    def check(self, flights):
+        fl = np.array(flights).astype(np.short)
+        print("fl ", fl, np.array(flights).astype(np.short).ctypes.data)
+
+        return lib.check_couple_condition_(self.obj, np.array(flights).astype(np.short).ctypes.data)
+
+    def air_couple_check(self, fl_pair_a, fl_pair_b):
+        air_pairs = []
+        for pairA in fl_pair_a:
+            for pairB in fl_pair_b:
+
+                air_pairs += [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB]
+        print(air_pairs[:8])
+        #print("combs", len(fl_pair_a)*len(fl_pair_b), len(air_pairs))
+        lib.air_couple_check_argtypes = [ctypes.POINTER(ctypes.c_short)]
+        return lib.air_couple_check_(self.obj, np.array(air_pairs[:99]).astype(np.short).ctypes.data)
+
+    def print_mat(self):
+        lib.print_mat_(self.obj)
 
     def print_couples(self):
         lib.print_couples_(self.obj)
@@ -102,10 +120,18 @@ class OfferChecker(object):
         lib.print_triples_(self.obj)
 
     # create a Geek class object
-print(rl_model.scheduleMatrix.dtype)
-print(rl_model.scheduleMatrix,"\n\n")
+# print(rl_model.scheduleMatrix.dtype)
+# print(rl_model.scheduleMatrix,"\n\n")
 f = OfferChecker(rl_model.scheduleMatrix, couples, triples)
 
-f.print_vect()
+f.print_mat()
 f.print_couples()
 f.print_triples()
+fl_pair_a = rl_model.airlines_pairs[0][0].flight_pairs
+fl_pair_b = rl_model.airlines_pairs[0][1].flight_pairs
+import checkOffers
+
+print(len(checkOffers.air_couple_check(rl_model.scheduleMatrix, rl_model.airlines_pairs[0])))
+print(f.air_couple_check(fl_pair_a, fl_pair_b))
+
+print(f.check([fl.slot.index for fl in airline.flight_pairs[0]] + [fl.slot.index for fl in rl_model.airlines[2].flight_pairs[0]]))

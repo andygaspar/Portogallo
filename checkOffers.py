@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 import concurrent.futures
-from multiprocessing import Pool, RawArray, Array
+from multiprocessing import Pool, Array
 from itertools import combinations, permutations
 import time
 

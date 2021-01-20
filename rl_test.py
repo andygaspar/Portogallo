@@ -50,6 +50,7 @@ print(flight)
 
 #get a couple of flights of an airline
 couple = airline.flight_pairs[0]
+print("the couple of flight tried to mathced is:", couple)
 t = time.perf_counter()
 couple_matches_for_flight = rl_model.check_couple_in_pairs(couple)
 print("time to get all flight's couple matches: ", time.perf_counter()-t)

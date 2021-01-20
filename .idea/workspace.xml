@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/parallel_test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/compile.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/offer_eval.cc" beforeDir="false" afterPath="$PROJECT_DIR$/offer_eval.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/parallel_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/parallel_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rl_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -184,7 +186,14 @@
       <option name="project" value="LOCAL" />
       <updated>1611139494332</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="pre parallel">
+      <created>1611161411264</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1611161411264</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -197,7 +206,8 @@
     <MESSAGE value="rl first speed up completed" />
     <MESSAGE value="rl first speed up completed, print added" />
     <MESSAGE value="fixed little issues,&#10;&#10;implemented internal optimisation in the rl costr" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed little issues,&#10;&#10;implemented internal optimisation in the rl costr" />
+    <MESSAGE value="pre parallel" />
+    <option name="LAST_COMMIT_MESSAGE" value="pre parallel" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -209,7 +219,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/rl_test.py</url>
-          <line>51</line>
+          <line>49</line>
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -224,7 +234,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/parallel_test.py</url>
-          <line>33</line>
+          <line>108</line>
           <option name="timeStamp" value="22" />
         </line-breakpoint>
       </breakpoints>

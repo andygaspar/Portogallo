@@ -5,51 +5,68 @@
 int value = 0;
 
 class OfferChecker{ 
-    long** mat;
-    int rows;
-    int cols;
+    double** mat;
+    int mat_rows;
+    int mat_cols;
+
+    short** couples;
+    int couples_rows;
+    int couples_cols;
+
+    short** triples;
+    int triples_rows;
+    int triples_cols;
 
     public: 
 
        
 
-        OfferChecker(long* vect, int row, int col): 
-            mat{new long*[row]}, rows{row}, cols{col}
+        OfferChecker(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col): 
+            mat{new double*[row]}, mat_rows{row}, mat_cols{col}, couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}
          {
          for (int i = 0 ; i< row; i++) {
-                mat[i]= &vect[i*col];
+                mat[i]= &schedule_mat[i*col];
+            }
+
+        for (int i = 0 ; i< coup_row; i++) {
+                couples[i]= &coup[i*coup_col];
+            }
+
+        for (int i = 0 ; i< trip_row; i++) {
+                triples[i]= &trip[i*trip_col];
             }
          }
 
         ~OfferChecker(){mat = nullptr;}
 
-        void assign_vect(long** vect, int row, int col){ 
-            std::cout<<" ciccio";
-            for (int i = 0 ; i< row; i++) {
-                for (int j=0; j< col; j++)
-                    {std::cout<<vect[i][j]<<" ";}
-            }
-        }
-
-        void myFunction(int val){ 
-            std::cout <<val<< " Hello Geek!!!  " <<value<< std::endl; 
-            value = 5;
-        } 
-
-        void printValue(){ 
-            std::cout << "valore "<<value << std::endl; 
-        } 
 
         void print_vect(){ 
-            for (int i = 0 ; i< rows; i++) {
-                for (int j=0; j< cols; j++)
+            for (int i = 0 ; i< mat_rows; i++) {
+                for (int j=0; j< mat_cols; j++)
                     {std::cout<<mat[i][j]<<" ";}
                     std::cout<<std::endl;
             }
+        }
+
+        void print_couples(){ 
+            for (int i = 0 ; i< couples_rows; i++) {
+                for (int j=0; j< couples_cols; j++)
+                    {std::cout<<couples[i][j]<<" ";}
+                    std::cout<<std::endl;
+            }
+        }
+
+        void print_triples(){ 
+            for (int i = 0 ; i< triples_rows; i++) {
+                for (int j=0; j< triples_cols; j++)
+                    {std::cout<<triples[i][j]<<" ";}
+                    std::cout<<std::endl;
+            }
+        }
             
             
 
-        } 
+         
 
 }; 
 int main() 
@@ -66,8 +83,9 @@ int main()
 
 
 extern "C" { 
-    OfferChecker* OfferChecker_(long* vect, int row, int col){ return new OfferChecker(vect,row, col); } 
-    void Geek_myFunction(OfferChecker* geek, int val){ geek -> myFunction(val); } 
-    void Geek_myValue(OfferChecker* geek){ geek -> printValue(); } 
-    void print_vect_(OfferChecker* geek){ geek -> print_vect(); } 
+    OfferChecker* OfferChecker_(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col)
+    { return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
+    void print_vect_(OfferChecker* off){ off -> print_vect(); }
+    void print_couples_(OfferChecker* off){ off -> print_couples(); } 
+    void print_triples_(OfferChecker* off){ off -> print_triples(); } 
 }

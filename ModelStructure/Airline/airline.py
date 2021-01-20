@@ -36,6 +36,10 @@ class Airline:
         for i in range(len(self.flights)):
             self.flights[i].set_local_num(i)
 
+        self.flight_pairs = self.pairs(self.flights)
+
+        self.flight_triplets = self.triplet(self.flights)
+
     def __str__(self):
         return self.name
 

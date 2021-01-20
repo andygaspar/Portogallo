@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Union, List, Callable
-from itertools import product
+from itertools import combinations
 from ModelStructure.Slot import slotList as sl
 from ModelStructure.Airline import airline as air
 from ModelStructure.Flight import flightList as fll
@@ -96,3 +96,6 @@ class ModelStructure:
             for flight in self.flights:
                 flight.set_cost_fun(costFun[i])
                 i += 1
+
+
+

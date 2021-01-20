@@ -3,6 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Istop/istop.py" beforeDir="false" afterPath="$PROJECT_DIR$/Istop/istop.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkOffers.py" beforeDir="false" afterPath="$PROJECT_DIR$/checkOffers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,13 +125,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Istop/istop.py</url>
-          <line>95</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Istop/istop.py</url>
-          <line>100</line>
-          <option name="timeStamp" value="10" />
+          <line>117</line>
+          <option name="timeStamp" value="13" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

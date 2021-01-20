@@ -97,10 +97,18 @@ class Istop(mS.ModelStructure):
         print("nuovo", time.perf_counter()-t)
         print("\n\n")
 
+        # t = time.perf_counter()
+        # triples = checkOffers.run_triples_check(self.scheduleMatrix, self.airlines_triples)
+        # print("triples", time.perf_counter()-t, len(triples))
+        # print("\n\n")
+        print(self.matches)
         t = time.perf_counter()
-        triples = checkOffers.run_triples_check(self.scheduleMatrix, self.airlines_triples)
-        print("triples", time.perf_counter()-t, len(triples))
-        print("\n\n")
+        checkOffers.check_couple_in_pairs(self.scheduleMatrix, self.airlines[0].flight_pairs[4], self.airlines_pairs)
+        print("single couple check", time.perf_counter() - t)
+
+        t = time.perf_counter()
+        checkOffers.check_couple_in_triples(self.scheduleMatrix, self.airlines[0].flight_pairs[4], self.airlines_triples)
+        print("single triple check", time.perf_counter() - t)
 
         # t = time.perf_counter()
         # triples = checkOffers.run_triples_check(self.scheduleMatrix, self.airlines_triples, parallel=True)

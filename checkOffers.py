@@ -127,34 +127,11 @@ def run_couples_check(mat, airlines_pairs, parallel=False):
         if len(match) > 0:
             matches += match
     return matches
-    # arr = []
-    # for flight in flights:
-    #     arr.append([[flight.slot.time] + [flight.eta] + [air_dict[flight.airline.name]] + flight.costs])
-    # arr = np.array(arr)
-    # arr = [l for sublist in arr for l in sublist]
-    # data = Array('d', len(arr))
-    # mat = np.frombuffer(data)
-    #
-    # mat.reshape(arr.shape)
-    # print(mat)
-    # # d = copy.deepcopy(airlines_pairs[0][0])
-    # # if parallel:
-    # #     with concurrent.futures.ProcessPoolExecutor() as exe:
-    # #         results = [exe.submit(check_couples, air_pair) for air_pair in airlines_pairs]
-    # #         print(len([match for f in concurrent.futures.as_completed(results)
-    # #                    for match in f.result() if len(f.result()) > 0]))
-    # # else:
-    # #     pass
-    # t = time.perf_counter()
-    # print([comb(i) for i in range(20)])
-    # print("seq ", time.perf_counter() - t)
-    #
-    # t = time.perf_counter()
-    # with concurrent.futures.ProcessPoolExecutor() as exe:
-    #     results = [exe.submit(comb, i) for i in range(20)]
-    #
-    #     print([f.result() for f in concurrent.futures.as_completed(results)])
-    # print("par", time.perf_counter() - t)
+
+
+
+
+
 
 
 def check_triple_condition(mat, flights):
@@ -222,4 +199,49 @@ def run_triples_check(mat, airlines_triples, parallel=False):
         match = air_triple_check(mat, air_triple, parallel)
         if len(match) > 0:
             matches += match
+    return matches
+
+
+def check_couple_in_pairs(mat, couple, airlines_pairs, paralle=False):
+    matches = []
+    other_airline = None
+
+    for air_pair in airlines_pairs:
+        if couple[0].airline.name == air_pair[0].name:
+            other_airline = air_pair[1]
+        elif couple[0].airline.name == air_pair[1].name:
+            other_airline = air_pair[0]
+
+        if other_airline is not None:
+            for pair in other_airline.flight_pairs:
+                if check_couple_condition(mat, [fl.slot.index for fl in couple] + [fl.slot.index for fl in pair]):
+                    matches.append([couple, pair])
+
+    return matches
+
+
+def check_couple_in_triples(mat, couple, airlines_triples, paralle=False):
+    matches = []
+    other_airline_A = None
+    other_airline_B = None
+
+    for air_pair in airlines_triples:
+        if couple[0].airline.name == air_pair[0].name:
+            other_airline_A = air_pair[1]
+            other_airline_B = air_pair[2]
+        elif couple[0].airline.name == air_pair[1].name:
+            other_airline_A = air_pair[0]
+            other_airline_B = air_pair[2]
+        elif couple[0].airline.name == air_pair[2].name:
+            other_airline_A = air_pair[0]
+            other_airline_B = air_pair[1]
+
+        if other_airline_A is not None:
+            for pairB in other_airline_A.flight_pairs:
+                for pairC in other_airline_B.flight_pairs:
+
+                    if check_couple_condition(mat, [fl.slot.index for fl in couple] + [fl.slot.index for fl in pairB] +
+                                                   [fl.slot.index for fl in pairC]):
+                        matches.append([couple, pairB, pairC])
+
     return matches

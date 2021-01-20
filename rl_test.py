@@ -14,11 +14,11 @@ import time
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 30
-num_airlines = 4
+num_flights = 50
+num_airlines = 5
 
 
-schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[3])
+schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[0])
 cost_fun = CostFuns().costFun["realistic"]
 
 
@@ -29,13 +29,13 @@ rl_model = rl.Rl(schedule_df, cost_fun)
 t = time.perf_counter()
 couple_matches = rl_model.get_couple_matches()
 print("time to get all couple matches: ", time.perf_counter()-t)
-print(couple_matches)
+print(len(couple_matches), " convenient pairs found")
 
 
 t = time.perf_counter()
 triple_matches = rl_model.get_triple_matches()
 print("time to get all triple matches: ", time.perf_counter()-t)
-print(triple_matches)
+print(len(triple_matches), "convenient triples found ")
 
 
 #get an airline

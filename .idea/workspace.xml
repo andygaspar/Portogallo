@@ -108,9 +108,9 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.run" />
-      <item itemvalue="Python.rl_test" />
       <item itemvalue="Python.parallel" />
+      <item itemvalue="Python.rl_test" />
+      <item itemvalue="Python.run" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -192,7 +192,14 @@
       <option name="project" value="LOCAL" />
       <updated>1611161411264</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="progress">
+      <created>1611163556623</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1611163556623</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -206,14 +213,15 @@
     <MESSAGE value="rl first speed up completed, print added" />
     <MESSAGE value="fixed little issues,&#10;&#10;implemented internal optimisation in the rl costr" />
     <MESSAGE value="pre parallel" />
-    <option name="LAST_COMMIT_MESSAGE" value="pre parallel" />
+    <MESSAGE value="progress" />
+    <option name="LAST_COMMIT_MESSAGE" value="progress" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Istop/istop.py</url>
-          <line>137</line>
+          <line>117</line>
           <option name="timeStamp" value="13" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -222,14 +230,24 @@
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/parallel_test.py</url>
-          <line>130</line>
-          <option name="timeStamp" value="23" />
+          <url>file://$PROJECT_DIR$/checkOffers.py</url>
+          <line>167</line>
+          <option name="timeStamp" value="24" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/parallel_test.py</url>
-          <line>110</line>
-          <option name="timeStamp" value="24" />
+          <line>131</line>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/checkOffers.py</url>
+          <line>108</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/checkOffers.py</url>
+          <line>119</line>
+          <option name="timeStamp" value="28" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

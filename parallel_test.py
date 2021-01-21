@@ -14,8 +14,8 @@ lib = cdll.LoadLibrary('./liboffers.so')
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 20
-num_airlines = 3
+num_flights = 80
+num_airlines = 7
 
 schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[0])
 cost_fun = CostFuns().costFun["realistic"]
@@ -24,7 +24,6 @@ cost_fun = CostFuns().costFun["realistic"]
 rl_model = rl.Rl(schedule_df, cost_fun)
 
 
-"""
 
 t = time.perf_counter()
 couple_matches = rl_model.get_couple_matches()
@@ -36,27 +35,27 @@ triple_matches = rl_model.get_triple_matches()
 print("time to get all triple matches: ", time.perf_counter() - t)
 print(len(triple_matches), "convenient triples found ")
 
-# get an airline
-airline = rl_model.airlines[0]
-print(airline)
+# # get an airline
+# airline = rl_model.airlines[0]
+# print(airline)
+#
+# # get a flight
+# flight = airline.flights[0]
+# print(flight)
 
-# get a flight
-flight = airline.flights[0]
-print(flight)
+# # get a couple of flights of an airline
+# couple = airline.flight_pairs[0]
+# print("the couple of flight tried to mathced is:", couple)
+# t = time.perf_counter()
+# couple_matches_for_flight = rl_model.check_couple_in_pairs(couple)
+# print("time to get all flight's couple matches: ", time.perf_counter() - t)
+#
+# # get a couple of flights of an airline
+# couple = airline.flight_pairs[0]
+# t = time.perf_counter()
+# triple_matches_for_flight = rl_model.check_couple_in_triples(couple)
+# print("time to get all flight's triple matches: ", time.perf_counter() - t)
 
-# get a couple of flights of an airline
-couple = airline.flight_pairs[0]
-print("the couple of flight tried to mathced is:", couple)
-t = time.perf_counter()
-couple_matches_for_flight = rl_model.check_couple_in_pairs(couple)
-print("time to get all flight's couple matches: ", time.perf_counter() - t)
-
-# get a couple of flights of an airline
-couple = airline.flight_pairs[0]
-t = time.perf_counter()
-triple_matches_for_flight = rl_model.check_couple_in_triples(couple)
-print("time to get all flight's triple matches: ", time.perf_counter() - t)
-"""
 
 couples = list(permutations([0, 1, 2, 3]))
 couples_copy = copy.copy(couples)
@@ -98,13 +97,25 @@ class OfferChecker(object):
         air_pairs = []
         for pairA in fl_pair_a:
             for pairB in fl_pair_b:
-                p= [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB]
                 air_pairs += [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB]
-        # print("combs", len(fl_pair_a)*len(fl_pair_b), len(air_pairs))
+
         lib.air_couple_check_.argtypes = [ctypes.c_void_p,ctypes.c_void_p]
         pappo = np.array(air_pairs).astype(np.short)
         ciccio = pappo.ctypes.data
-        return lib.air_couple_check_(self.obj,ciccio)
+
+        return lib.air_couple_check_(self.obj,ciccio,ctypes.c_uint(len(fl_pair_a)*len(fl_pair_b)))
+
+    def air_triple_check(self, fl_pair_a, fl_pair_b, fl_pair_c):
+        air_pairs = []
+        for pairA in fl_pair_a:
+            for pairB in fl_pair_b:
+                for pairC in fl_pair_c:
+                    air_pairs += [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB] + [fl.slot.index for fl in pairC]
+
+        lib.air_triple_check_.argtypes = [ctypes.c_void_p,ctypes.c_void_p]
+        pappo = np.array(air_pairs).astype(np.short)
+        ciccio = pappo.ctypes.data
+        return lib.air_triple_check_(self.obj, ciccio, ctypes.c_uint(len(fl_pair_a)*len(fl_pair_b)*len(fl_pair_c)))
 
     def print_mat(self):
         lib.print_mat_(self.obj)
@@ -125,12 +136,28 @@ f = OfferChecker(rl_model.scheduleMatrix, couples, triples)
 # f.print_mat()
 # f.print_couples()
 # f.print_triples()
-fl_pair_a = rl_model.airlines_pairs[0][0].flight_pairs
-fl_pair_b = rl_model.airlines_pairs[0][1].flight_pairs
+
 import checkOffers
 
-print(len(checkOffers.air_couple_check(rl_model.scheduleMatrix, rl_model.airlines_pairs[0])))
-print(f.air_couple_check(fl_pair_a, fl_pair_b))
+counter = 0
+# print(len(checkOffers.air_couple_check(rl_model.scheduleMatrix, rl_model.airlines_pairs[0])))
+t = time.perf_counter()
+for air_pair in rl_model.airlines_pairs:
+    fl_pair_a = air_pair[0].flight_pairs
+    fl_pair_b = air_pair[1].flight_pairs
+    counter += f.air_couple_check(fl_pair_a, fl_pair_b)
+
+print(counter, time.perf_counter()-t, "C++ time ")
+
+counter = 0
+t = time.perf_counter()
+for air_pair in rl_model.airlines_triples:
+    fl_pair_a = air_pair[0].flight_pairs
+    fl_pair_b = air_pair[1].flight_pairs
+    fl_pair_c = air_pair[2].flight_pairs
+    counter += f.air_triple_check(fl_pair_a, fl_pair_b, fl_pair_c)
+
+print(counter, time.perf_counter()-t, "C++ time triples")
 
 # print(f.check(
 #     [fl.slot.index for fl in airline.flight_pairs[0]] + [fl.slot.index for fl in rl_model.airlines[2].flight_pairs[0]]))

@@ -89,24 +89,22 @@ triples = np.array(triples)
 
 
 def check_couple_condition(mat, flights):
-    if flights[0] == 3 and flights[1] == 12 and flights[2] == 2 and flights[3] == 5:
-        for c in couples:
-            # first airline eta check
-            if mat[flights[0], 1] <= mat[flights[c[0]], 0]:
-                if mat[flights[1], 1] <= mat[flights[c[1]], 0]:
+    for c in couples:
+        # first airline eta check
+        if mat[flights[0], 1] <= mat[flights[c[0]], 0]:
+            if mat[flights[1], 1] <= mat[flights[c[1]], 0]:
 
-                    # check first airline's convenience
-                    if mat[flights[0], 2 + flights[0]] + mat[flights[1], 2 + flights[1]] > \
-                            mat[flights[0], 2 + flights[c[0]]] + mat[flights[1], 2 + flights[c[1]]]:
+                # check first airline's convenience
+                if mat[flights[0], 2 + flights[0]] + mat[flights[1], 2 + flights[1]] > \
+                        mat[flights[0], 2 + flights[c[0]]] + mat[flights[1], 2 + flights[c[1]]]:
 
-                        # second airline eta check
-                        if mat[flights[2], 1] <= mat[flights[c[2]], 0]:
-                            if mat[flights[3], 1] <= mat[flights[c[3]], 0]:
-                                print(mat[flights[2], 2 + flights[2]] + mat[flights[3], 2 + flights[3]],   mat[flights[2], 2 + flights[c[2]]] + mat[flights[3], 2 + flights[c[3]]])
-                                if mat[flights[2], 2 + flights[2]] + mat[flights[3], 2 + flights[3]] > \
-                                        mat[flights[2], 2 + flights[c[2]]] + \
-                                        mat[flights[3], 2 + flights[c[3]]]:
-                                    return True
+                    # second airline eta check
+                    if mat[flights[2], 1] <= mat[flights[c[2]], 0]:
+                        if mat[flights[3], 1] <= mat[flights[c[3]], 0]:
+                            if mat[flights[2], 2 + flights[2]] + mat[flights[3], 2 + flights[3]] > \
+                                    mat[flights[2], 2 + flights[c[2]]] + \
+                                    mat[flights[3], 2 + flights[c[3]]]:
+                                return True
     return False
 
 
@@ -116,9 +114,8 @@ def air_couple_check(mat, airl_pair):
     fl_pair_b = airl_pair[1].flight_pairs
     for pairA in fl_pair_a:
         for pairB in fl_pair_b:
-            if pairA[0].slot.index == 3 and pairA[1].slot.index == 12 and pairB[0].slot.index == 2 and pairB[1].slot.index == 5:
-                if check_couple_condition(mat, [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB]):
-                    matches.append([pairA, pairB])
+            if check_couple_condition(mat, [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB]):
+                matches.append([pairA, pairB])
     return matches
 
 
@@ -165,6 +162,7 @@ def check_triple_condition(mat, flights):
                                         if mat[flights[4], 2 + flights[4]] + mat[flights[5], 2 + flights[5]] > \
                                                 mat[flights[4], 2 + flights[t[4]]] + \
                                                 mat[flights[5], 2 + flights[t[5]]]:
+                                            # print(flights)
                                             return True
     return False
 
@@ -188,7 +186,7 @@ def air_triple_check(mat, airl_pair, parallel):
             for pairB in fl_pair_b:
                 for pairC in fl_pair_c:
 
-                    if check_couple_condition(mat, [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB] +
+                    if check_triple_condition(mat, [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB] +
                                                    [fl.slot.index for fl in pairC]):
                         matches.append([pairA, pairB, pairC])
     return matches

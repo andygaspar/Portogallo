@@ -199,7 +199,14 @@
       <option name="project" value="LOCAL" />
       <updated>1611163556623</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="sistemato">
+      <created>1611242732002</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1611242732002</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -214,7 +221,8 @@
     <MESSAGE value="fixed little issues,&#10;&#10;implemented internal optimisation in the rl costr" />
     <MESSAGE value="pre parallel" />
     <MESSAGE value="progress" />
-    <option name="LAST_COMMIT_MESSAGE" value="progress" />
+    <MESSAGE value="sistemato" />
+    <option name="LAST_COMMIT_MESSAGE" value="sistemato" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -231,23 +239,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/checkOffers.py</url>
-          <line>167</line>
+          <line>165</line>
           <option name="timeStamp" value="24" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/parallel_test.py</url>
-          <line>131</line>
+          <line>142</line>
           <option name="timeStamp" value="25" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/checkOffers.py</url>
-          <line>108</line>
-          <option name="timeStamp" value="26" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/checkOffers.py</url>
-          <line>119</line>
-          <option name="timeStamp" value="28" />
+          <url>file://$PROJECT_DIR$/parallel_test.py</url>
+          <line>33</line>
+          <option name="timeStamp" value="29" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

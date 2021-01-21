@@ -66,52 +66,111 @@ class OfferChecker{
 
 
         bool check_couple_condition(short* flights){
-            if (flights[0]==3 and flights[1]==12 and  flights[2]==2 and  flights[3]==5){
-                for (short i = 0; i< couples_rows; i++){
-                    std::cout<<"siamo qua"<<std::endl;
-                    // first airline eta check
-                    if (mat[flights[0]][1] <= mat[flights[couples[i][0]]][0]){
-                        std::cout<<"primo if"<<std::endl;
-                        if (mat[flights[1]][1] <= mat[flights[couples[i][1]]][0]){
-                            std::cout<<"secondo if"<<std::endl;
-                            // couples[i]hecouples[i]k first airline's couples[i]onveniencouples[i]e
-                            if (mat[flights[0]][ 2 + flights[0]] + mat[flights[1]][ 2 + flights[1]] > 
-                                    mat[flights[0]][ 2 + flights[couples[i][0]]] + mat[flights[1]][ 2 + flights[couples[i][1]]]){
-                                                std::cout<<"terzo if"<<std::endl;
-                                // secouples[i]ond airline eta couples[i]hecouples[i]k
-                                if (mat[flights[2]][1] <= mat[flights[couples[i][2]]][0]){
+            for (short i = 0; i< couples_rows; i++){
 
-                                    std::cout<<"quarto if"<<std::endl;
-                                    if (mat[flights[3]][1] <= mat[flights[couples[i][3]]][0]){
+                // first airline eta check
+                if (mat[flights[0]][1] <= mat[flights[couples[i][0]]][0]){
+                    if (mat[flights[1]][1] <= mat[flights[couples[i][1]]][0]){
 
-                                        std::cout<<"quinto if"<<std::endl;
-                                        std::cout<<mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]]<<" "<<mat[flights[2]][2 + flights[couples[i][2]]] + mat[flights[3]][2 + flights[couples[i][3]]]<<std::endl;
-                                        if (mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]] > 
-                                                mat[flights[2]][2 + flights[couples[i][2]]] + 
-                                                mat[flights[3]][2 + flights[couples[i][3]]]){
+                        // couples[i]hecouples[i]k first airline's couples[i]onveniencouples[i]e
+                        if (mat[flights[0]][ 2 + flights[0]] + mat[flights[1]][ 2 + flights[1]] > 
+                                mat[flights[0]][ 2 + flights[couples[i][0]]] + mat[flights[1]][ 2 + flights[couples[i][1]]]){
 
-                                                    std::cout<<"trovato"<<std::endl;
-                                                    return true;
-                                                }
-                                            
-                                    }
+                            // secouples[i]ond airline eta couples[i]hecouples[i]k
+                            if (mat[flights[2]][1] <= mat[flights[couples[i][2]]][0]){
+
+                                if (mat[flights[3]][1] <= mat[flights[couples[i][3]]][0]){
+
+                                    if (mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]] > 
+                                            mat[flights[2]][2 + flights[couples[i][2]]] + 
+                                            mat[flights[3]][2 + flights[couples[i][3]]]){
+                                                return true;
+                                            }
+                                        
                                 }
                             }
                         }
                     }
                 }
             }
+            
             return false;
         }
 
 
-        int air_couple_check(short* airl_pair){
+        int air_couple_check(short* airl_pair, unsigned offers){
             int matches = 0;
-            for (int k = 0; k < 315; k++){
+            for (int k = 0; k < offers; k++){
                 if (check_couple_condition(&airl_pair[k*4]))
                         matches++;
             }
-            std::cout<<"trovati "<<matches<<std::endl;
+            //print_mat();
+            return matches;
+            
+        }
+
+
+
+
+         bool check_triple_condition(short* flights){
+                for (int i= 0; i< triples_rows; i++){
+
+                    // first airline eta check
+                    if (mat[flights[0]][1] <= mat[flights[triples[i][0]]][0]){
+                        if (mat[flights[1]][1] <= mat[flights[triples[i][1]]][0]){
+
+                            //std::cout<<"first"<<std::endl;
+
+                            // check first airline's convenience
+                            if (mat[flights[0]][2 + flights[0]] + mat[flights[1]][2 + flights[1]] > 
+                                    mat[flights[0]][2 + flights[triples[i][0]]] + mat[flights[1]][2 + flights[triples[i][1]]]){
+
+
+                                // second airline eta check
+                                if (mat[flights[2]][1] <= mat[flights[triples[i][2]]][0]){
+
+
+                                    if (mat[flights[3]][1] <= mat[flights[triples[i][3]]][0]){
+
+
+                                        // second convenience check
+                                        if (mat[flights[2]][2 + flights[2]] + mat[flights[3]][2 + flights[3]] > 
+                                                mat[flights[2]][2 + flights[triples[i][2]]] + 
+                                                mat[flights[3]][2 + flights[triples[i][3]]]){
+
+
+                                            // third airline eta check
+                                            if (mat[flights[4]][1] <= mat[flights[triples[i][4]]][0]){
+
+                                                if (mat[flights[5]][1] <= mat[flights[triples[i][5]]][0]){
+
+                                                    // third convenience check
+                                                    if (mat[flights[4]][2 + flights[4]] + mat[flights[5]][2 + flights[5]] > 
+                                                            mat[flights[4]][2 + flights[triples[i][4]]] + 
+                                                            mat[flights[5]][2 + flights[triples[i][5]]]){
+                                                                return true;
+                                                            }
+                                                        
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            return false;
+        }
+
+
+        int air_triple_check(short* airl_pair, unsigned offers){
+            int matches = 0;
+            for (int k = 0; k < offers; k++){
+                if (check_triple_condition(&airl_pair[k*6]))
+                        matches++;
+            }
             //print_mat();
             return matches;
             
@@ -138,9 +197,11 @@ int main()
 extern "C" { 
     OfferChecker* OfferChecker_(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col)
     {  return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
-    int air_couple_check_(OfferChecker* off,short* airl_pair) {return off->air_couple_check(airl_pair);}
+    int air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
+    int air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 
-    bool check_couple_condition_(OfferChecker* off,short* flights) {return off->check_couple_condition(flights);}
+    bool check_couple_condition_(OfferChecker* off, short* flights) {return off->check_couple_condition(flights);}
+    bool check_triple_condition_(OfferChecker* off, short* flights) {return off->check_triple_condition(flights);}
     
     void print_mat_(OfferChecker* off){ off -> print_mat(); }
     void print_couples_(OfferChecker* off){ off -> print_couples(); } 

@@ -98,13 +98,16 @@ class OfferChecker{
         }
 
 
-        int air_couple_check(short* airl_pair, unsigned offers){
-            int matches = 0;
+        bool* air_couple_check(short* airl_pair, unsigned offers){
+            bool* matches = new bool[offers]; 
             for (int k = 0; k < offers; k++){
-                if (check_couple_condition(&airl_pair[k*4]))
-                        matches++;
+                if (check_couple_condition(&airl_pair[k*4])){
+                    matches[k] = true;
+                }
+                else{
+                    matches[k] = false;
+                }
             }
-            //print_mat();
             return matches;
             
         }
@@ -113,12 +116,13 @@ class OfferChecker{
 
 
          bool check_triple_condition(short* flights){
+             std::cout<<flights[0]<<" "<<flights[1]<<" "<<flights[2]<<" "<<flights[3]<<" "<<flights[4]<<" "<<flights[5]<<std::endl;
                 for (int i= 0; i< triples_rows; i++){
 
                     // first airline eta check
                     if (mat[flights[0]][1] <= mat[flights[triples[i][0]]][0]){
                         if (mat[flights[1]][1] <= mat[flights[triples[i][1]]][0]){
-
+                            
                             //std::cout<<"first"<<std::endl;
 
                             // check first airline's convenience
@@ -165,11 +169,18 @@ class OfferChecker{
         }
 
 
-        int air_triple_check(short* airl_pair, unsigned offers){
-            int matches = 0;
+        bool* air_triple_check(short* airl_pair, unsigned offers){
+
+
+            bool* matches = new bool[offers];
             for (int k = 0; k < offers; k++){
-                if (check_triple_condition(&airl_pair[k*6]))
-                        matches++;
+                std::cout<<k<<std::endl;
+                if (check_triple_condition(&airl_pair[k*6])){
+                    matches[k] = true;
+                }
+                else{
+                    matches[k] = false;
+                }
             }
             //print_mat();
             return matches;
@@ -181,24 +192,14 @@ class OfferChecker{
          
 
 }; 
-int main() 
-{ 
-     std::cout << "iniziato" << std::endl; 
-    // Creating an object 
-    //OfferChecker t = OfferChecker(NULL, 0,0);  
-  
-    // Calling function 
-    //t.myFunction(val);   
-    std::cout << "finito" << std::endl; 
-    return 0; 
-} 
+
 
 
 extern "C" { 
     OfferChecker* OfferChecker_(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col)
     {  return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
-    int air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
-    int air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
+    bool* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
+    bool* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 
     bool check_couple_condition_(OfferChecker* off, short* flights) {return off->check_couple_condition(flights);}
     bool check_triple_condition_(OfferChecker* off, short* flights) {return off->check_triple_condition(flights);}

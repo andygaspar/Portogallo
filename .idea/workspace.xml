@@ -3,9 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/checkOffers.py" beforeDir="false" afterPath="$PROJECT_DIR$/checkOffers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/offer_eval.cc" beforeDir="false" afterPath="$PROJECT_DIR$/offer_eval.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parallel_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/parallel_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/parallel_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/cpp_test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,11 +39,16 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/parallel_test.py" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="editor.preferences.fonts.default" />
   </component>
-  <component name="RunManager" selected="Python.parallel">
-    <configuration name="parallel" type="PythonConfigurationType" factoryName="Python">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.cpp_test">
+    <configuration name="cpp_test" type="PythonConfigurationType" factoryName="Python">
       <module name="Portogallo" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -56,7 +60,7 @@
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/parallel_test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/cpp_test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -108,7 +112,7 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.parallel" />
+      <item itemvalue="Python.cpp_test" />
       <item itemvalue="Python.rl_test" />
       <item itemvalue="Python.run" />
     </list>
@@ -206,7 +210,14 @@
       <option name="project" value="LOCAL" />
       <updated>1611242732002</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="funzionante">
+      <created>1611252395594</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1611252395594</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -222,7 +233,8 @@
     <MESSAGE value="pre parallel" />
     <MESSAGE value="progress" />
     <MESSAGE value="sistemato" />
-    <option name="LAST_COMMIT_MESSAGE" value="sistemato" />
+    <MESSAGE value="funzionante" />
+    <option name="LAST_COMMIT_MESSAGE" value="funzionante" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -238,19 +250,19 @@
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/checkOffers.py</url>
-          <line>165</line>
-          <option name="timeStamp" value="24" />
+          <url>file://$PROJECT_DIR$/cpp_test.py</url>
+          <line>92</line>
+          <option name="timeStamp" value="35" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/parallel_test.py</url>
-          <line>142</line>
-          <option name="timeStamp" value="25" />
+          <url>file://$PROJECT_DIR$/cpp_test.py</url>
+          <line>177</line>
+          <option name="timeStamp" value="37" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/parallel_test.py</url>
-          <line>33</line>
-          <option name="timeStamp" value="29" />
+          <url>file://$PROJECT_DIR$/cpp_test.py</url>
+          <line>130</line>
+          <option name="timeStamp" value="38" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

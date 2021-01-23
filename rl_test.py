@@ -31,18 +31,18 @@ rl_model = rl.Rl(schedule_df, cost_fun)
 t = time.perf_counter()
 couple_matches = rl_model.all_couples_matches()
 print("time to get all couple matches: ", time.perf_counter()-t)
-print(len(couple_matches), " convenient pairs found","\n")
+print(len(couple_matches), " convenient pairs found", "\n")
 
 
 t = time.perf_counter()
 triple_matches = rl_model.all_triples_matches()
 print("time to get all triple matches: ", time.perf_counter()-t)
-print(len(triple_matches), "convenient triples found ","\n")
+print(len(triple_matches), "convenient triples found ", "\n")
 
 
 #get all airlines pairs and triples
-print("airline pairs ", rl_model.airlines_pairs,"\n")
-print("airline triples ", rl_model.airlines_triples,"\n")
+print("airline pairs ", rl_model.airlines_pairs, "\n")
+print("airline triples ", rl_model.airlines_triples, "\n")
 
 
 #get an airline
@@ -50,12 +50,14 @@ airline = rl_model.airlines[1]
 print("airline", airline)
 
 
-#get a flight
-flight = airline.flights[0]
-print(flight, "flight type: ", flight.type, "flight's slot: ", flight.slot.index,"\n")
-# or
+#get a flight from the schedule
 flight = rl_model.flights[0]
-print(flight, "flight type: ", flight.type, "flight's slot: ", flight.slot.index,"\n")
+print(flight, "flight type: ", flight.type, "flight's slot: ", flight.slot.index, "\n")
+#or from a particular airline
+flight = airline.flights[0]
+print(flight, "flight type: ", flight.type, "flight's slot: ", flight.slot.index, "\n")
+
+
 
 #flight type dict
 print(rl_model.flightTypeDict,"\n")
@@ -69,13 +71,15 @@ couple = airline.flight_pairs[0]
 print("the couple of flight tried to be matched is:", couple)
 t = time.perf_counter()
 couple_matches_for_flight = rl_model.check_couple_in_pairs(couple)
-print("couples matches for couple: ",couple_matches_for_flight)
-print("time to check matches: ", time.perf_counter()-t,"\n")
+print("couples matches for couple: ", couple_matches_for_flight)
+print("time to check pair matches: ", time.perf_counter()-t, "\n")
 
 
 #get a couple of flights of an airline
 t = time.perf_counter()
 triple_matches_for_flight = rl_model.check_couple_in_triples(couple)
-print("triples matches for couple: ",triple_matches_for_flight)
-print("time to check matches: ", time.perf_counter()-t)
+print("triples matches for couple: ", triple_matches_for_flight)
+print("time to check triple matches: ", time.perf_counter()-t)
+
+print("flights ordered without flights of airline", airline, rl_model.get_filtered_schedule(airline))
 

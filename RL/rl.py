@@ -1,5 +1,6 @@
 from typing import Union, Callable, List
 from Istop import istop
+from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from UDPP import udppModel
 from OfferChecker import checkOffers
 
@@ -26,3 +27,8 @@ class Rl(istop.Istop):
 
     def all_triples_matches(self):
         return checkOffers.all_triples_check(self.scheduleMatrix, self.airlines_triples)
+
+    def get_filtered_schedule(self, airline: IstopAirline):
+        return [flight for flight in self.flights if flight.airline != airline]
+
+

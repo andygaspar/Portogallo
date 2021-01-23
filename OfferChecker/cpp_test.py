@@ -88,7 +88,7 @@ class OfferChecker(object):
     # constructor
     def __init__(self, vect, coup, trip):
         # attribute
-
+        print(hex(ctypes.c_void_p(vect.ctypes.data)))
         lib.OfferChecker_.restype = ctypes.c_void_p
         self.obj = lib.OfferChecker_(ctypes.c_void_p(vect.ctypes.data), ctypes.c_short(vect.shape[0]), ctypes.c_short(vect.shape[1]),
                                      ctypes.c_void_p(coup.ctypes.data), ctypes.c_short(coup.shape[0]), ctypes.c_short(coup.shape[1]),

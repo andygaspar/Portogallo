@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/offer_eval.cc" beforeDir="false" afterPath="$PROJECT_DIR$/offer_eval.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parallel_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/cpp_test.py" afterDir="false" />
-    </list>
+    <list default="true" id="a15e2df8-6e2a-4524-b875-47c235e2aa33" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

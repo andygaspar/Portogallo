@@ -4,6 +4,11 @@
 
 int value = 0;
 
+
+void check(){
+    std::cout<<"here"<<std::endl;
+}
+
 class OfferChecker{ 
     double** mat;
     int mat_rows;
@@ -24,6 +29,7 @@ class OfferChecker{
         OfferChecker(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col): 
             mat{new double*[row]}, mat_rows{row}, mat_cols{col}, couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}
          {
+             check();
          for (int i = 0 ; i< row; i++) {
                 mat[i]= &schedule_mat[i*col];
             }
@@ -197,7 +203,7 @@ class OfferChecker{
 
 extern "C" { 
     OfferChecker* OfferChecker_(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col)
-    {  return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
+    { check(); return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
     bool* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
     bool* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 

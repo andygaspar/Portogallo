@@ -11,25 +11,25 @@ void check(){
 
 class OfferChecker{ 
     double** mat;
-    int mat_rows;
-    int mat_cols;
+    short mat_rows;
+    short mat_cols;
 
     short** couples;
-    int couples_rows;
-    int couples_cols;
+    short couples_rows;
+    short couples_cols;
 
     short** triples;
-    int triples_rows;
-    int triples_cols;
+    short triples_rows;
+    short triples_cols;
 
     public: 
 
        
 
-        OfferChecker(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col): 
-            mat{&schedule_mat}, mat_rows{row}, mat_cols{col}, couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}
+        OfferChecker(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, short* trip, short trip_row, short trip_col): 
+            mat{new double*[row]}, mat_rows{row}, mat_cols{col}, couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}
          {
-             check();
+            
          for (int i = 0 ; i< row; i++) {
                 mat[i]= &schedule_mat[i*col];
             }
@@ -122,7 +122,7 @@ class OfferChecker{
 
 
          bool check_triple_condition(short* flights){
-             std::cout<<flights[0]<<" "<<flights[1]<<" "<<flights[2]<<" "<<flights[3]<<" "<<flights[4]<<" "<<flights[5]<<std::endl;
+             //std::cout<<flights[0]<<" "<<flights[1]<<" "<<flights[2]<<" "<<flights[3]<<" "<<flights[4]<<" "<<flights[5]<<std::endl;
                 for (int i= 0; i< triples_rows; i++){
 
                     // first airline eta check
@@ -180,7 +180,7 @@ class OfferChecker{
 
             bool* matches = new bool[offers];
             for (int k = 0; k < offers; k++){
-                std::cout<<k<<std::endl;
+                //std::cout<<k<<std::endl;
                 if (check_triple_condition(&airl_pair[k*6])){
                     matches[k] = true;
                 }
@@ -202,18 +202,8 @@ class OfferChecker{
 
 
 extern "C" { 
-    OfferChecker* OfferChecker_(double* schedule_mat, int row, int col, short* coup, int coup_row, int coup_col, short* trip, int trip_row, int trip_col)
-    { check();
-    std::cout<<"col "<<col<<std::endl; 
-    for(int i = 0; i<row; i++){
-        for(int j=0; j<col; j++){
-            std::cout<<schedule_mat[i*col+j]<<" ";
-        }
-        std::cout<<std::endl;
-    }
-    std::cout<<"address "<<schedule_mat<<std::endl; 
-    
-    return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
+    OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, short* trip, short trip_row, short trip_col)
+    {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
     bool* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
     bool* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 

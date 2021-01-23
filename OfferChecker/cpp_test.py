@@ -19,8 +19,8 @@ lib.air_triple_check_.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uin
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 15
-num_airlines = 3
+num_flights = 50
+num_airlines = 10
 
 schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[0])
 cost_fun = CostFuns().costFun["realistic"]
@@ -28,28 +28,24 @@ cost_fun = CostFuns().costFun["realistic"]
 # create model
 rl_model = rl.Rl(schedule_df, cost_fun)
 
-# print("flights: ", num_flights, "   num airlines: ", num_airlines)
-#
-#
-# t = time.perf_counter()
-# couple_matches = rl_model.all_couples_matches()
-# print("n couples: ", len(couple_matches), "   python time: ", time.perf_counter() - t)
-#
+print("flights: ", num_flights, "   num airlines: ", num_airlines)
+
+
+t = time.perf_counter()
+couple_matches = rl_model.all_couples_matches()
+print("n couples: ", len(couple_matches), "   python time: ", time.perf_counter() - t)
+
 # print(couple_matches)
-#
-# t = time.perf_counter()
-# triple_matches = rl_model.all_triples_matches()
-# print("n triples: ", len(triple_matches), "    python time triples:", time.perf_counter() - t)
 
-# # get an airline
-# airline = rl_model.airlines[0]
-# print(airline)
-#
-# # get a flight
-# flight = airline.flights[0]
-# print(flight)
+t = time.perf_counter()
+triple_matches = rl_model.all_triples_matches()
+print("n triples: ", len(triple_matches), "    python time triples:", time.perf_counter() - t)
 
-# # get a couple of flights of an airline
+# get an airline
+airline = rl_model.airlines[0]
+
+
+# get a couple of flights of an airline
 # couple = airline.flight_pairs[0]
 # print("the couple of flight tried to mathced is:", couple)
 # t = time.perf_counter()
@@ -69,7 +65,7 @@ for c in couples_copy:
     if (c[0] == 0 and c[1] == 1) or (c[0] == 1 and c[1] == 0):
         couples.remove(c)
 couples = np.array(couples).astype(np.short)
-print(len(couples))
+# print(len(couples))
 
 triples = list(permutations([0, 1, 2, 3, 4, 5]))
 triples_copy = copy.copy(triples)
@@ -79,7 +75,7 @@ for t in triples_copy:
             ((t[4] == 4 and t[5] == 5) or (t[4] == 5 and t[5] == 4)):
         triples.remove(t)
 triples = np.array(triples).astype(np.short)
-print(len(triples))
+# print(len(triples))
 
 
 # create a Geek class
@@ -88,7 +84,6 @@ class OfferChecker(object):
     # constructor
     def __init__(self, vect, coup, trip):
         # attribute
-        print(hex(ctypes.c_void_p(vect.ctypes.data)))
         lib.OfferChecker_.restype = ctypes.c_void_p
         self.obj = lib.OfferChecker_(ctypes.c_void_p(vect.ctypes.data), ctypes.c_short(vect.shape[0]), ctypes.c_short(vect.shape[1]),
                                      ctypes.c_void_p(coup.ctypes.data), ctypes.c_short(coup.shape[0]), ctypes.c_short(coup.shape[1]),
@@ -132,7 +127,6 @@ class OfferChecker(object):
         lib.air_triple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
         input_vect = np.array(input_vect).astype(np.short)
 
-        p = ctypes.pointer(input_vect.ctypes.data)
         answer = lib.air_triple_check_(ctypes.c_void_p(self.obj),
                                        ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
         return [air_trips[i] for i in range(len_array) if answer[i]]
@@ -168,7 +162,7 @@ for air_pair in rl_model.airlines_pairs:
 
 print("n couples: ", len(coup), "   C++ time: ", time.perf_counter() - t)
 
-print(coup)
+#print(coup)
 
 trip = []
 t = time.perf_counter()
@@ -180,7 +174,7 @@ for air_pair in rl_model.airlines_triples:
 
 print("n triples: ", len(trip), "   C++ time: ", time.perf_counter() - t)
 
-print(trip)
+#print(trip)
 
 # print(f.check(
 #     [fl.slot.index for fl in airline.flight_pairs[0]] + [fl.slot.index for fl in rl_model.airlines[2].flight_pairs[0]]))

@@ -1,12 +1,10 @@
 from typing import Callable, Union, List
-import copy
 from ModelStructure import modelStructure as mS
-# from mip import *
 import sys
-from itertools import combinations, permutations
+from itertools import combinations
 from Istop.AirlineAndFlight import istopAirline as air, istopFlight as modFl
 from ModelStructure.Solution import solution
-import checkOffers
+from OfferChecker import checkOffers
 
 import numpy as np
 import pandas as pd
@@ -70,8 +68,6 @@ class Istop(mS.ModelStructure):
 
         self.x = None
         self.c = None
-        # self.m.threads = -1
-        # self.m.verbose = 0
 
         self.matches = []
         self.couples = []
@@ -81,55 +77,7 @@ class Istop(mS.ModelStructure):
 
     def check_and_set_matches(self):
 
-        # t = time.time()
-        # for airl_pair in self.airlines_pairs:
-        #     fl_pair_a = airl_pair[0].flight_pairs
-        #     fl_pair_b = airl_pair[1].flight_pairs
-        #     for pairA in fl_pair_a:
-        #         for pairB in fl_pair_b:
-        #             if checkOffers.condition([pairA, pairB]):
-        #                 self.matches.append([pairA, pairB])
-        # print("vecchio", time.time() - t, "couples ", len(self.matches))
-        # print(self.matches, "\n\n")
-
-        t = time.perf_counter()
-        self.matches = checkOffers.run_couples_check(self.scheduleMatrix, self.airlines_pairs)
-        print("nuovo", time.perf_counter()-t)
-        print("\n\n")
-
-        # t = time.perf_counter()
-        # triples = checkOffers.run_triples_check(self.scheduleMatrix, self.airlines_triples)
-        # print("triples", time.perf_counter()-t, len(triples))
-        # print("\n\n")
-        # print(self.matches)
-        # t = time.perf_counter()
-        # checkOffers.check_couple_in_pairs(self.scheduleMatrix, self.airlines[0].flight_pairs[4], self.airlines_pairs)
-        # print("single couple check", time.perf_counter() - t)
-
-        # t = time.perf_counter()
-        # checkOffers.check_couple_in_triples(self.scheduleMatrix, self.airlines[0].flight_pairs[4], self.airlines_triples)
-        # print("single triple check", time.perf_counter() - t)
-
-        # t = time.perf_counter()
-        # triples = checkOffers.run_triples_check(self.scheduleMatrix, self.airlines_triples, parallel=True)
-        # print("triples parallel", time.perf_counter()-t)
-        # print("\n\n")
-
-        if self.triples:
-            t = time.time()
-            counter = 0
-            for airl_triple in self.airlines_triples:
-                fl_pair_a = airl_triple[0].flight_pairs
-                fl_pair_b = airl_triple[1].flight_pairs
-                fl_pair_c = airl_triple[2].flight_pairs
-                for pairA in fl_pair_a:
-                    for pairB in fl_pair_b:
-                        for pairC in fl_pair_c:
-                            if checkOffers.condition([pairA, pairB, pairC]):
-                                counter += 1
-
-            print("nuovo", time.time() - t, "triples ", counter)
-
+        self.matches = checkOffers.all_couples_check(self.scheduleMatrix, self.airlines_pairs)
 
         for match in self.matches:
             for couple in match:
@@ -149,8 +97,6 @@ class Istop(mS.ModelStructure):
         self.x = np.array([[xp.var(vartype=xp.binary) for j in self.slots] for i in self.slots])
 
         self.c = np.array([xp.var(vartype=xp.binary) for i in self.matches])
-        # print(self.x.shape)
-        print(self.c.shape)
         self.m.addVariable(self.x, self.c)
 
     def set_constraints(self):
@@ -231,10 +177,9 @@ class Istop(mS.ModelStructure):
             if timing:
                 print("Simplex time ", end)
 
-            # print("status: ", self.m.getProbStatus())
             print("problem status, explained: ", self.m.getProbStatusString())
             xpSolution = self.x
-            # print(self.m.getSolution(self.x))
+
             self.assign_flights(xpSolution)
 
         else:
@@ -245,18 +190,11 @@ class Istop(mS.ModelStructure):
 
         self.offer_solution_maker()
 
-        # for i in self.slots:
-        #     if self.x[i, i].x == 0:
-        #         for j in self.slots:
-        #             if self.x[i, j].x != 0:
-        #                 print(i, j)
-
         offers = 0
         for i in range(len(self.matches)):
             if self.m.getSolution(self.c[i]) > 0.5:
-                # print(self.matches[i])
                 offers += 1
-        print("offers: ", offers)
+        print("num otp offers: ", offers)
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []

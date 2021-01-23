@@ -1,4 +1,3 @@
-from ctypes import cdll, pointer
 import ctypes
 from numpy.ctypeslib import ndpointer
 import numpy as np
@@ -29,18 +28,18 @@ cost_fun = CostFuns().costFun["realistic"]
 # create model
 rl_model = rl.Rl(schedule_df, cost_fun)
 
-print("flights: ", num_flights, "   num airlines: ", num_airlines)
-
-
-t = time.perf_counter()
-couple_matches = rl_model.get_couple_matches()
-print("n couples: ", len(couple_matches), "   python time: ", time.perf_counter() - t)
-
-print(couple_matches)
-
-t = time.perf_counter()
-triple_matches = rl_model.get_triple_matches()
-print("n triples: ", len(triple_matches), "    python time triples:", time.perf_counter() - t)
+# print("flights: ", num_flights, "   num airlines: ", num_airlines)
+#
+#
+# t = time.perf_counter()
+# couple_matches = rl_model.all_couples_matches()
+# print("n couples: ", len(couple_matches), "   python time: ", time.perf_counter() - t)
+#
+# print(couple_matches)
+#
+# t = time.perf_counter()
+# triple_matches = rl_model.all_triples_matches()
+# print("n triples: ", len(triple_matches), "    python time triples:", time.perf_counter() - t)
 
 # # get an airline
 # airline = rl_model.airlines[0]
@@ -157,8 +156,6 @@ f = OfferChecker(rl_model.scheduleMatrix, couples, triples)
 # f.print_mat()
 # f.print_couples()
 # f.print_triples()
-
-import checkOffers
 
 
 coup = []

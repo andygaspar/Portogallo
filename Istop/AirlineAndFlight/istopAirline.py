@@ -18,7 +18,11 @@ class IstopAirline(air.Airline):
     def __init__(self, df_airline: pd.DataFrame, airline_index, slots):
 
         super().__init__(df_airline=df_airline, airline_index=airline_index, slots=slots, flight_ctor=IstopFlight)
+
         self.sum_priorities = sum(self.df["priority"])
+
+        self.flight_pairs = self.pairs(self.flights)
+        self.flight_triplets = self.triplet(self.flights)
 
     def set_preferences(self, priority_function):
         flight: IstopFlight

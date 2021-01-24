@@ -1,6 +1,7 @@
 #include <iostream> 
 #include <string>
 #include <vector>
+#include <omp.h>
 
 int value = 0;
 
@@ -22,13 +23,24 @@ class OfferChecker{
     short triples_rows;
     short triples_cols;
 
+    short num_procs;
+
     public: 
 
        
 
-        OfferChecker(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, short* trip, short trip_row, short trip_col): 
-            mat{new double*[row]}, mat_rows{row}, mat_cols{col}, couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}
+        OfferChecker(double* schedule_mat, short row, short col, 
+                    short* coup, short coup_row, short coup_col, short* trip, 
+                    short trip_row, short trip_col, 
+                    short n_procs): 
+            mat{new double*[row]}, mat_rows{row}, mat_cols{col}, 
+            couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, 
+            triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}, 
+            num_procs{n_procs}
          {
+
+             std::cout<<"procs "<<omp_get_num_procs()<<std::endl;
+             std::cout<<"threads "<<omp_get_num_threads()<<std::endl;
             
          for (int i = 0 ; i< row; i++) {
                 mat[i]= &schedule_mat[i*col];
@@ -106,7 +118,10 @@ class OfferChecker{
 
         bool* air_couple_check(short* airl_pair, unsigned offers){
             bool* matches = new bool[offers]; 
+            omp_set_num_threads(num_procs);
+            #pragma omp parallel for schedule(dynamic) shared(matches, airl_pair, offers, mat)
             for (int k = 0; k < offers; k++){
+                
                 if (check_couple_condition(&airl_pair[k*4])){
                     matches[k] = true;
                 }
@@ -177,8 +192,10 @@ class OfferChecker{
 
         bool* air_triple_check(short* airl_pair, unsigned offers){
 
+            omp_set_num_threads(num_procs);
 
             bool* matches = new bool[offers];
+            #pragma omp parallel for schedule(dynamic) shared(matches, airl_pair, offers, mat)
             for (int k = 0; k < offers; k++){
                 //std::cout<<k<<std::endl;
                 if (check_triple_condition(&airl_pair[k*6])){
@@ -202,8 +219,9 @@ class OfferChecker{
 
 
 extern "C" { 
-    OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, short* trip, short trip_row, short trip_col)
-    {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
+    OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, 
+                                short* trip, short trip_row, short trip_col, short n_procs)
+    {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col, n_procs); } 
     bool* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
     bool* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 

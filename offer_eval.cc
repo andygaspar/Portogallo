@@ -22,12 +22,20 @@ class OfferChecker{
     short triples_rows;
     short triples_cols;
 
+    short num_procs;
+
     public: 
 
        
 
-        OfferChecker(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, short* trip, short trip_row, short trip_col): 
-            mat{new double*[row]}, mat_rows{row}, mat_cols{col}, couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}
+        OfferChecker(double* schedule_mat, short row, short col, 
+                    short* coup, short coup_row, short coup_col, short* trip, 
+                    short trip_row, short trip_col, 
+                    short n_procs): 
+            mat{new double*[row]}, mat_rows{row}, mat_cols{col}, 
+            couples{new short*[coup_row]}, couples_rows{coup_row}, couples_cols{coup_col}, 
+            triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}, 
+            num_procs{n_procs}
          {
             
          for (int i = 0 ; i< row; i++) {
@@ -202,8 +210,9 @@ class OfferChecker{
 
 
 extern "C" { 
-    OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, short* trip, short trip_row, short trip_col)
-    {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col); } 
+    OfferChecker* OfferChecker_(double* schedule_mat, short row, short col, short* coup, short coup_row, short coup_col, 
+                                short* trip, short trip_row, short trip_col, short n_procs)
+    {return new OfferChecker(schedule_mat,row, col, coup, coup_row, coup_col, trip, trip_row, trip_col, n_procs); } 
     bool* air_couple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_couple_check(airl_pair, offers);}
     bool* air_triple_check_(OfferChecker* off,short* airl_pair, unsigned offers) {return off->air_triple_check(airl_pair, offers);}
 

@@ -24,6 +24,8 @@ class ModelStructure:
 
         self.set_flights_cost_functions(costFun)
 
+        self.set_flights_cost_vect()
+
         self.numFlights = len(self.flights)
 
         self.initialTotalCosts = self.compute_costs(self.flights, "initial")
@@ -53,7 +55,7 @@ class ModelStructure:
     def make_schedule_matrix(self):
         arr = []
         for flight in self.flights:
-            arr.append([flight.slot.time] + [flight.eta] + flight.costs)
+            arr.append([flight.slot.time] + [flight.eta] + flight.costVect)
         return np.array(arr)
 
     @staticmethod
@@ -90,12 +92,15 @@ class ModelStructure:
         if isinstance(costFun, Callable):
             for flight in self.flights:
                 flight.set_cost_fun(costFun)
-                flight.costs = [flight.costFun(flight, slot) for slot in self.slots]
         else:
             i = 0
             for flight in self.flights:
                 flight.set_cost_fun(costFun[i])
                 i += 1
+
+    def set_flights_cost_vect(self):
+        for flight in self.flights:
+            flight.costVect = [flight.costFun(flight, slot) for slot in self.slots]
 
 
 

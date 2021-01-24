@@ -8,6 +8,8 @@ import time
 from itertools import permutations
 import copy
 
+from OfferChecker.checkOfferC import OfferChecker as O
+
 lib = ctypes.CDLL('./liboffers.so')
 lib.OfferChecker_.argtypes = [ctypes.c_void_p, ctypes.c_short, ctypes.c_short, ctypes.c_void_p, ctypes.c_short,
                               ctypes.c_short, ctypes.c_void_p, ctypes.c_short, ctypes.c_short]
@@ -19,7 +21,7 @@ lib.air_triple_check_.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uin
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 50
+num_flights = 70
 num_airlines = 10
 
 schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[0])
@@ -31,15 +33,15 @@ rl_model = rl.Rl(schedule_df, cost_fun)
 print("flights: ", num_flights, "   num airlines: ", num_airlines)
 
 
-t = time.perf_counter()
-couple_matches = rl_model.all_couples_matches()
-print("n couples: ", len(couple_matches), "   python time: ", time.perf_counter() - t)
+# t = time.perf_counter()
+# couple_matches = rl_model.all_couples_matches()
+# print("n couples: ", len(couple_matches), "   python time: ", time.perf_counter() - t)
 
 # print(couple_matches)
 
-t = time.perf_counter()
-triple_matches = rl_model.all_triples_matches()
-print("n triples: ", len(triple_matches), "    python time triples:", time.perf_counter() - t)
+# t = time.perf_counter()
+# triple_matches = rl_model.all_triples_matches()
+# print("n triples: ", len(triple_matches), "    python time triples:", time.perf_counter() - t)
 
 # get an airline
 airline = rl_model.airlines[0]
@@ -146,7 +148,7 @@ class OfferChecker(object):
 # print(rl_model.scheduleMatrix.dtype)
 # print(rl_model.scheduleMatrix,"\n\n")
 f = OfferChecker(rl_model.scheduleMatrix, couples, triples)
-
+ob = O(rl_model.scheduleMatrix)
 # f.print_mat()
 # f.print_couples()
 # f.print_triples()
@@ -162,6 +164,11 @@ for air_pair in rl_model.airlines_pairs:
 
 print("n couples: ", len(coup), "   C++ time: ", time.perf_counter() - t)
 
+t = time.perf_counter()
+ob.all_couples_check(rl_model.airlines_pairs)
+print("n couples: ", len(coup), "   C++ obj time: ", time.perf_counter() - t)
+
+
 #print(coup)
 
 trip = []
@@ -174,6 +181,10 @@ for air_pair in rl_model.airlines_triples:
 
 print("n triples: ", len(trip), "   C++ time: ", time.perf_counter() - t)
 
+
+t = time.perf_counter()
+ob.all_triples_check(rl_model.airlines_triples)
+print("n triples: ", len(coup), "   C++ obj time: ", time.perf_counter() - t)
 #print(trip)
 
 # print(f.check(

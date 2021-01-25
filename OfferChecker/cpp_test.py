@@ -173,21 +173,21 @@ ob = O(rl_model.scheduleMatrix)
 #
 # #print(coup)
 #
-# trip = []
-# t = time.perf_counter()
-# for air_pair in rl_model.airlines_triples:
-#     fl_pair_a = air_pair[0].flight_pairs
-#     fl_pair_b = air_pair[1].flight_pairs
-#     fl_pair_c = air_pair[2].flight_pairs
-#     trip += f.air_triple_check(fl_pair_a, fl_pair_b, fl_pair_c)
-#
-# print("n triples: ", len(trip), "   C++ time: ", time.perf_counter() - t)
+trip = []
+t = time.perf_counter()
+for air_pair in rl_model.airlines_triples:
+    fl_pair_a = air_pair[0].flight_pairs
+    fl_pair_b = air_pair[1].flight_pairs
+    fl_pair_c = air_pair[2].flight_pairs
+    trip += f.air_triple_check(fl_pair_a, fl_pair_b, fl_pair_c)
+
+print("n triples: ", len(trip), "   C++ time: ", time.perf_counter() - t)
 
 
-# t = time.perf_counter()
-# tri = ob.all_triples_check(rl_model.airlines_triples)
-# print("n triples: ", len(tri), "   C++ obj time: ", time.perf_counter() - t)
-#print(trip)
+t = time.perf_counter()
+tri = ob.all_triples_check(rl_model.airlines_triples)
+print("n triples: ", len(tri), "   C++ obj time: ", time.perf_counter() - t)
+print(trip)
 
 # print(f.check(
 #     [fl.slot.index for fl in airline.flight_pairs[0]] + [fl.slot.index for fl in rl_model.airlines[2].flight_pairs[0]]))

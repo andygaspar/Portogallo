@@ -18,7 +18,7 @@ scheduleTypes = scheduleMaker.schedule_types(show=True)
 
 
 #init variables, chedule and cost function
-num_flights = 20
+num_flights = 35
 num_airlines = 5
 schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
 cost_fun = CostFuns().costFun["realistic"]

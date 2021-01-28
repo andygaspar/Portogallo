@@ -1,6 +1,6 @@
 from Istop import istop
 from NoNegativeBound import nnBound
-from RL import rl
+from Training import instanceMaker
 from ModelStructure.ScheduleMaker import scheduleMaker
 from ModelStructure.Costs.costFunctionDict import CostFuns
 from ModelStructure.Slot.slot import Slot
@@ -16,70 +16,16 @@ flight: IstopFlight
 np.random.seed(0)
 scheduleTypes = scheduleMaker.schedule_types(show=True)
 
-
-#init variables, chedule and cost function
-num_flights = 35
 num_airlines = 5
-schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
-cost_fun = CostFuns().costFun["realistic"]
+num_flights = 35
 
+instance = instanceMaker.Instance(num_flights=num_flights, num_airlines=num_airlines)
+mat = instance.get_schedule_tensor()
 
-#create model
-rl_model = rl.Rl(schedule_df, cost_fun)
+print(instance.airDict)
+print(instance.flightDict)
 
-
-t = time.perf_counter()
-couple_matches = rl_model.all_couples_matches()
-print("time to get all couple matches: ", time.perf_counter()-t)
-print(len(couple_matches), " convenient pairs found", "\n")
-
-
-t = time.perf_counter()
-triple_matches = rl_model.all_triples_matches()
-print("time to get all triple matches: ", time.perf_counter()-t)
-print(len(triple_matches), "convenient triples found ", "\n")
-
-
-#get all airlines pairs and triples
-print("airline pairs ", rl_model.airlines_pairs, "\n")
-print("airline triples ", rl_model.airlines_triples, "\n")
-
-
-#get an airline
-airline = rl_model.airlines[1]
-print("airline", airline)
-
-
-#get a flight from the schedule
-flight = rl_model.flights[0]
-print(flight, "flight type: ", flight.type, "flight's slot: ", flight.slot.index, "\n")
-#or from a particular airline
-flight = airline.flights[0]
-print(flight, "flight type: ", flight.type, "flight's slot: ", flight.slot.index, "\n")
-
-
-
-#flight type dict
-print(rl_model.flightTypeDict,"\n")
-
-#flight type in numbers
-print(flight, "flight type: ", flight.type, "  type in numbers", rl_model.flightTypeDict[flight.type], "\n")
-
-
-#get a couple of flights of an airline
-couple = airline.flight_pairs[0]
-print("the couple of flight tried to be matched is:", couple)
-t = time.perf_counter()
-couple_matches_for_flight = rl_model.check_couple_in_pairs(couple)
-print("couples matches for couple: ", couple_matches_for_flight)
-print("time to check pair matches: ", time.perf_counter()-t, "\n")
-
-
-#get a couple of flights of an airline
-t = time.perf_counter()
-triple_matches_for_flight = rl_model.check_couple_in_triples(couple)
-print("triples matches for couple: ", triple_matches_for_flight)
-print("time to check triple matches: ", time.perf_counter()-t)
-
-print("flights ordered without flights of airline", airline, rl_model.get_filtered_schedule(airline))
-
+for i in range(mat.shape[0]):
+    flight = instance.flights[i]
+    print(flight.airline, flight.type, instance.flightDict[flight.type], flight, flight.slot.time - flight.eta)
+    print(mat[i])

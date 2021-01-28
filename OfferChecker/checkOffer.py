@@ -1,10 +1,6 @@
 import ctypes
 from numpy.ctypeslib import ndpointer
 import numpy as np
-from RL import rl
-from ModelStructure.ScheduleMaker import scheduleMaker
-from ModelStructure.Costs.costFunctionDict import CostFuns
-import time
 from itertools import permutations
 import copy
 import os
@@ -12,10 +8,16 @@ import os
 
 class OfferChecker(object):
 
-    def __init__(self, schedule_mat):
+    def __init__(self, schedule_mat, parallel=True, private=False):
 
         self.numProcs = os.cpu_count()
-        self.lib = ctypes.CDLL('./liboffers_parallel.so')
+        if parallel:
+            if private:
+                self.lib = ctypes.CDLL('./liboffers_parallel_2.so')
+            else:
+                self.lib = ctypes.CDLL('./liboffers_parallel.so')
+        else:
+            self.lib = ctypes.CDLL('./liboffers.so')
         self.lib.OfferChecker_.argtypes = [ctypes.c_void_p, ctypes.c_short, ctypes.c_short,
                                            ctypes.c_void_p, ctypes.c_short, ctypes.c_short, ctypes.c_void_p,
                                            ctypes.c_short, ctypes.c_short, ctypes.c_short]
@@ -184,3 +186,28 @@ class OfferChecker(object):
 
     def print_triples(self):
         self.lib.print_triples_(self.obj)
+
+    def all_triples_check_fast(self, airlines_triples):
+        air_trips = []
+        input_vect = []
+
+        for air_triple in airlines_triples:
+            fl_pair_a = air_triple[0].flight_pairs
+            fl_pair_b = air_triple[1].flight_pairs
+            fl_pair_c = air_triple[2].flight_pairs
+            for pairA in fl_pair_a:
+                for pairB in fl_pair_b:
+                    for pairC in fl_pair_c:
+                        air_trips.append([pairA, pairB, pairC])
+                        input_vect += [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB] + \
+                                      [fl.slot.index for fl in pairC]
+
+        len_array = int(len(input_vect) / 6)
+
+        self.lib.air_triple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
+        input_vect = np.array(input_vect).astype(np.short)
+
+        answer = self.lib.air_triple_check_(ctypes.c_void_p(self.obj),
+                                            ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
+
+        return [air_trips[i] for i in range(len_array) if answer[i]]

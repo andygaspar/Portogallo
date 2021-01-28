@@ -1,14 +1,14 @@
 import ctypes
 from numpy.ctypeslib import ndpointer
 import numpy as np
-from RL import rl
+from Training import instanceMaker
 from ModelStructure.ScheduleMaker import scheduleMaker
 from ModelStructure.Costs.costFunctionDict import CostFuns
 import time
 from itertools import permutations
 import copy
 import os
-from OfferChecker.checkOfferC import OfferChecker as O
+from OfferChecker.checkOffer import OfferChecker as O
 
 
 
@@ -30,7 +30,7 @@ schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=sch
 cost_fun = CostFuns().costFun["realistic"]
 
 # create model
-rl_model = rl.Rl(schedule_df, cost_fun)
+rl_model = instanceMaker.Instance(schedule_df, cost_fun)
 
 print("flights: ", num_flights, "   num airlines: ", num_airlines)
 

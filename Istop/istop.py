@@ -1,10 +1,12 @@
 from typing import Callable, Union, List
+
 from ModelStructure import modelStructure as mS
+# from mip import *
 import sys
 from itertools import combinations
 from Istop.AirlineAndFlight import istopAirline as air, istopFlight as modFl
 from ModelStructure.Solution import solution
-from OfferChecker import checkOffers
+from OfferChecker.checkOffer import OfferChecker
 
 import numpy as np
 import pandas as pd
@@ -23,39 +25,39 @@ class Istop(mS.ModelStructure):
             if np.array_equiv(array[i], elem):
                 return i
 
-    def get_couple(self, couple):
-        index = 0
-        for c in self.couples:
-            if couple[0].num == c[0].num and couple[1].num == c[1].num:
-                return index
-            index += 1
+    # def get_couple(self, couple):
+    #     index = 0
+    #     for c in self.couples:
+    #         if couple[0].num == c[0].num and couple[1].num == c[1].num:
+    #             return index
+    #         index += 1
 
-    @staticmethod
-    def get_tuple(flight):
-        j = 0
-        indexes = []
-        for pair in flight.airline.flight_pairs:
-            if flight in pair:
-                indexes.append(j)
-            j += 1
-        return indexes
+    # @staticmethod
+    # def get_tuple(flight):
+    #     j = 0
+    #     indexes = []
+    #     for pair in flight.airline.flight_pairs:
+    #         if flight in pair:
+    #             indexes.append(j)
+    #         j += 1
+    #     return indexes
 
     def get_match_for_flight(self, flight):
         j = 0
         indexes = []
         for match in self.matches:
             for couple in match:
-                if flight.num == couple[0].num or flight.num == couple[1].num:
+                if flight.slot == couple[0].slot or flight.slot == couple[1].slot:
                     indexes.append(j)
             j += 1
         return indexes
 
-    def __init__(self, df_init, cost_fun: Union[Callable, List[Callable]], alpha=1, triples=False):
+    def __init__(self, df_init, costFun: Union[Callable, List[Callable]], alpha=1, triples=False):
 
         self.preference_function = lambda x, y: x * (y ** alpha)
         self.offers = None
         self.triples = triples
-        super().__init__(df_init=df_init, costFun=cost_fun, airline_ctor=air.IstopAirline)
+        super().__init__(df_init=df_init, costFun=costFun, airline_ctor=air.IstopAirline)
         airline: air.IstopAirline
         for airline in self.airlines:
             airline.set_preferences(self.preference_function)
@@ -64,6 +66,7 @@ class Istop(mS.ModelStructure):
         self.airlines_triples = np.array(list(combinations(self.airlines, 3)))
 
         self.epsilon = sys.float_info.min
+        self.offerChecker = OfferChecker(self.scheduleMatrix)
         self.m = xp.problem()
 
         self.x = None
@@ -73,11 +76,14 @@ class Istop(mS.ModelStructure):
         self.couples = []
         self.flights_in_matches = []
 
-        # self.initial_objective_value = sum([self.score(flight, flight.slot) for flight in self.flights])
+        self.offers_selected = []
+
 
     def check_and_set_matches(self):
-
-        self.matches = checkOffers.all_couples_check(self.scheduleMatrix, self.airlines_pairs)
+        start = time.time()
+        self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
+        if self.triples:
+            self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
 
         for match in self.matches:
             for couple in match:
@@ -88,15 +94,14 @@ class Istop(mS.ModelStructure):
                     if not self.f_in_matched(couple[1]):
                         self.flights_in_matches.append(couple[1])
 
-        print("preprocess concluded.  number of couples: *******  ", len(self.matches))
-
-
+        print("preprocess concluded in sec:", time.time()-start, "   Number of possible offers: ", len(self.matches))
         return len(self.matches) > 0
 
     def set_variables(self):
-        self.x = np.array([[xp.var(vartype=xp.binary) for j in self.slots] for i in self.slots])
+        self.x = np.array([[xp.var(vartype=xp.binary) for _ in self.slots] for _ in self.slots], dtype=xp.npvar)
 
-        self.c = np.array([xp.var(vartype=xp.binary) for i in self.matches])
+        self.c = np.array([xp.var(vartype=xp.binary) for _ in self.matches], dtype=xp.npvar)
+
         self.m.addVariable(self.x, self.c)
 
     def set_constraints(self):
@@ -113,40 +118,33 @@ class Istop(mS.ModelStructure):
         for j in self.slots:
             self.m.addConstraint(xp.Sum(self.x[i.index, j.index] for i in self.slots) <= 1)
 
-        for flight in self.flights:
-            for j in flight.notCompatibleSlots:
-                self.m.addConstraint(self.x[flight.slot.index, j.index] == 0)
+        # for flight in self.flights:
+        #     for j in flight.notCompatibleSlots:
+        #         self.m.addConstraint(self.x[flight.slot.index, j.index] == 0)
+
 
         for flight in self.flights_in_matches:
-            self.m.addConstraint(xp.Sum(self.x[flight.slot.index, slot_to_swap.index] for slot_to_swap in
-                                        [s for s in self.slots if s != flight.slot]) \
-                                 == xp.Sum([self.c[j] for j in self.get_match_for_flight(flight)]))
+            self.m.addConstraint(
+                                 xp.Sum(self.x[flight.slot.index, slot.index]
+                                        for slot in self.slots if slot != flight.slot) \
+                                 <= xp.Sum([self.c[j] for j in self.get_match_for_flight(flight)]))
 
-        for flight in self.flights:
-            for other_flight in flight.airline.flights:
-                if flight != other_flight:
-                    self.m.addConstraint(self.x[flight.slot.index, other_flight.slot.index] == 0)
+
 
         k = 0
         for match in self.matches:
-            pairA = match[0]
-            pairB = match[1]
+            flights = [flight for pair in match for flight in pair]
+            self.m.addConstraint(xp.Sum(xp.Sum(self.x[i.slot.index, j.slot.index] for i in pair for j in flights)
+                                        for pair in match) >= (self.c[k]) * len(flights))
 
-            self.m.addConstraint(xp.Sum(self.x[i.slot.index, j.slot.index] for i in pairA for j in pairB) + \
-                                 xp.Sum(self.x[i.slot.index, j.slot.index] for i in pairB for j in pairA) >= \
-                                 (self.c[k]) * 4)
 
-            self.m.addConstraint(
-                xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, j.slot) for i in pairA for j in pairB) - \
-                (1 - self.c[k]) * 100000 \
-                <= xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, i.slot) for i in pairA for j in pairB) - \
-                self.epsilon)
+            for pair in match:
+                self.m.addConstraint(
+                    xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, j.slot) for i in pair for j in flights) -
+                    (1 - self.c[k]) * 10000000 \
+                    <= xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, i.slot) for i in pair for j in flights) - \
+                    self.epsilon)
 
-            self.m.addConstraint(
-                xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, j.slot) for i in pairB for j in pairA) - \
-                (1 - self.c[k]) * 100000 \
-                <= xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, i.slot) for i in pairB for j in pairA) - \
-                self.epsilon)
 
             k += 1
 
@@ -157,9 +155,7 @@ class Istop(mS.ModelStructure):
                    for flight in self.flights for j in self.slots), sense=xp.minimize)
 
     def run(self, timing=False):
-
         feasible = self.check_and_set_matches()
-
         if feasible:
             self.set_variables()
 
@@ -179,7 +175,7 @@ class Istop(mS.ModelStructure):
 
             print("problem status, explained: ", self.m.getProbStatusString())
             xpSolution = self.x
-
+            # print(self.m.getSolution(self.x))
             self.assign_flights(xpSolution)
 
         else:
@@ -190,11 +186,17 @@ class Istop(mS.ModelStructure):
 
         self.offer_solution_maker()
 
+        for flight in self.flights:
+            if flight.eta > flight.newSlot.time:
+                print("********************** danno *********************************",
+                      flight, flight.eta, flight.newSlot.time)
+
         offers = 0
         for i in range(len(self.matches)):
             if self.m.getSolution(self.c[i]) > 0.5:
+                self.offers_selected.append(self.matches[i])
                 offers += 1
-        print("num otp offers: ", offers)
+        print("Number of offers selected: ", offers)
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []
@@ -203,8 +205,7 @@ class Istop(mS.ModelStructure):
                 others_slots.extend(airline.AUslots)
         return np.intersect1d(others_slots, flight.compatibleSlots, assume_unique=True)
 
-    @staticmethod
-    def score(flight, slot):
+    def score(self, flight, slot):
         return (flight.preference * flight.delay(slot) ** 2) / 2
 
     def offer_solution_maker(self):
@@ -239,11 +240,6 @@ class Istop(mS.ModelStructure):
     def assign_flights(self, xpSolution):
         for flight in self.flights:
             for slot in self.slots:
-                if self.m.getSolution(xpSolution[flight.slot.index, slot.index]) > .5:
+                if self.m.getSolution(xpSolution[flight.slot.index, slot.index]) > 0.5:
                     flight.newSlot = slot
-                    # print(flight, flight.slot, flight.newSlot)
 
-    # def find_match(self, i):
-    #     for j in self.slotIndexes[self.slotIndexes != i]:
-    #         if self.xpSolution[i.slot, j] == 1:
-    #             return self.flights[j]

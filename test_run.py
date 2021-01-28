@@ -1,8 +1,8 @@
-from Istop import istop
 from NoNegativeBound import nnBound
 from ModelStructure.ScheduleMaker import scheduleMaker
 from ModelStructure.Costs.costFunctionDict import CostFuns
 from UDPP import udppModel
+from Istop import istop
 import pandas as pd
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -22,7 +22,7 @@ np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
 num_flights = 25
-num_airlines = 5
+num_airlines = 9
 
 for i in range(0, 1):
     df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleType[3])

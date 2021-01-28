@@ -5,6 +5,8 @@ import pandas as pd
 import os
 
 at_gate = pd.read_csv("ModelStructure/Costs/costs_table_gate.csv", sep=" ")
+types = at_gate["flight"].unique()
+flightTypeDict = dict(zip(types, range(len(types))))
 delay_range = list(at_gate.columns[1:].astype(int))
 
 def get_interval(time):
@@ -26,6 +28,8 @@ def compute(flight, slot):
 class CostFuns:
 
     def __init__(self):
+
+        self.flightTypeDict = flightTypeDict
         self.costFun = {
 
             "linear": lambda flight, slot: flight.cost * (slot.time - flight.eta),

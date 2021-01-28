@@ -38,9 +38,6 @@ class OfferChecker{
             triples{new short*[trip_row]}, triples_rows{trip_row}, triples_cols{trip_col}, 
             num_procs{n_procs}
          {
-
-             std::cout<<"procs "<<omp_get_num_procs()<<std::endl;
-             std::cout<<"threads "<<omp_get_num_threads()<<std::endl;
             
          for (int i = 0 ; i< row; i++) {
                 mat[i]= &schedule_mat[i*col];
@@ -86,7 +83,6 @@ class OfferChecker{
         bool check_couple_condition(short* flights){
             for (short i = 0; i< couples_rows; i++){
 
-                // first airline eta check
                 if (mat[flights[0]][1] <= mat[flights[couples[i][0]]][0]){
                     if (mat[flights[1]][1] <= mat[flights[couples[i][1]]][0]){
 
@@ -137,7 +133,6 @@ class OfferChecker{
 
 
          bool check_triple_condition(short* flights){
-             //std::cout<<flights[0]<<" "<<flights[1]<<" "<<flights[2]<<" "<<flights[3]<<" "<<flights[4]<<" "<<flights[5]<<std::endl;
                 for (int i= 0; i< triples_rows; i++){
 
                     // first airline eta check
@@ -173,7 +168,9 @@ class OfferChecker{
                                                     if (mat[flights[4]][2 + flights[4]] + mat[flights[5]][2 + flights[5]] > 
                                                             mat[flights[4]][2 + flights[triples[i][4]]] + 
                                                             mat[flights[5]][2 + flights[triples[i][5]]]){
+                                                                
                                                                 return true;
+                                                                
                                                             }
                                                         
                                                 }
@@ -197,7 +194,6 @@ class OfferChecker{
             bool* matches = new bool[offers];
             #pragma omp parallel for schedule(dynamic) shared(matches, airl_pair, offers, mat)
             for (int k = 0; k < offers; k++){
-                //std::cout<<k<<std::endl;
                 if (check_triple_condition(&airl_pair[k*6])){
                     matches[k] = true;
                 }
@@ -205,7 +201,6 @@ class OfferChecker{
                     matches[k] = false;
                 }
             }
-            //print_mat();
             return matches;
             
         }

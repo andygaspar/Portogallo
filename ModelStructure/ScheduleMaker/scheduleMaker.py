@@ -74,8 +74,8 @@ def distribution_maker(num_flights, num_airlines, distribution="uniform"):
     return dist
 
 
-def df_maker(num_flights=20, num_airlines=3, distribution="uniform", capacity=1, new_capacity=2, custom:Union[None, List[int]]= None):
-
+def df_maker(num_flights=20, num_airlines=3, distribution="uniform",
+             capacity=1, new_capacity=2, custom: Union[None, List[int]] = None):
     if custom is None:
         dist = distribution_maker(num_flights, num_airlines, distribution)
         airline = [[string.ascii_uppercase[j] for i in range(dist[j])] for j in range(num_airlines)]

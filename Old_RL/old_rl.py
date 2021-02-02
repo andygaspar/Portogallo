@@ -11,7 +11,7 @@ class Rl(istop.Istop):
         # internal optimisation step
         udpp_model_xp = udppModel.UDPPmodel(df_init, cost_fun)
         udpp_model_xp.run()
-
+        self.udppDf = udpp_model_xp.get_new_df()
         super().__init__(udpp_model_xp.get_new_df(), cost_fun, triples)
         types = df_init["type"].unique()
         self.flightTypeDict = dict(zip(types, range(len(types))))
@@ -34,4 +34,5 @@ class Rl(istop.Istop):
 
     def get_filtered_schedule(self, airline: IstopAirline):
         return [flight for flight in self.flights if flight.airline != airline]
+
 

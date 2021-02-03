@@ -25,8 +25,7 @@ num_airlines = 10
 
 
 schedule_df = scheduleMaker.df_maker(custom=[5,5,5,5])
-print(schedule_df)
-# schedule_df.to_csv("custom_5_5.csv")
+schedule_df.to_csv("custom_5_4.csv")
 schedule_df_1 = pd.read_csv("custom_5_5.csv")
 print(schedule_df["type"]==schedule_df_1["type"])
 cost_fun = CostFuns().costFun["realistic"]
@@ -74,7 +73,6 @@ print(len(triple_matches), "convenient triples found ", "\n")
 
 rl_model.run()
 rl_model.print_performance()
-rl_model.print_schedule()
 print(rl_model.offers_selected)
 
 

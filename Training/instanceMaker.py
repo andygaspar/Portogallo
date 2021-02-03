@@ -9,10 +9,11 @@ import torch
 
 
 class Instance(istop.Istop):
-    def __init__(self,  num_flights = 50, num_airlines = 5, reduction_factor=100, custom_schedule=None, df = None):
+    def __init__(self, num_flights=50, num_airlines=5, triples=True,
+                 reduction_factor=100, custom_schedule=None, df=None):
 
         scheduleTypes = scheduleMaker.schedule_types(show=True)
-        # init variables, chedule and cost function
+        # init variables, schedule and cost function
         if custom_schedule is None and df is None:
             schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
         else:
@@ -23,14 +24,20 @@ class Instance(istop.Istop):
 
         self.reductionFactor = reduction_factor
         self.costFun = CostFuns().costFun["realistic"]
-        self.flightDict = CostFuns().flightTypeDict
-        self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
+        self.flightTypeDict = CostFuns().flightTypeDict
 
         # internal optimisation step
         udpp_model_xp = udppModel.UDPPmodel(schedule_df, self.costFun)
         udpp_model_xp.run()
 
-        super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=True)
+        super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples)
+        self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
+
+    def get_matches(self, matches=None):
+        if matches is None:
+            super().get_matches()
+        else:
+            print("pippimo")
 
     def check_couple_in_pairs(self, couple):
         return self.offerChecker.check_couple_in_pairs(couple, self.airlines_pairs)
@@ -48,11 +55,10 @@ class Instance(istop.Istop):
         return [flight for flight in self.flights if flight.airline != airline]
 
     def get_schedule_tensor(self) -> torch.tensor:
-        mat = torch.zeros((self.numFlights, self.numAirlines + len(self.flightDict.keys()) + 1))
+        schedule_tensor = torch.zeros((self.numFlights, 2 + self.numAirlines + len(self.flightTypeDict.keys())))
         for i in range(self.numFlights):
-            mat[i, self.airDict[self.flights[i].airline.name]] = 1
-            mat[i, self.numAirlines + self.flightDict[self.flights[i].type]] = 1
-            mat[i, -1] = (self.flights[i].slot.time - self.flights[i].eta)/self.reductionFactor
-        return mat
-
-
+            schedule_tensor[i, self.airDict[self.flights[i].airline.name]] = 1
+            schedule_tensor[i, self.numAirlines + self.flightTypeDict[self.flights[i].type]] = 1
+            schedule_tensor[i, -2] = self.flights[i].slot.time / self.reductionFactor
+            schedule_tensor[i, -1] = self.flights[i].eta / self.reductionFactor
+        return schedule_tensor.flatten()

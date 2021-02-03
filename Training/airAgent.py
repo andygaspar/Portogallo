@@ -16,7 +16,8 @@ class AirNet(nn.Module):
 
   def forward(self, state, current_trade):
     x = torch.cat((state[0], state[1], current_trade), dim=-1)
-    return self.l1(x)
+    x = self.l1(x)
+    return x
 
 
 

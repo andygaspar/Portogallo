@@ -23,7 +23,7 @@ instance = instanceMaker.Instance(num_flights=num_flights, num_airlines=num_airl
 mat = instance.get_schedule_tensor()
 
 print(instance.airDict)
-print(instance.flightDict)
+print(instance.flightTypeDict)
 
 # for i in range(mat.shape[0]):
 #     flight = instance.flights[i]

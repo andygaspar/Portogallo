@@ -53,10 +53,10 @@ class Istop(mS.ModelStructure):
         return indexes
 
     def __init__(self, df_init, costFun: Union[Callable, List[Callable]], alpha=1, triples=False):
-
         self.preference_function = lambda x, y: x * (y ** alpha)
         self.offers = None
         self.triples = triples
+
         super().__init__(df_init=df_init, costFun=costFun, airline_ctor=air.IstopAirline)
         airline: air.IstopAirline
         for airline in self.airlines:
@@ -73,17 +73,21 @@ class Istop(mS.ModelStructure):
         self.c = None
 
         self.matches = []
+
         self.couples = []
         self.flights_in_matches = []
 
         self.offers_selected = []
 
-
-    def check_and_set_matches(self):
-        start = time.time()
+    def get_matches(self):
         self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
         if self.triples:
             self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
+
+    def check_and_set_matches(self):
+        start = time.time()
+
+        self.get_matches()
 
         for match in self.matches:
             for couple in match:

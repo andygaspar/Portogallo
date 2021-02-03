@@ -4,6 +4,7 @@ from Istop import istop
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from UDPP import udppModel
 from OfferChecker import checkOffer
+from ModelStructure.Costs.costFunctionDict import CostFuns
 
 
 class Rl(istop.Istop):
@@ -12,9 +13,9 @@ class Rl(istop.Istop):
         udpp_model_xp = udppModel.UDPPmodel(df_init, cost_fun)
         udpp_model_xp.run()
         self.udppDf = udpp_model_xp.get_new_df()
-        super().__init__(udpp_model_xp.get_new_df(), cost_fun, triples)
+        super().__init__(udpp_model_xp.get_new_df(), cost_fun, triples=triples)
         types = df_init["type"].unique()
-        self.flightTypeDict = dict(zip(types, range(len(types))))
+        self.flightTypeDict = CostFuns().flightTypeDict
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix, parallel, private)
 
     def check_couple_in_pairs(self, couple):

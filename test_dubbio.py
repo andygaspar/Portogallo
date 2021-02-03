@@ -9,6 +9,7 @@ from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from Istop.AirlineAndFlight.istopFlight import IstopFlight
 import numpy as np
 import time
+import pandas as pd
 
 airline: IstopAirline
 flight: IstopFlight
@@ -19,8 +20,17 @@ scheduleTypes = scheduleMaker.schedule_types(show=True)
 # init variables, chedule and cost function
 num_flights = 70
 num_airlines = 10
-schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
+# schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
+
+
+
+schedule_df = scheduleMaker.df_maker(custom=[5,5,5,5])
+print(schedule_df)
+# schedule_df.to_csv("custom_5_5.csv")
+schedule_df_1 = pd.read_csv("custom_5_5.csv")
+print(schedule_df["type"]==schedule_df_1["type"])
 cost_fun = CostFuns().costFun["realistic"]
+
 
 # create model
 # rl_model = old_rl.Rl(schedule_df, cost_fun, triples=True, parallel=False)
@@ -37,35 +47,38 @@ cost_fun = CostFuns().costFun["realistic"]
 # print(len(triple_matches), "convenient triples found ", "\n")
 #
 #
-rl_model = old_rl.Rl(schedule_df, cost_fun, triples=True, parallel=True, private=False)
+rl_model = old_rl.Rl(schedule_df, cost_fun, triples=False, parallel=True, private=False)
 #
 #
-# t = time.perf_counter()
-# couple_matches = rl_model.all_couples_matches()
-# print("time to get all couple matches: ", time.perf_counter() - t)
-# print(len(couple_matches), " convenient pairs found", "\n")
+t = time.perf_counter()
+couple_matches = rl_model.all_couples_matches()
+print("time to get all couple matches: ", time.perf_counter() - t)
+print(len(couple_matches), " convenient pairs found", "\n")
 #
 # t = time.perf_counter()
 # triple_matches = rl_model.all_triples_matches()
 # print("time to get all triple matches: ", time.perf_counter() - t)
 # print(len(triple_matches), "convenient triples found ", "\n")
 #
+# t = time.perf_counter()
+# triple_matches = rl_model.all_triples_matches_fast()
+# print("time to get all triple matches: ", time.perf_counter() - t)
+# print(len(triple_matches), "convenient triples found ", "\n")
+
+
+# rl_model = old_rl.Rl(schedule_df, cost_fun, triples=True, parallel=True, private=True)
 t = time.perf_counter()
 triple_matches = rl_model.all_triples_matches_fast()
 print("time to get all triple matches: ", time.perf_counter() - t)
 print(len(triple_matches), "convenient triples found ", "\n")
 
-
-rl_model = old_rl.Rl(schedule_df, cost_fun, triples=True, parallel=True, private=True)
-t = time.perf_counter()
-triple_matches = rl_model.all_triples_matches_fast()
-print("time to get all triple matches: ", time.perf_counter() - t)
-print(len(triple_matches), "convenient triples found ", "\n")
+rl_model.run()
+rl_model.print_performance()
+rl_model.print_schedule()
+print(rl_model.offers_selected)
 
 
-
-
-
+print(rl_model.flightTypeDict)
 
 #
 # # get all airlines pairs and triples

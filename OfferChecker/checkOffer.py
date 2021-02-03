@@ -13,11 +13,11 @@ class OfferChecker(object):
         self.numProcs = os.cpu_count()
         if parallel:
             if private:
-                self.lib = ctypes.CDLL('./liboffers_parallel_2.so')
+                self.lib = ctypes.CDLL('./C_Libraries/liboffers_parallel_2.so')
             else:
-                self.lib = ctypes.CDLL('./liboffers_parallel.so')
+                self.lib = ctypes.CDLL('./C_Libraries/liboffers_parallel.so')
         else:
-            self.lib = ctypes.CDLL('./liboffers.so')
+            self.lib = ctypes.CDLL('./C_Libraries/liboffers.so')
         self.lib.OfferChecker_.argtypes = [ctypes.c_void_p, ctypes.c_short, ctypes.c_short,
                                            ctypes.c_void_p, ctypes.c_short, ctypes.c_short, ctypes.c_void_p,
                                            ctypes.c_short, ctypes.c_short, ctypes.c_short]

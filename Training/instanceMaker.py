@@ -9,22 +9,28 @@ import torch
 
 
 class Instance(istop.Istop):
-    def __init__(self,  num_flights, num_airlines, reduction_factor=100):
+    def __init__(self,  num_flights = 50, num_airlines = 5, reduction_factor=100, custom_schedule=None, df = None):
 
         scheduleTypes = scheduleMaker.schedule_types(show=True)
         # init variables, chedule and cost function
-        schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
+        if custom_schedule is None and df is None:
+            schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
+        else:
+            if df is None:
+                schedule_df = scheduleMaker.df_maker(custom=custom_schedule)
+            else:
+                schedule_df = df
 
         self.reductionFactor = reduction_factor
         self.costFun = CostFuns().costFun["realistic"]
-        self.flightDict =  CostFuns().flightTypeDict
+        self.flightDict = CostFuns().flightTypeDict
+        self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
 
         # internal optimisation step
         udpp_model_xp = udppModel.UDPPmodel(schedule_df, self.costFun)
         udpp_model_xp.run()
 
         super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=True)
-        self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
 
     def check_couple_in_pairs(self, couple):
         return self.offerChecker.check_couple_in_pairs(couple, self.airlines_pairs)
@@ -47,5 +53,6 @@ class Instance(istop.Istop):
             mat[i, self.airDict[self.flights[i].airline.name]] = 1
             mat[i, self.numAirlines + self.flightDict[self.flights[i].type]] = 1
             mat[i, -1] = (self.flights[i].slot.time - self.flights[i].eta)/self.reductionFactor
-
         return mat
+
+

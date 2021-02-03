@@ -129,6 +129,8 @@ class Istop(mS.ModelStructure):
                                         for slot in self.slots if slot != flight.slot) \
                                  <= xp.Sum([self.c[j] for j in self.get_match_for_flight(flight)]))
 
+            self.m.addConstraint(xp.Sum([self.c[j] for j in self.get_match_for_flight(flight)]) <= 1)
+
 
 
         k = 0
@@ -150,8 +152,11 @@ class Istop(mS.ModelStructure):
 
     def set_objective(self):
 
+        # self.m.setObjective(
+        #     xp.Sum(self.x[flight.slot.index, j.index] * self.score(flight, j)
+        #            for flight in self.flights for j in self.slots), sense=xp.minimize)
         self.m.setObjective(
-            xp.Sum(self.x[flight.slot.index, j.index] * self.score(flight, j)
+            xp.Sum(self.x[flight.slot.index, j.index] * flight.costFun(flight, j)
                    for flight in self.flights for j in self.slots), sense=xp.minimize)
 
     def run(self, timing=False):

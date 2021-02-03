@@ -6,6 +6,7 @@ import os
 
 at_gate = pd.read_csv("ModelStructure/Costs/costs_table_gate.csv", sep=" ")
 types = at_gate["flight"].unique()
+print("voli", types)
 flightTypeDict = dict(zip(types, range(len(types))))
 delay_range = list(at_gate.columns[1:].astype(int))
 

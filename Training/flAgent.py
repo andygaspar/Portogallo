@@ -15,7 +15,6 @@ class FlNet(nn.Module):
 
         self.l1 = nn.Linear(self.input_size, self.couples_combs)
 
-    def forward(self, state, current_trade):
-        x = torch.cat((state[0], state[1], current_trade), dim=-1)
-        return self.l1(x)
+    def forward(self, state):
+        return self.l1(state)
 

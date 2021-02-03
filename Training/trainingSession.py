@@ -15,7 +15,7 @@ AIR = airAgent.AirNet(input_size, num_flights= None, num_airlines=4, num_trades=
 FL = flAgent.FlNet(input_size, None, None, None, couples_combs=10)
 hyper_agent = hyperAgent.HyperAgent(AIR, FL)
 
-train = trainer.Trainer(hyper_agent, n_step)
+train = trainer.Trainer(AIR, FL, n_step)
 
 instance = instanceMaker.Instance(triples=False, df=df)
 

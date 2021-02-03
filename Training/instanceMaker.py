@@ -25,7 +25,7 @@ class Instance(istop.Istop):
         self.reductionFactor = reduction_factor
         self.costFun = CostFuns().costFun["realistic"]
         self.flightTypeDict = CostFuns().flightTypeDict
-        self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
+
 
         # internal optimisation step
         udpp_model_xp = udppModel.UDPPmodel(schedule_df, self.costFun)
@@ -33,6 +33,7 @@ class Instance(istop.Istop):
 
         super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples)
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
+        self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
     def get_matches(self, matches=None):
         if matches is None:

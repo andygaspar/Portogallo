@@ -24,9 +24,11 @@ class Trainer:
         if df is not None:
             instance = instanceMaker.Instance(triples=False, df=df)
         else:
-            #to do
+            #la creazione dell'istanza dovrà essere messa nel for successivamente
             return
 
         for i in range(num_iterations):
             schedule = instance.get_schedule_tensor()
-            self.episode(schedule)
+            num_flights = instance.numFlights
+            num_airlines = instance.numAirlines
+            actions = self.episode(schedule)

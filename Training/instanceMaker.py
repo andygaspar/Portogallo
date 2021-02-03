@@ -25,6 +25,7 @@ class Instance(istop.Istop):
         self.reductionFactor = reduction_factor
         self.costFun = CostFuns().costFun["realistic"]
         self.flightTypeDict = CostFuns().flightTypeDict
+        self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
         # internal optimisation step
         udpp_model_xp = udppModel.UDPPmodel(schedule_df, self.costFun)

@@ -1,5 +1,7 @@
 import copy
 from typing import List
+
+import numpy as np
 import torch
 from torch import optim
 from Training.replayMemory import ReplayMemory
@@ -33,21 +35,23 @@ class HyperAgent:
         self.AirReplayMemory = ReplayMemory(self.numAirlines, input_size, size=memory_size)
         self.FlReplayMemory = ReplayMemory(self.numCombs, input_size, size=memory_size)
 
-
-
-    def pick_air_action(self, state):
+    def pick_air_action(self, state, eps):
+        if self.trainMode and np.random.rand() < eps:
+            return np.random.choice(self.numAirlines)
         scores = self.AirAgent.pick_action(state)
         action = torch.zeros_like(scores)
         action[torch.argmax(scores)] = 1
         return action
 
-    def pick_fl_action(self, state):
+    def pick_fl_action(self, state, eps):
+        if self.trainMode and np.random.rand() < eps:
+            return np.random.choice(self.numCombs)
         scores = self.FlAgent.pick_action(state)
         action = torch.zeros_like(scores)
         action[torch.argmax(scores)] = 1
         return action
 
-    def step(self, state_list: List, last_step=False):
+    def step(self, state_list: List, eps, last_step=False):
         current_trade = torch.zeros(self.singleTradeSize)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.AirReplayMemory.set_initial_state(state)
@@ -55,28 +59,28 @@ class HyperAgent:
         start = 0
         end = start + self.numAirlines
 
-        air_action = self.pick_air_action(state)
+        air_action = self.pick_air_action(state, eps)
         current_trade[start:end] = air_action
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
 
         start = end
         end = start + self.numCombs
         self.FlReplayMemory.set_initial_state(state)
-        fl_action = self.pick_fl_action(state)
+        fl_action = self.pick_fl_action(state, eps)
         current_trade[start:end] = fl_action
 
         start = end
         end = start + self.numAirlines
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0, initial=True)
-        air_action = self.pick_air_action(state)
+        air_action = self.pick_air_action(state, eps)
         current_trade[start:end] = air_action
 
         start = end
         end = start + self.numCombs
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0, initial=True)
-        fl_action = self.pick_fl_action(state)
+        fl_action = self.pick_fl_action(state, eps)
         current_trade[start:end] = fl_action
 
         if not last_step:

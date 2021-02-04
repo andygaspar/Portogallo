@@ -23,15 +23,20 @@ class Trainer:
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         trade_list = torch.zeros(28 * self.lengthEpisode)
+        self.hyperAgent.instance = instance
         for i in range(self.lengthEpisode):
-            trades = self.hyperAgent.step([schedule_tensor, trade_list], eps)
+            trades, ended = self.hyperAgent.step([schedule_tensor, trade_list], eps, instance)
+            if not ended:
+                return
             trade_list[i * 28: (i + 1) * 28] = trades
 
-        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list], eps, last_step=True)
+        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list], eps,
+                                                                         instance, last_step=True)
         instance.set_matches(trade_list, self.lengthEpisode, 28)
 
         instance.run()
         # instance.print_performance()
+        print("semo rivai qua")
         shared_reward = - instance.compute_costs(instance.flights, which="final")
         self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action, shared_reward)
 
@@ -47,7 +52,7 @@ class Trainer:
             num_airlines = instance.numAirlines
             self.eps = np.exp(- 4*i/num_iterations)
             self.episode(schedule, instance, self.eps)
-            if i >= 100:
+            if i >= 30:
                 self.hyperAgent.train()
 
             if i >= 100 and i % 25 == 0:

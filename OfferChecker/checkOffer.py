@@ -178,6 +178,52 @@ class OfferChecker(object):
                                             ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
         return [air_trips[i] for i in range(len_array) if answer[i]]
 
+    def check_airline_feasibility(self, airline, airline_pairs):
+        matches = []
+        for air_pair in airline_pairs:
+            if airline.name == air_pair[0].name or airline.name == air_pair[0].name:
+                match = self.air_couple_check(air_pair)
+                if len(match) > 0:
+                    matches += match
+
+        return matches
+
+    def check_air_air_couple_match(self, couple, airline2):
+        fl_pair_b = airline2.flight_pairs
+
+        air_pairs = []
+        input_vect = []
+        for pairB in fl_pair_b:
+            air_pairs.append([couple, pairB])
+            input_vect += [fl.slot.index for fl in couple] + [fl.slot.index for fl in pairB]
+
+        len_array = int(len(input_vect) / 4)
+
+        if len_array > 0:
+            self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
+            input_vect = np.array(input_vect).astype(np.short)
+            answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
+                                                ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
+
+            return [air_pairs[i] for i in range(len_array) if answer[i]]
+        else:
+            return []
+
+    def check_trade(self, couple, couple_2):
+        input_vect = [fl.slot.index for fl in couple] + [fl.slot.index for fl in couple_2]
+
+        len_array = int(len(input_vect) / 4)
+
+        if len_array > 0:
+            self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
+            input_vect = np.array(input_vect).astype(np.short)
+            answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
+                                                ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
+
+            return True
+        else:
+            return False
+
     def print_mat(self):
         self.lib.print_mat_(self.obj)
 
@@ -211,3 +257,5 @@ class OfferChecker(object):
                                             ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
 
         return [air_trips[i] for i in range(len_array) if answer[i]]
+
+

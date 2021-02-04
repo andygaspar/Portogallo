@@ -19,7 +19,7 @@ num_combs = 10
 num_flights = 20
 
 # fixed particular instance (copied inside the trainer - trainer must be changed in the future)
-df = pd.read_csv("custom_5_5.csv")
+df = pd.read_csv("custom_5_4.csv")
 instance = instanceMaker.Instance(triples=False, df=df)
 instance.run()
 instance.print_performance()
@@ -28,7 +28,7 @@ print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in
 
 # hyper agent parameters
 weight_decay = 1e-5
-batch_size = 500
+batch_size = 10
 memory_size = 10000
 
 hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,

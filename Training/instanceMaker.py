@@ -1,4 +1,6 @@
 from typing import Union, Callable, List
+import xpress as xp
+from GlobalFuns.globalFuns import HiddenPrints
 from Istop import istop
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
 from ModelStructure.Costs.costFunctionDict import CostFuns
@@ -10,8 +12,7 @@ import torch
 
 class Instance(istop.Istop):
     def __init__(self, num_flights=50, num_airlines=5, triples=True,
-                 reduction_factor=100, custom_schedule=None, df=None):
-
+                 reduction_factor=100, custom_schedule=None, df=None, xp_problem=None):
         scheduleTypes = scheduleMaker.schedule_types(show=False)
         # init variables, schedule and cost function
         if custom_schedule is None and df is None:
@@ -27,13 +28,25 @@ class Instance(istop.Istop):
         self.flightTypeDict = CostFuns().flightTypeDict
 
 
+        if xp_problem is None:
+            self.xp_problem = xp.problem()
+        else:
+            self.xp_problem = xp_problem
+        with HiddenPrints():
+            self.xp_problem.reset()
+
+
         # internal optimisation step
-        udpp_model_xp = udppModel.UDPPmodel(schedule_df, self.costFun)
+        udpp_model_xp = udppModel.UDPPmodel(schedule_df, self.costFun, self.xp_problem)
         udpp_model_xp.run()
 
-        super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples)
+        with HiddenPrints():
+            self.xp_problem.reset()
+
+        super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples, xp_problem=self.xp_problem)
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
+
 
 
     def set_matches(self, matches: torch.tensor, num_trades, single_trade_len):

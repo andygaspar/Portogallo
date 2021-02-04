@@ -52,10 +52,11 @@ class Istop(mS.ModelStructure):
             j += 1
         return indexes
 
-    def __init__(self, df_init, costFun: Union[Callable, List[Callable]], alpha=1, triples=False):
+    def __init__(self, df_init, costFun: Union[Callable, List[Callable]], alpha=1, triples=False, xp_problem=None):
         self.preference_function = lambda x, y: x * (y ** alpha)
         self.offers = None
         self.triples = triples
+        self.xp_problem = xp_problem
 
         super().__init__(df_init=df_init, costFun=costFun, airline_ctor=air.IstopAirline)
         airline: air.IstopAirline
@@ -67,7 +68,11 @@ class Istop(mS.ModelStructure):
 
         self.epsilon = sys.float_info.min
         self.offerChecker = OfferChecker(self.scheduleMatrix)
-        self.m = xp.problem()
+
+        if self.xp_problem is None:
+            self.m = xp.problem()
+        else:
+            self.m = xp_problem
 
         self.x = None
         self.c = None

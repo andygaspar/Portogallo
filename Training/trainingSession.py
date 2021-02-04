@@ -6,6 +6,10 @@ import instanceMaker
 import pandas as pd
 
 df = pd.read_csv("custom_5_5.csv")
+instance = instanceMaker.Instance(triples=False, df=df)
+instance.run()
+instance.print_performance()
+print(instance.matches)
 
 n_step= 12
 
@@ -16,7 +20,7 @@ FL = flAgent.FlNet(input_size, None, None, None, couples_combs=10)
 hyper_agent = hyperAgent.HyperAgent(AIR, FL)
 
 train = trainer.Trainer(AIR, FL, n_step)
-train.run(2000, df)
+train.run(10000, df)
 
 # print(train.episode(instance.get_schedule_tensor()))
 

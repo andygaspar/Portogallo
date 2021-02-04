@@ -22,9 +22,12 @@ def eta_limit_slot(flight: fl.UDPPflight, AUslots: List[sl.Slot]):
         i += 1
 
 
-def UDPPlocalOpt(airline: air.UDPPairline, slots: List[sl.Slot]):
+def UDPPlocalOpt(airline: air.UDPPairline, slots: List[sl.Slot], xp_problem=None):
 
-    m = xp.problem()
+    if xp_problem is None:
+        m = xp.problem()
+    else:
+        m = xp_problem
 
     x = np.array([[xp.var(vartype=xp.binary) for j in slots] for i in airline.flights])
 
@@ -62,5 +65,5 @@ def UDPPlocalOpt(airline: air.UDPPairline, slots: List[sl.Slot]):
                 flight.priorityValue = "N"
                 # print(flight.slot, flight.newSlot)
 
-    print(sum([flight.costFun(flight, flight.slot) for flight in airline.flights]),
-          sum([flight.costFun(flight, flight.newSlot) for flight in airline.flights]))
+    # print(sum([flight.costFun(flight, flight.slot) for flight in airline.flights]),
+    #       sum([flight.costFun(flight, flight.newSlot) for flight in airline.flights]))

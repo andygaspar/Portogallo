@@ -7,6 +7,8 @@ from Training.airAgent import AirNet
 import torch
 from torch import nn, optim
 
+import xpress as xp
+
 
 class Trainer:
 
@@ -22,9 +24,10 @@ class Trainer:
         self.flOptimizer = optim.Adam(self.FlAgent.parameters(), weight_decay=1e-5)
 
     def train(self):
-        air_batch = self.AirReplayMemory.sample(20)
-        fl_batch = self.FlReplayMemory.sample(20)
+        air_batch = self.AirReplayMemory.sample(200)
+        fl_batch = self.FlReplayMemory.sample(200)
         self.AirAgent.update_weights(air_batch)
+        self.FlAgent.update_weights(fl_batch)
 
     def step(self, state_list: List, last_step = False):
         current_trade = torch.zeros(28)
@@ -66,22 +69,31 @@ class Trainer:
 
         trades, last_state, air_action, fl_action = self.step([schedule_tensor, trade_list], last_step=True)
         instance.set_matches(trade_list, self.lengthEpisode, 28)
+
         instance.run()
+
         # instance.print_performance()
         shared_reward = - instance.compute_costs(instance.flights, which="final")
         self.AirReplayMemory.add_record(next_state=last_state, action=air_action, reward=shared_reward, done=1)
         self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward, done=1)
 
     def run(self, num_iterations, df=None):
+        xp_problem= xp.problem()
         for i in range(num_iterations):
             print(i)
-            instance = instanceMaker.Instance(triples=False, df=df)
+
+            instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
             self.episode(schedule, instance)
-            if i > 200:
+            if i >= 100:
                 self.train()
+
+            if i >= 100 and i % 10 == 0:
+                instance.run()
+                print(instance.matches)
+                instance.print_performance()
 
 
     def compute_air_reward(self):

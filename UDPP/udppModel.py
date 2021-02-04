@@ -17,16 +17,17 @@ import ModelStructure.modelStructure as ms
 
 class UDPPmodel(ModelStructure):
 
-    def __init__(self, df_init: pd.DataFrame, costFun: Union[Callable, List[Callable]]):
+    def __init__(self, df_init: pd.DataFrame, costFun: Union[Callable, List[Callable]], xp_problem=None):
 
         super().__init__(df_init=df_init, costFun=costFun, airline_ctor=UDPPairline)
+        self.xp_problem = xp_problem
 
     def run(self):
         airline: UDPPairline
         start = time.time()
         for airline in self.airlines:
             with HiddenPrints():
-                UDPPlocalOpt(airline, self.slots)
+                UDPPlocalOpt(airline, self.slots, self.xp_problem)
         # print(time.time() - start)
         solution.make_solution(self)
 

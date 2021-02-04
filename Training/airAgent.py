@@ -9,32 +9,40 @@ class AirNet(nn.Module):
     def __init__(self, input_size, num_flights, num_airlines, num_trades):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
+
         self.num_airlines = num_airlines
         self.num_flights = num_flights
         self.input_size = input_size
         self.num_trades = num_trades
-        self.to(self.device)
+        self.loss = 0
 
-        self.l1 = nn.Linear(self.input_size, self.num_airlines)
+        self.l1 = nn.Linear(self.input_size, self.input_size * 2).to(self.device)
+        self.l2 = nn.Linear(self.input_size * 2, self.input_size).to(self.device)
+        self.l3 = nn.Linear(self.input_size, self.num_airlines).to(self.device)
 
         self.optimizer = optim.Adam(self.parameters(), weight_decay=1e-5)
 
     def forward(self, state):
-        return self.l1(state)
+        x = F.relu(self.l1(state))
+        x = F.relu(self.l2(x))
+        return self.l3(x)
 
     def pick_action(self, state):
         with torch.no_grad():
-            scores = self.forward(state)
+            scores = self.forward(state.to(self.device))
         action = torch.zeros_like(scores)
         action[torch.argmax(scores)] = 1
+
         return action
 
     def update_weights(self, batch: tuple, gamma: float=0.9):
         criterion = torch.nn.MSELoss()
 
-        states, next_states, actions, rewards, dones = batch
+        states, next_states, actions, rewards, dones = (element.to(self.device) for element in batch)
 
         for i in range(10):
+            self.zero_grad()
             curr_Q = self.forward(states)
             curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
             next_Q =self.forward(next_states)
@@ -43,13 +51,12 @@ class AirNet(nn.Module):
 
             loss = criterion(curr_Q, expected_Q)  #.detach()
             self.loss = loss.item()
-            #self.optimizer.zero_grad()
-            self.zero_grad()
+            self.optimizer.zero_grad()
+
             loss.backward()
-            print(loss)
             # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
             self.optimizer.step()
-
+        print(self.loss)
     #
     #   super().__init__()
     #   self.convSchedule = nn.Linear(21, 4)

@@ -24,6 +24,7 @@ class IstopAirline(air.Airline):
         self.flight_pairs = self.pairs(self.flights)
         self.flight_triplets = self.triplet(self.flights)
 
+
     def set_preferences(self, priority_function):
         flight: IstopFlight
         for flight in self.flights:

@@ -79,6 +79,8 @@ class Istop(mS.ModelStructure):
 
         self.offers_selected = []
 
+        self.preprocessed = False
+
     def get_matches(self):
         self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
         if self.triples:
@@ -87,7 +89,8 @@ class Istop(mS.ModelStructure):
     def check_and_set_matches(self):
         start = time.time()
 
-        self.get_matches()
+        if not self.preprocessed:
+            self.get_matches()
 
         for match in self.matches:
             for couple in match:
@@ -98,7 +101,7 @@ class Istop(mS.ModelStructure):
                     if not self.f_in_matched(couple[1]):
                         self.flights_in_matches.append(couple[1])
 
-        print("preprocess concluded in sec:", time.time()-start, "   Number of possible offers: ", len(self.matches))
+        # print("preprocess concluded in sec:", time.time()-start, "   Number of possible offers: ", len(self.matches))
         return len(self.matches) > 0
 
     def set_variables(self):
@@ -168,21 +171,21 @@ class Istop(mS.ModelStructure):
         if feasible:
             self.set_variables()
 
-            start = time.time()
+            # start = time.time()
             self.set_constraints()
-            end = time.time() - start
-            if timing:
-                print("Constraints setting time ", end)
+            # end = time.time() - start
+            # if timing:
+            #     print("Constraints setting time ", end)
 
             self.set_objective()
 
             start = time.time()
             self.m.solve()
             end = time.time() - start
-            if timing:
-                print("Simplex time ", end)
-
-            print("problem status, explained: ", self.m.getProbStatusString())
+            # if timing:
+            #     print("Simplex time ", end)
+            #
+            # print("problem status, explained: ", self.m.getProbStatusString())
             xpSolution = self.x
             # print(self.m.getSolution(self.x))
             self.assign_flights(xpSolution)
@@ -205,7 +208,7 @@ class Istop(mS.ModelStructure):
             if self.m.getSolution(self.c[i]) > 0.5:
                 self.offers_selected.append(self.matches[i])
                 offers += 1
-        print("Number of offers selected: ", offers)
+        # print("Number of offers selected: ", offers)
 
     def other_airlines_compatible_slots(self, flight):
         others_slots = []

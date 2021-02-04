@@ -12,7 +12,7 @@ class Instance(istop.Istop):
     def __init__(self, num_flights=50, num_airlines=5, triples=True,
                  reduction_factor=100, custom_schedule=None, df=None):
 
-        scheduleTypes = scheduleMaker.schedule_types(show=True)
+        scheduleTypes = scheduleMaker.schedule_types(show=False)
         # init variables, schedule and cost function
         if custom_schedule is None and df is None:
             schedule_df = scheduleMaker.df_maker(num_flights, num_airlines, distribution=scheduleTypes[0])
@@ -35,23 +35,16 @@ class Instance(istop.Istop):
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
-    def get_matches(self, preprocessed= False):
-        if preprocessed:
-            return
-        else:
-            super().get_matches()
 
-    def set_matches(self, matches: torch.tensor, num_trades):
-        trades[0:4] = air_action
-
-        trades[4:14] = fl_action
-
-
-        trades[14:18] = self.pick_action(air_action)
-
-
-        trades[18:28] = self.pick_action(fl_action)
-
+    def set_matches(self, matches: torch.tensor, num_trades, single_trade_len):
+        for i in range(num_trades):
+            start = i*single_trade_len
+            airline_1 = self.airlines[torch.argmax(matches[start:start+4]).item()]
+            couple_1 = airline_1.flight_pairs[torch.argmax(matches[start+4 :start+14])]
+            airline_2 = self.airlines[torch.argmax(matches[start+ 14:start + 18])]
+            couple_2 = airline_2.flight_pairs[torch.argmax(matches[start + 18:start + 28])]
+            self.matches.append([couple_1, couple_2])
+        self.preprocessed = True
         return
 
     def check_couple_in_pairs(self, couple):

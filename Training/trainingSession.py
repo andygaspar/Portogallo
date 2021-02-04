@@ -16,14 +16,11 @@ FL = flAgent.FlNet(input_size, None, None, None, couples_combs=10)
 hyper_agent = hyperAgent.HyperAgent(AIR, FL)
 
 train = trainer.Trainer(AIR, FL, n_step)
-train.run(2,df)
-instance = instanceMaker.Instance(triples=False, df=df)
+train.run(2000, df)
 
 # print(train.episode(instance.get_schedule_tensor()))
 
-instance.run()
-print(train.AirReplayMemory.states)
-# instance.print_performance()
+
 
 
 

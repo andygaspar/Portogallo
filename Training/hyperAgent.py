@@ -9,13 +9,14 @@ from Training.replayMemory import ReplayMemory
 
 class HyperAgent:
 
-    def __init__(self, air_agent, fl_agent, train_mode=False):
+    def __init__(self, air_agent, fl_agent, batch_size=200, memory_size=10000, train_mode=False):
         self.FlAgent = fl_agent
         self.AirAgent = air_agent
         self.trainMode = train_mode
+        self.batchSize = batch_size
 
-        self.AirReplayMemory = ReplayMemory(4)
-        self.FlReplayMemory = ReplayMemory(10)
+        self.AirReplayMemory = ReplayMemory(4, size=memory_size)
+        self.FlReplayMemory = ReplayMemory(10, size=memory_size)
 
         self.airOptimizer = optim.Adam(self.AirAgent.parameters(), weight_decay=1e-5)
         self.flOptimizer = optim.Adam(self.FlAgent.parameters(), weight_decay=1e-5)
@@ -32,7 +33,7 @@ class HyperAgent:
         action[torch.argmax(scores)] = 1
         return action
 
-    def step(self, state_list: List, last_step = False):
+    def step(self, state_list: List, last_step=False):
         current_trade = torch.zeros(28)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.AirReplayMemory.set_initial_state(state)
@@ -68,5 +69,8 @@ class HyperAgent:
         self.AirReplayMemory.add_record(next_state=last_state, action=air_action, reward=shared_reward, done=1)
         self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward, done=1)
 
-
-
+    def train(self):
+        air_batch = self.AirReplayMemory.sample(200)
+        fl_batch = self.FlReplayMemory.sample(200)
+        self.AirAgent.update_weights(air_batch)
+        self.FlAgent.update_weights(fl_batch)

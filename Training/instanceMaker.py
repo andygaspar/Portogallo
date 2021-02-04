@@ -35,11 +35,24 @@ class Instance(istop.Istop):
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
-    def get_matches(self, matches=None):
-        if matches is None:
-            super().get_matches()
+    def get_matches(self, preprocessed= False):
+        if preprocessed:
+            return
         else:
-            print("pippimo")
+            super().get_matches()
+
+    def set_matches(self, matches: torch.tensor, num_trades):
+        trades[0:4] = air_action
+
+        trades[4:14] = fl_action
+
+
+        trades[14:18] = self.pick_action(air_action)
+
+
+        trades[18:28] = self.pick_action(fl_action)
+
+        return
 
     def check_couple_in_pairs(self, couple):
         return self.offerChecker.check_couple_in_pairs(couple, self.airlines_pairs)

@@ -21,7 +21,7 @@ class Trainer:
         action[torch.argmax(scores)] = 1
         return action
 
-    def step(self, state_list: List):
+    def step(self, state_list: List, last_step = False):
         current_trade = torch.zeros(28)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.AirReplayMemory.set_initial_state(state)
@@ -34,36 +34,45 @@ class Trainer:
         fl_action = self.pick_action(self.FlAgent(state))
         current_trade[4:14] = fl_action
 
-        self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0, initial=True)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0, initial=True)
         air_action = self.pick_action(self.AirAgent(state))
         current_trade[14:18] = self.pick_action(air_action)
 
-        self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0, initial=True)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0, initial=True)
         fl_action = self.pick_action(self.FlAgent(state))
         current_trade[18:28] = self.pick_action(fl_action)
 
-        return current_trade
+        if not last_step:
+            state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+            self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0)
+            self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0)
+            return current_trade
+        else:
+            state = torch.cat(torch.ones_like(state) * -1, dim=-1)
+            return current_trade, state, air_action, fl_action
 
-    def episode(self, schedule_tensor: torch.tensor):
+    def episode(self, schedule_tensor: torch.tensor, instance):
         trade_list = torch.zeros(28 * self.lengthEpisode)
         for i in range(self.lengthEpisode):
-            trade_list[i * 28: (i + 1) * 28] = self.step([schedule_tensor, trade_list])
-        return trade_list
+            trades = self.step([schedule_tensor, trade_list])
+            trade_list[i * 28: (i + 1) * 28] = trades
+
+        trades, last_state, air_action, fl_action = self.step([schedule_tensor, trade_list], last_step=True)
+        instance.set_matches(trade_list, self.lengthEpisode)
+        instance.run()
+        shared_reward = instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final")
+        self.FlReplayMemory.add_record(next_state=last_state, action=air_action, reward=shared_reward)
+        self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward)
 
     def run(self, num_iterations, df=None):
-        if df is not None:
-            instance = instanceMaker.Instance(triples=False, df=df)
-        else:
-            #la creazione dell'istanza dovrà essere messa nel for successivamente
-            return
-
         for i in range(num_iterations):
+            instance = instanceMaker.Instance(triples=False, df=df)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
-            actions = self.episode(schedule)
+            self.episode(schedule, instance)
 
     def compute_air_reward(self):
         pass

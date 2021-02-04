@@ -51,11 +51,21 @@ class Instance(istop.Istop):
 
     def set_matches(self, matches: torch.tensor, num_trades, single_trade_len):
         for i in range(num_trades):
-            start = i*single_trade_len
-            airline_1 = self.airlines[torch.argmax(matches[start:start+4]).item()]
-            couple_1 = airline_1.flight_pairs[torch.argmax(matches[start+4 :start+14])]
-            airline_2 = self.airlines[torch.argmax(matches[start+ 14:start + 18])]
-            couple_2 = airline_2.flight_pairs[torch.argmax(matches[start + 18:start + 28])]
+            start = i * single_trade_len
+            end = start + self.numAirlines
+            airline_1 = self.airlines[torch.argmax(matches[start: end]).item()]
+
+            start = end
+            end = start + len(airline_1.flight_pairs)
+            couple_1 = airline_1.flight_pairs[torch.argmax(matches[start: end])]
+
+            start = end
+            end = start + self.numAirlines
+            airline_2 = self.airlines[torch.argmax(matches[start: end])]
+
+            start = end
+            end = start + len(airline_2.flight_pairs)
+            couple_2 = airline_2.flight_pairs[torch.argmax(matches[start: end])]
             self.matches.append([couple_1, couple_2])
         self.preprocessed = True
         return

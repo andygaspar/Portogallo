@@ -6,22 +6,24 @@ import torch.nn.functional as F
 
 
 class AirNet(nn.Module):
-    def __init__(self, input_size, num_flights, num_airlines, num_trades):
+    def __init__(self, input_size, weight_decay ,num_flight_types, num_airlines, num_flights, num_trades, num_combs):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
 
-        self.num_airlines = num_airlines
-        self.num_flights = num_flights
-        self.input_size = input_size
+        self.numFlightTypes = num_flight_types
+        self.numCombs = num_combs
+        self.numAirlines = num_airlines
+        self.numFlights = num_flights
+        self.inputSize = input_size
         self.num_trades = num_trades
         self.loss = 0
 
-        self.l1 = nn.Linear(self.input_size, self.input_size * 2).to(self.device)
-        self.l2 = nn.Linear(self.input_size * 2, self.input_size).to(self.device)
-        self.l3 = nn.Linear(self.input_size, self.num_airlines).to(self.device)
+        self.l1 = nn.Linear(self.inputSize, self.inputSize * 2).to(self.device)
+        self.l2 = nn.Linear(self.inputSize * 2, self.inputSize).to(self.device)
+        self.l3 = nn.Linear(self.inputSize, self.numAirlines).to(self.device)
 
-        self.optimizer = optim.Adam(self.parameters(), weight_decay=1e-5)
+        self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
 
     def forward(self, state):
         x = F.relu(self.l1(state))

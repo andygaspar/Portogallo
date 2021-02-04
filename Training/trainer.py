@@ -12,17 +12,9 @@ import xpress as xp
 
 class Trainer:
 
-    def __init__(self, air_agent: AirNet, fl_agent, hyper_agent, length_episode):
+    def __init__(self, hyper_agent, length_episode):
         self.hyperAgent = hyper_agent
-        self.FlAgent = fl_agent
-        self.AirAgent = air_agent
         self.lengthEpisode = length_episode
-
-        self.AirReplayMemory = ReplayMemory(4)
-        self.FlReplayMemory = ReplayMemory(10)
-
-        self.airOptimizer = optim.Adam(self.AirAgent.parameters(), weight_decay=1e-5)
-        self.flOptimizer = optim.Adam(self.FlAgent.parameters(), weight_decay=1e-5)
 
     def episode(self, schedule_tensor: torch.tensor, instance):
         trade_list = torch.zeros(28 * self.lengthEpisode)
@@ -40,7 +32,7 @@ class Trainer:
 
 
     def run(self, num_iterations, df=None):
-        xp_problem= xp.problem()
+        xp_problem = xp.problem()
         for i in range(num_iterations):
             print(i)
 
@@ -57,6 +49,6 @@ class Trainer:
                 print(instance.matches)
                 instance.print_performance()
 
-
+# to do
     def compute_air_reward(self):
         pass

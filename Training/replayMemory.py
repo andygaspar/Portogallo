@@ -6,7 +6,7 @@ import numpy as np
 
 class ReplayMemory:
 
-    def __init__(self, action_size, state_size=784, size=1000):
+    def __init__(self, action_size, state_size, size=1000):
         size = int(size)
         self.states = torch.zeros((size, state_size))
         self.nextStates = torch.zeros((size, state_size))

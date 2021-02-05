@@ -1,5 +1,4 @@
 import trainer
-
 import hyperAgent
 import instanceMaker
 import pandas as pd
@@ -28,8 +27,8 @@ print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in
 
 # hyper agent parameters
 weight_decay = 1e-5
-batch_size = 10
-memory_size = 10000
+batch_size = 500
+memory_size = 100_000
 
 hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
                                     weight_decay=weight_decay, batch_size=batch_size,
@@ -40,6 +39,6 @@ hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights,
 EPS_DECAY: float = 1000
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_decay=EPS_DECAY)
-train.run(10000, df)
+train.run(1_000_000, df)
 
 # print(train.episode(instance.get_schedule_tensor()))

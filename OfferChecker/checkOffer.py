@@ -213,16 +213,13 @@ class OfferChecker(object):
         input_vect = [fl.slot.index for fl in couple] + [fl.slot.index for fl in couple_2]
 
         len_array = int(len(input_vect) / 4)
+        self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
+        input_vect = np.array(input_vect).astype(np.short)
+        answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
+                                            ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
 
-        if len_array > 0:
-            self.lib.air_couple_check_.restype = ndpointer(dtype=ctypes.c_bool, shape=(len_array,))
-            input_vect = np.array(input_vect).astype(np.short)
-            answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
-                                                ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
+        return answer[0]
 
-            return True
-        else:
-            return False
 
     def print_mat(self):
         self.lib.print_mat_(self.obj)

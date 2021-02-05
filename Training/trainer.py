@@ -22,17 +22,17 @@ class Trainer:
         self.epsDecay = eps_decay # not used yet
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
-        trade_list = torch.zeros(28 * self.lengthEpisode)
+        trade_tensor = torch.zeros(28 * self.lengthEpisode)
         self.hyperAgent.instance = instance
         for i in range(self.lengthEpisode):
-            trades, ended = self.hyperAgent.step([schedule_tensor, trade_list], eps, instance)
+            trades, ended = self.hyperAgent.step(schedule_tensor, trade_tensor, eps, instance)
             if not ended:
                 return
-            trade_list[i * 28: (i + 1) * 28] = trades
+            trade_tensor[i * 28: (i + 1) * 28] = trades
 
-        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list], eps,
+        trades, last_state, air_action, fl_action = self.hyperAgent.step(schedule_tensor, trade_tensor, eps,
                                                                          instance, last_step=True)
-        instance.set_matches(trade_list, self.lengthEpisode, 28)
+        instance.set_matches(trade_tensor, self.lengthEpisode, 28)
 
         instance.run()
         # instance.print_performance()

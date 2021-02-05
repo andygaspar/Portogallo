@@ -9,6 +9,7 @@ from Training.instanceMaker import Instance
 from Training.replayMemory import ReplayMemory
 import flAgent
 import airAgent
+from Training.agentNetwork import AgentNetwork
 from OfferChecker import checkOffer
 
 
@@ -29,10 +30,10 @@ class HyperAgent:
 
         self.weightDecay = weight_decay
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.AirAgent = airAgent.AirNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights,
-                                        num_trades, num_combs)
-        self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights,
-                                     num_trades, num_combs)
+        self.AirAgent = AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights,
+                                     num_trades, num_combs, self.numAirlines)
+        self.FlAgent = AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights,
+                                    num_trades, num_combs, self.numCombs)
 
         self.trainMode = train_mode
         self.batchSize = batch_size
@@ -77,9 +78,9 @@ class HyperAgent:
         action[action_idx] = 1
         return action, action_idx
 
-    def step(self, state_list: List, eps, instance: Instance, last_step=False):
+    def step(self, schedule_tensor, trade_tensor, eps, instance: Instance, last_step=False):
         current_trade = torch.zeros(self.singleTradeSize)
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        state = torch.cat((schedule_tensor, trade_tensor, current_trade), dim=-1)
         self.AirReplayMemory.set_initial_state(state)
 
         start = 0
@@ -91,7 +92,7 @@ class HyperAgent:
                                             reward=-instance.initialTotalCosts, done=1)
             return [], False
         current_trade[start:end] = air_action
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        state = torch.cat((schedule_tensor, trade_tensor, current_trade), dim=-1)
 
         start = end
         end = start + self.numCombs
@@ -106,7 +107,7 @@ class HyperAgent:
 
         start = end
         end = start + self.numAirlines
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        state = torch.cat((schedule_tensor, trade_tensor, current_trade), dim=-1)
         self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0, initial=True)
         air_action, action_idx = self.pick_air_action(state, eps)
         airline_2 = instance.airlines[action_idx]
@@ -118,7 +119,7 @@ class HyperAgent:
 
         start = end
         end = start + self.numCombs
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        state = torch.cat((schedule_tensor, trade_tensor, current_trade), dim=-1)
         self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0, initial=True)
         fl_action, action_idx = self.pick_fl_last_action(state, eps, couple, airline_2, instance)
         couple_2 = airline_2.flight_pairs[action_idx]
@@ -129,7 +130,7 @@ class HyperAgent:
         current_trade[start:end] = fl_action
 
         if not last_step:
-            state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+            state = torch.cat((schedule_tensor, trade_tensor, current_trade), dim=-1)
             self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0)
             self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0)
             return current_trade, True

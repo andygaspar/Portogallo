@@ -48,7 +48,7 @@ class Trainer:
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
-            self.eps = 1 - i/num_iterations #np.exp(1 - (num_iterations+1)/(i+1))
+            self.eps = max(0.1, abs(1 - i/5000)) #np.exp(1 - (num_iterations+1)/(i+1))
             self.episode(schedule, instance, self.eps)
 
             if i >= 100:

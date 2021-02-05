@@ -30,15 +30,15 @@ class Trainer:
                 return
             trade_list[i * 28: (i + 1) * 28] = trades
 
-        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list], eps,
-                                                                         instance, last_step=True)
-        instance.set_matches(trade_list, self.lengthEpisode, 28)
-
-        instance.run()
-        # instance.print_performance()
-        print("semo rivai qua")
-        shared_reward = - instance.compute_costs(instance.flights, which="final")
-        self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action, shared_reward)
+        result, ended = self.hyperAgent.step([schedule_tensor, trade_list], eps, instance, last_step=True)
+        if ended:
+            trades, last_state, air_action, fl_action = result
+            instance.set_matches(trade_list, self.lengthEpisode, 28)
+            instance.run()
+            # instance.print_performance()
+            print("semo rivai qua")
+            shared_reward = - instance.compute_costs(instance.flights, which="final")
+            self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action, shared_reward)
 
 
     def run(self, num_iterations, df=None):

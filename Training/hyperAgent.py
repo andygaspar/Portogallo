@@ -135,7 +135,7 @@ class HyperAgent:
             return current_trade, True
         else:
             state = torch.ones_like(state) * (-1)
-            return current_trade, state, air_action, fl_action
+            return (current_trade, state, air_action, fl_action), True
 
     def assign_end_episode_reward(self, last_state, air_action, fl_action, shared_reward):
         self.AirReplayMemory.add_record(next_state=last_state, action=air_action, reward=shared_reward, done=1)

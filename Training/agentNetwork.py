@@ -25,7 +25,6 @@ class AgentNetwork(nn.Module):
         ETA_info_size = 1
         time_info_size = 1
 
-
         self.flightConvSize = self.numFlightTypes + ETA_info_size + time_info_size + self.num_airlines
         self.singleTradeSize = (self.numAirlines + self.numCombs) * 2
 

@@ -25,7 +25,7 @@ class AgentNetwork(nn.Module):
         ETA_info_size = 1
         time_info_size = 1
 
-        self.flightConvSize = self.numFlightTypes + ETA_info_size + time_info_size + self.num_airlines
+        self.flightConvSize = self.numFlightTypes + ETA_info_size + time_info_size + self.numAirlines
         self.singleTradeSize = (self.numAirlines + self.numCombs) * 2
 
         self.firstConvFlights = nn.Linear(self.flightConvSize, self.flightConvSize * 2).to(self.device)
@@ -40,17 +40,21 @@ class AgentNetwork(nn.Module):
         self.jointInputSize = (self.numFlights + self.numTrades + 1) * 8
         self.l1 = nn.Linear(self.jointInputSize, self.jointInputSize * 2).to(self.device)
         self.l2 = nn.Linear(self.jointInputSize * 2, self.jointInputSize).to(self.device)
-        self.l3 = nn.Linear(self.jointInputSize, self.jointInputSize % 2).to(self.device)
-        self.l4 = nn.Linear(self.jointInputSize % 2, self.outputSize).to(self.device)
+        self.l3 = nn.Linear(self.jointInputSize, int(self.jointInputSize / 2)).to(self.device)
+        self.l4 = nn.Linear(int(self.jointInputSize / 2), self.outputSize).to(self.device)
 
         self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
 
     def forward(self, state):
+        sta = state
         flights, trades, current_trade = torch.split(state, [self.flightConvSize * self.numFlights,
                                                              self.singleTradeSize * self.numTrades,
                                                              self.singleTradeSize], dim=-1)
 
-        flights = torch.split(flights, [self.flightConvSize for _ in range(self.numFlights)])
+        flights = torch.split(flights, [self.flightConvSize for _ in range(self.numFlights)], dim=-1)
+        flights = [self.firstConvFlights(flight) for flight in flights]
+
+
         trades = torch.split(trades, [self.singleTradeSize for _ in range(self.numTrades)])
 
         x = F.relu(self.l1(state))

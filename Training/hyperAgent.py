@@ -15,7 +15,7 @@ from OfferChecker import checkOffer
 
 class HyperAgent:
 
-    def __init__(self, num_flight_types, num_airlines, num_flights, num_trades, num_combs, weight_decay, batch_size=200,
+    def __init__(self, num_flight_types, num_airlines, num_flights, num_trades, num_combs, weight_decay, batch_size,
                  memory_size=10000, train_mode=False):
 
         ETA_info_size = 1
@@ -143,8 +143,8 @@ class HyperAgent:
         self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward, done=1)
 
     def train(self):
-        air_batch = self.AirReplayMemory.sample(200)
-        fl_batch = self.FlReplayMemory.sample(200)
+        air_batch = self.AirReplayMemory.sample(self.batchSize)
+        fl_batch = self.FlReplayMemory.sample(self.batchSize)
         self.AirAgent.update_weights(air_batch)
         self.FlAgent.update_weights(fl_batch)
 

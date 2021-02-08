@@ -61,7 +61,7 @@ class HyperAgent:
 
         air_action = self.pick_air_action(state, eps)
         current_trade[start:end] = air_action
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        state[-self.currentTradeSize:] = current_trade
 
         start = end
         end = start + self.numCombs
@@ -71,20 +71,20 @@ class HyperAgent:
 
         start = end
         end = start + self.numAirlines
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        state[-self.currentTradeSize:] = current_trade
         self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0, initial=True)
         air_action = self.pick_air_action(state, eps)
         current_trade[start:end] = air_action
 
         start = end
         end = start + self.numCombs
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+        state[-self.currentTradeSize:] = current_trade
         self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0, initial=True)
         fl_action = self.pick_fl_action(state, eps)
         current_trade[start:end] = fl_action
 
         if not last_step:
-            state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
+            state[-self.currentTradeSize:] = current_trade
             self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0)
             self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0)
             return current_trade
@@ -97,7 +97,7 @@ class HyperAgent:
         self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward, done=1)
 
     def train(self):
-        air_batch = self.AirReplayMemory.sample(200)
-        fl_batch = self.FlReplayMemory.sample(200)
+        air_batch = self.AirReplayMemory.sample(self.batchSize)
+        fl_batch = self.FlReplayMemory.sample(self.batchSize)
         self.AirAgent.update_weights(air_batch)
         self.FlAgent.update_weights(fl_batch)

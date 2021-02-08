@@ -43,21 +43,23 @@ class AirNet(nn.Module):
 
         states, next_states, actions, rewards, dones = (element.to(self.device) for element in batch)
 
-        for i in range(10):
-            self.zero_grad()
-            curr_Q = self.forward(states)
-            curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
+
+        self.zero_grad()
+        curr_Q = self.forward(states)
+        curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
+
+        with torch.no_grad():
             next_Q =self.forward(next_states)
             max_next_Q = torch.max(next_Q, 1)[0]
             expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 
-            loss = criterion(curr_Q, expected_Q)  #.detach()
-            self.loss = loss.item()
-            self.optimizer.zero_grad()
+        loss = criterion(curr_Q, expected_Q)  #.detach()
+        self.loss = loss.item()
+        self.optimizer.zero_grad()
 
-            loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
-            self.optimizer.step()
+        loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
+        self.optimizer.step()
         print(self.loss)
     #
     #   super().__init__()

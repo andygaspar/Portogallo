@@ -47,7 +47,7 @@ class Trainer:
             num_airlines = instance.numAirlines
             self.eps = np.exp(- 4*i/num_iterations)
             self.episode(schedule, instance, self.eps)
-            if i >= 100:
+            if i >= 20:
                 self.hyperAgent.train()
 
             if i >= 100 and i % 25 == 0:

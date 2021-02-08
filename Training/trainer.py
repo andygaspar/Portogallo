@@ -30,6 +30,7 @@ class Trainer:
                 return
             trade_list[i * 28: (i + 1) * 28] = trades
 
+        print("ghe semo quasi")
         result, ended = self.hyperAgent.step([schedule_tensor, trade_list], eps, instance, last_step=True)
         if ended:
             trades, last_state, air_action, fl_action = result
@@ -48,7 +49,7 @@ class Trainer:
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
-            self.eps = max(0.1, abs(1 - i/5000)) #np.exp(1 - (num_iterations+1)/(i+1))
+            self.eps = max(0.1, 1 - i/5000) #np.exp(1 - (num_iterations+1)/(i+1))
             self.episode(schedule, instance, self.eps)
 
             if i >= 100:

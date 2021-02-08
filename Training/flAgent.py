@@ -22,15 +22,17 @@ class FlNet(nn.Module):
         print("Running on GPU:", torch.cuda.is_available())
 
         self.l1 = nn.Linear(self.inputSize, self.inputSize*2).to(self.device)
-        self.l2 = nn.Linear(self.inputSize*2, self.inputSize).to(self.device)
-        self.l3 = nn.Linear(self.inputSize, self.numCombs).to(self.device)
+        self.l2 = nn.Linear(self.inputSize * 2, 2 * self.inputSize).to(self.device)
+        self.l3 = nn.Linear(self.inputSize * 2, self.inputSize).to(self.device)
+        self.l4 = nn.Linear(self.inputSize, self.numCombs).to(self.device)
 
         self.optimizer = torch.optim.Adam(self.parameters(), weight_decay=weight_decay)
 
     def forward(self, state):
         x = F.relu(self.l1(state))
         x = F.relu(self.l2(x))
-        return self.l3(x)
+        x = F.relu(self.l3(x))
+        return self.l4(x)
 
     def pick_action(self, state):
         with torch.no_grad():
@@ -57,6 +59,6 @@ class FlNet(nn.Module):
             #self.zero_grad()
             loss.backward()
 
-            # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
+            torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
             self.optimizer.step()
 

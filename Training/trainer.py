@@ -52,7 +52,7 @@ class Trainer:
             self.eps = max(0.1, 1 - i/5000) #np.exp(1 - (num_iterations+1)/(i+1))
             self.episode(schedule, instance, self.eps)
 
-            if i >= 100:
+            if i >= 30:
                 self.hyperAgent.train()
                 print(i, self.hyperAgent.AirAgent.loss, self.hyperAgent.FlAgent.loss, self.eps)
             else:

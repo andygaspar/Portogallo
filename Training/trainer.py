@@ -15,11 +15,12 @@ import xpress as xp
 
 class Trainer:
 
-    def __init__(self, hyper_agent, length_episode, eps_decay=100):
+    def __init__(self, hyper_agent, length_episode, eps_fun, eps_decay=100):
         self.hyperAgent = hyper_agent
         self.lengthEpisode = length_episode
         self.eps = 1
         self.epsDecay = eps_decay # not used yet
+        self.epsFun = eps_fun
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         trade_size = self.hyperAgent.singleTradeSize
@@ -53,12 +54,12 @@ class Trainer:
             self.episode(schedule, instance, eps=1)
 
         for i in range(training_start_iteration, num_iterations):
-            print(i, self.hyperAgent.AirAgent.loss, self.hyperAgent.FlAgent.loss)
+            print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss, self.hyperAgent.FlAgent.loss, self.eps))
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
-            self.eps = max(0.05, 1-i/num_iterations) #np.exp(- 4*i/num_iterations)
+            self.eps = self.epsFun(i, num_iterations)
             self.episode(schedule, instance, self.eps)
             self.hyperAgent.train()
 

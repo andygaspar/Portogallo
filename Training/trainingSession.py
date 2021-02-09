@@ -13,13 +13,13 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 
 # problem's parameters
 num_flight_types = len(CostFuns().flightTypeDict)
-num_trades = 12
+num_trades = 7
 num_airlines = 4
 num_combs = 10
-num_flights = 20
+num_flights = 16
 
 # fixed particular instance (copied inside the trainer - trainer must be changed in the future)
-df = pd.read_csv("custom_5_5.csv")
+df = pd.read_csv("custom_4_4.csv")
 instance = instanceMaker.Instance(triples=False, df=df)
 instance.run()
 instance.print_performance()

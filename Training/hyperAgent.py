@@ -53,7 +53,7 @@ class HyperAgent:
         action[torch.argmax(scores)] = 1
         return action
 
-    def step(self, state_list: List, eps, last_step=False):
+    def step(self, state_list: List, eps, last_step=False, train=True):
         current_trade = torch.zeros(self.singleTradeSize)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.AirReplayMemory.set_initial_state(state)

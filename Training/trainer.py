@@ -28,7 +28,8 @@ class Trainer:
             trades = self.hyperAgent.step([schedule_tensor, trade_list], eps)
             trade_list[i * trade_size: (i + 1) * trade_size] = trades
 
-        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list], eps, last_step=True)
+        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list],
+                                                                         eps, last_step=True)
         instance.set_matches(trade_list, self.lengthEpisode, trade_size)
 
         instance.run()
@@ -36,18 +37,23 @@ class Trainer:
         shared_reward = - instance.compute_costs(instance.flights, which="final")
         self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action, shared_reward)
 
+    def test_episode(self, schedule_tensor: torch.tensor, instance, eps):
+        self.hyperAgent.trainMode = False
+        self.episode(schedule_tensor, instance, eps)
+        self.hyperAgent.trainMode = True
+
     def run(self, num_iterations, df=None, training_start_iteration=100):
         xp_problem = xp.problem()
         for i in range(training_start_iteration):
+            print(i)
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
-            self.eps = np.exp(- 4 * i / num_iterations)
             self.episode(schedule, instance, eps=1)
 
         for i in range(training_start_iteration, num_iterations):
-            print(i)
+            print(i, self.hyperAgent.AirAgent.loss, self.hyperAgent.FlAgent.loss)
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
@@ -57,6 +63,7 @@ class Trainer:
             self.hyperAgent.train()
 
             if i >= 100 and i % 25 == 0:
+                self.test_episode(schedule, instance, self.eps)
                 instance.run()
                 print(instance.matches)
                 instance.print_performance()

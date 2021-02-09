@@ -60,7 +60,7 @@ class AirNet(nn.Module):
         loss.backward()
         # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
         self.optimizer.step()
-        print(self.loss)
+
     #
     #   super().__init__()
     #   self.convSchedule = nn.Linear(21, 4)

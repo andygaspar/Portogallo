@@ -58,7 +58,7 @@ class Trainer:
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
-            self.eps = np.exp(- 4*i/num_iterations)
+            self.eps = max(0.05, 1-i/num_iterations) #np.exp(- 4*i/num_iterations)
             self.episode(schedule, instance, self.eps)
             self.hyperAgent.train()
 

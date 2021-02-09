@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class AirNet(nn.Module):
-    def __init__(self, input_size, weight_decay ,num_flight_types, num_airlines, num_flights, num_trades, num_combs):
+    def __init__(self, input_size, weight_decay, num_flight_types, num_airlines, num_flights, num_trades, num_combs):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.cpu = torch.device("cpu")
@@ -21,9 +21,10 @@ class AirNet(nn.Module):
         self.loss = 0
 
         self.l1 = nn.Linear(self.inputSize, self.inputSize * 2).to(self.device)
-        self.l2 = nn.Linear(self.inputSize * 2, 2 * self.inputSize).to(self.device)
-        self.l3 = nn.Linear(self.inputSize * 2, self.inputSize).to(self.device)
-        self.l4 = nn.Linear(self.inputSize, self.numAirlines).to(self.device)
+        self.l2 = nn.Linear(self.inputSize * 2, 4 * self.inputSize).to(self.device)
+        self.l3 = nn.Linear(self.inputSize * 4, self.inputSize *2).to(self.device)
+        self.l4 = nn.Linear(self.inputSize *2, self.inputSize).to(self.device)
+        self.l5 = nn.Linear(self.inputSize , self.numAirlines).to(self.device)
 
         self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
 
@@ -31,7 +32,8 @@ class AirNet(nn.Module):
         x = F.relu(self.l1(state))
         x = F.relu(self.l2(x))
         x = F.relu(self.l3(x))
-        return self.l4(x)
+        x= F.relu(self.l4(x))
+        return self.l5(x)
 
     def pick_action(self, state):
         with torch.no_grad():
@@ -41,25 +43,26 @@ class AirNet(nn.Module):
 
         return action
 
-    def update_weights(self, batch: tuple, gamma: float=0.9):
+    def update_weights(self, batch: tuple, gamma: float = 0.9):
         criterion = torch.nn.MSELoss()
 
         states, next_states, actions, rewards, dones = (element.to(self.device) for element in batch)
 
-        for i in range(10):
+        for i in range(5):
             self.zero_grad()
             curr_Q = self.forward(states)
-            curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
-            next_Q =self.forward(next_states)
-            max_next_Q = torch.max(next_Q, 1)[0]
-            expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
+            curr_Q = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
 
-            loss = criterion(curr_Q, expected_Q)  #.detach()
+            with torch.no_grad():
+                next_Q = self.forward(next_states)
+                max_next_Q = torch.max(next_Q, 1)[0]
+                expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
+
+            loss = criterion(curr_Q, expected_Q)  # .detach()
             self.loss = loss.item()
             self.optimizer.zero_grad()
-
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.parameters(), 4)
+            torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
             self.optimizer.step()
     #
     #   super().__init__()

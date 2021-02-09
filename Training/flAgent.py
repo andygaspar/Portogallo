@@ -21,10 +21,11 @@ class FlNet(nn.Module):
         torch.cuda.current_device()
         print("Running on GPU:", torch.cuda.is_available())
 
-        self.l1 = nn.Linear(self.inputSize, self.inputSize*2).to(self.device)
-        self.l2 = nn.Linear(self.inputSize * 2, 2 * self.inputSize).to(self.device)
-        self.l3 = nn.Linear(self.inputSize * 2, self.inputSize).to(self.device)
-        self.l4 = nn.Linear(self.inputSize, self.numCombs).to(self.device)
+        self.l1 = nn.Linear(self.inputSize, self.inputSize * 2).to(self.device)
+        self.l2 = nn.Linear(self.inputSize * 2, 4 * self.inputSize).to(self.device)
+        self.l3 = nn.Linear(self.inputSize * 4, self.inputSize *2).to(self.device)
+        self.l4 = nn.Linear(self.inputSize *2, self.inputSize).to(self.device)
+        self.l5 = nn.Linear(self.inputSize , self.numCombs).to(self.device)
 
         self.optimizer = torch.optim.Adam(self.parameters(), weight_decay=weight_decay)
 
@@ -32,7 +33,8 @@ class FlNet(nn.Module):
         x = F.relu(self.l1(state))
         x = F.relu(self.l2(x))
         x = F.relu(self.l3(x))
-        return self.l4(x)
+        x = F.relu(self.l4(x))
+        return self.l5(x)
 
     def pick_action(self, state):
         with torch.no_grad():
@@ -46,19 +48,21 @@ class FlNet(nn.Module):
 
         states, next_states, actions, rewards, dones = (element.to(self.device) for element in batch)
 
-        for i in range(10):
+        for i in range(5):
+            self.zero_grad()
             curr_Q = self.forward(states)
-            curr_Q = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
-            next_Q = self.forward(next_states)
-            max_next_Q = torch.max(next_Q, 1)[0]
-            expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
+            curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
 
-            loss = criterion(curr_Q, expected_Q)  # .detach()
+            with torch.no_grad():
+                next_Q =self.forward(next_states)
+                max_next_Q = torch.max(next_Q, 1)[0]
+                expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
+
+            loss = criterion(curr_Q, expected_Q)  #.detach()
             self.loss = loss.item()
             self.optimizer.zero_grad()
-            #self.zero_grad()
-            loss.backward()
 
+            loss.backward()
             torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
             self.optimizer.step()
 

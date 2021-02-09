@@ -142,10 +142,11 @@ class HyperAgent:
         self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward, done=1)
 
     def train(self):
-        air_batch = self.AirReplayMemory.sample(200)
-        fl_batch = self.FlReplayMemory.sample(200)
-        self.AirAgent.update_weights(air_batch)
-        self.FlAgent.update_weights(fl_batch)
+        for i in range(10):
+            air_batch = self.AirReplayMemory.sample(self.batchSize)
+            fl_batch = self.FlReplayMemory.sample(self.batchSize)
+            self.AirAgent.update_weights(air_batch)
+            self.FlAgent.update_weights(fl_batch)
 
     @staticmethod
     def feasible_offers_for_airline(airline, instance):

@@ -11,8 +11,8 @@ import airAgent
 
 class HyperAgent:
 
-    def __init__(self, num_flight_types, num_airlines, num_flights, num_trades, num_combs, weight_decay, batch_size=200,
-                 memory_size=10000, train_mode=False):
+    def __init__(self, num_flight_types, num_airlines, num_flights, num_trades, num_combs, weight_decay,
+                 trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
         ETA_info_size = 1
         time_info_size = 1
@@ -30,10 +30,12 @@ class HyperAgent:
         self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
 
         self.trainMode = train_mode
+        self.trainingsPerStep= trainings_per_step
         self.batchSize = batch_size
 
         self.AirReplayMemory = ReplayMemory(self.numAirlines, input_size, size=memory_size)
         self.FlReplayMemory = ReplayMemory(self.numCombs, input_size, size=memory_size)
+
 
     def pick_air_action(self, state, eps):
         if self.trainMode and np.random.rand() < eps:
@@ -97,7 +99,8 @@ class HyperAgent:
         self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward, done=1)
 
     def train(self):
-        air_batch = self.AirReplayMemory.sample(self.batchSize)
-        fl_batch = self.FlReplayMemory.sample(self.batchSize)
-        self.AirAgent.update_weights(air_batch)
-        self.FlAgent.update_weights(fl_batch)
+        for i in range(self.trainingsPerStep):
+            air_batch = self.AirReplayMemory.sample(self.batchSize)
+            fl_batch = self.FlReplayMemory.sample(self.batchSize)
+            self.AirAgent.update_weights(air_batch)
+            self.FlAgent.update_weights(fl_batch)

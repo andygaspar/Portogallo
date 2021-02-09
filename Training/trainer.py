@@ -64,7 +64,6 @@ class Trainer:
 
             if i >= 100 and i % 25 == 0:
                 self.test_episode(schedule, instance, self.eps)
-                instance.run()
                 print(instance.matches)
                 instance.print_performance()
 

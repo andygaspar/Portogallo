@@ -13,9 +13,9 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 
 # problem's parameters
 num_flight_types = len(CostFuns().flightTypeDict)
-num_trades = 7
+num_trades = 6
 num_airlines = 4
-num_combs = 10
+num_combs = 6
 num_flights = 16
 
 # fixed particular instance (copied inside the trainer - trainer must be changed in the future)

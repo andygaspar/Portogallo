@@ -50,6 +50,7 @@ class Instance(istop.Istop):
 
 
     def set_matches(self, matches: torch.tensor, num_trades, single_trade_len):
+        self.matches = []
         for i in range(num_trades):
             start = i * single_trade_len
             end = start + self.numAirlines

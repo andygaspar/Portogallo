@@ -1,6 +1,6 @@
 import trainer
-
-import hyperAgent
+import masker
+from Agents import hyperAgent
 import instanceMaker
 import pandas as pd
 from ModelStructure.Costs.costFunctionDict import CostFuns
@@ -22,6 +22,10 @@ num_flights = 16
 df = pd.read_csv("custom_4_4.csv")
 instance = instanceMaker.Instance(triples=False, df=df)
 instance.run()
+
+print(instance.airlines)
+m = masker.Masker(instance)
+print("\n\n\n\n")
 instance.print_performance()
 print(instance.matches[0])
 print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches])
@@ -40,6 +44,6 @@ EPS_DECAY: float = 1000
 eps_fun = lambda i, num_iterations: max(0.05, 1 - i / num_iterations)  # np.exp(- 4*i/num_iterations)
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-train.run(10000, df)
+#train.run(10000, df)
 
 # print(train.episode(instance.get_schedule_tensor()))

@@ -4,8 +4,8 @@ from typing import List
 import numpy as np
 
 from Training import instanceMaker
-from Training.replayMemory import ReplayMemory
-from Training.airAgent import AirNet
+from Training.Agents.replayMemory import ReplayMemory
+from Training.Agents.airAgent import AirNet
 
 import torch
 from torch import nn, optim
@@ -67,6 +67,8 @@ class Trainer:
                 self.test_episode(schedule, instance, self.eps)
                 print(instance.matches)
                 instance.print_performance()
+
+
 
 # to do
     def compute_air_reward(self):

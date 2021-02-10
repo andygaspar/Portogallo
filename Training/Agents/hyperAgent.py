@@ -4,9 +4,8 @@ from typing import List
 import numpy as np
 import torch
 from torch import optim
-from Training.replayMemory import ReplayMemory
-import flAgent
-import airAgent
+from Training.Agents.replayMemory import ReplayMemory
+from Training.Agents import flAgent, airAgent
 
 
 class HyperAgent:
@@ -35,7 +34,6 @@ class HyperAgent:
 
         self.AirReplayMemory = ReplayMemory(self.numAirlines, input_size, size=memory_size)
         self.FlReplayMemory = ReplayMemory(self.numCombs, input_size, size=memory_size)
-
 
     def pick_air_action(self, state, eps):
         if self.trainMode and np.random.rand() < eps:

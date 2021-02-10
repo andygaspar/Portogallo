@@ -35,7 +35,7 @@ class Trainer:
 
         instance.run()
         # instance.print_performance()
-        shared_reward = - instance.compute_costs(instance.flights, which="final")
+        shared_reward = - instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts
         self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action, shared_reward)
 
     def test_episode(self, schedule_tensor: torch.tensor, instance, eps):
@@ -54,7 +54,9 @@ class Trainer:
             self.episode(schedule, instance, eps=1)
 
         for i in range(training_start_iteration, num_iterations):
-            print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss, self.hyperAgent.FlAgent.loss, self.eps))
+            s = 10_000
+            print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss*s,
+                                                    self.hyperAgent.FlAgent.loss*s, self.eps))
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights

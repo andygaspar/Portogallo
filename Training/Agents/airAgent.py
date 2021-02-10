@@ -18,17 +18,22 @@ class AirNet(nn.Module):
         self.inputSize = input_size
         self.num_trades = num_trades
         self.loss = 0
+        self.bestLoss = 100_000_000
 
         self.l1 = nn.Linear(self.inputSize, self.inputSize * 2).to(self.device)
-        self.l2 = nn.Linear(self.inputSize * 2, self.inputSize).to(self.device)
-        self.l3 = nn.Linear(self.inputSize, self.numAirlines).to(self.device)
+        self.l2 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
+        self.l3 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
+        self.l4 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
+        self.l5 = nn.Linear(self.inputSize * 2, self.numAirlines).to(self.device)
 
         self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
 
     def forward(self, state):
         x = F.relu(self.l1(state))
         x = F.relu(self.l2(x))
-        return self.l3(x)
+        x = F.relu(self.l3(x))
+        x = F.relu(self.l4(x))
+        return self.l5(x)
 
     def pick_action(self, state):
         with torch.no_grad():
@@ -58,8 +63,12 @@ class AirNet(nn.Module):
         self.optimizer.zero_grad()
 
         loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
+        torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
         self.optimizer.step()
+
+
+        if self.loss < self.bestLoss:
+            torch.save(self.state_dict(), "air.pt")
 
     #
     #   super().__init__()

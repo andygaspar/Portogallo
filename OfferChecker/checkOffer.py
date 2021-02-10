@@ -71,18 +71,20 @@ class OfferChecker(object):
             answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
                                                 ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
 
-            return [air_pairs[i] for i in range(len_array) if answer[i]]
+            return [air_pairs[i] for i in range(len_array) if answer[i]], answer
         else:
-            return []
+            return [], [0 for _ in range(len_array)]
 
     def all_couples_check(self, airlines_pairs):
         matches = []
+        matches_vect = []
         for air_pair in airlines_pairs:
-            match = self.air_couple_check(air_pair)
+            match, match_vect = self.air_couple_check(air_pair)
             if len(match) > 0:
                 matches += match
+            matches_vect += match_vect
 
-        return matches
+        return matches, matches_vect
 
     def air_triple_check(self, air_triple):
         fl_pair_a = air_triple[0].flight_pairs

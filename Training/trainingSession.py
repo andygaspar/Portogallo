@@ -33,7 +33,7 @@ print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in
 # hyper agent parameters
 weight_decay = 1e-5
 batch_size = 500
-memory_size = 3000
+memory_size = 20_000
 
 hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
                                     weight_decay=weight_decay, batch_size=batch_size,
@@ -41,9 +41,9 @@ hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights,
 
 # trainer parameters
 EPS_DECAY: float = 1000
-eps_fun = lambda i, num_iterations: max(0.05, 1 - i / num_iterations)  # np.exp(- 4*i/num_iterations)
+eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 30_000)  # np.exp(- 4*i/num_iterations)
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-#train.run(10000, df)
+train.run(100_000_000, df)
 
 # print(train.episode(instance.get_schedule_tensor()))

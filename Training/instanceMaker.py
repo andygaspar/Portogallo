@@ -26,7 +26,7 @@ class Instance(istop.Istop):
         self.reductionFactor = reduction_factor
         self.costFun = CostFuns().costFun["realistic"]
         self.flightTypeDict = CostFuns().flightTypeDict
-
+        x, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
 
         if xp_problem is None:
             self.xp_problem = xp.problem()

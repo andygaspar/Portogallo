@@ -26,7 +26,7 @@ class Instance(istop.Istop):
         self.reductionFactor = reduction_factor
         self.costFun = CostFuns().costFun["realistic"]
         self.flightTypeDict = CostFuns().flightTypeDict
-        x, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
+
 
         if xp_problem is None:
             self.xp_problem = xp.problem()
@@ -45,6 +45,7 @@ class Instance(istop.Istop):
 
         super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples, xp_problem=self.xp_problem)
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
+        _, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
 

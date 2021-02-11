@@ -87,7 +87,7 @@ class Istop(mS.ModelStructure):
         self.preprocessed = False
 
     def get_matches(self):
-        self.matches, = self.offerChecker.all_couples_check(self.airlines_pairs)
+        self.matches, _ = self.offerChecker.all_couples_check(self.airlines_pairs)
         if self.triples:
             self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
 

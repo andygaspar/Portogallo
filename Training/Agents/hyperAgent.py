@@ -6,6 +6,7 @@ import torch
 from torch import optim
 from Training.Agents.replayMemory import ReplayMemory
 from Training.Agents import flAgent, airAgent
+from Training.masker import Masker
 
 
 class HyperAgent:
@@ -35,23 +36,33 @@ class HyperAgent:
         self.AirReplayMemory = ReplayMemory(self.numAirlines, input_size, size=memory_size)
         self.FlReplayMemory = ReplayMemory(self.numCombs, input_size, size=memory_size)
 
-    def pick_air_action(self, state, eps):
+    def pick_air_action(self, state, eps, masker: Masker):
         if self.trainMode and np.random.rand() < eps:
-            return np.random.choice(self.numAirlines)
+            action = np.random.choice([i for i in range(len(masker.airMask)) if masker.airMask[i] == 1])
+            masker.air_action(action)
+            return action
         scores = self.AirAgent.pick_action(state)
-        action = torch.zeros_like(scores)
-        action[torch.argmax(scores)] = 1
-        return action
+        scores *= masker.airMask.to("cuda")
+        actions = torch.zeros_like(scores)
+        action = torch.argmax(scores)
+        actions[action] = 1
+        masker.air_action(action)
+        return actions
 
-    def pick_fl_action(self, state, eps):
+    def pick_fl_action(self, state, eps, masker:Masker):
         if self.trainMode and np.random.rand() < eps:
-            return np.random.choice(self.numCombs)
+            action = np.random.choice([i for i in range(len(masker.flMask)) if masker.flMask[i] == 1])
+            masker.fl_action(action)
+            return action
         scores = self.FlAgent.pick_action(state)
-        action = torch.zeros_like(scores)
-        action[torch.argmax(scores)] = 1
-        return action
+        scores *= masker.flMask.to("cuda")
+        actions = torch.zeros_like(scores)
+        action = torch.argmax(scores)
+        actions[action] = 1
+        masker.fl_action(action)
+        return actions
 
-    def step(self, state_list: List, eps, last_step=False, train=True):
+    def step(self, state_list: List, eps, last_step=False, masker=None, train=True):
         current_trade = torch.zeros(self.singleTradeSize)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.AirReplayMemory.set_initial_state(state)
@@ -59,42 +70,46 @@ class HyperAgent:
         start = 0
         end = start + self.numAirlines
 
-        air_action = self.pick_air_action(state, eps)
+        air_action = self.pick_air_action(state, eps, masker)
         current_trade[start:end] = air_action
         state[-self.currentTradeSize:] = current_trade
 
         start = end
         end = start + self.numCombs
         self.FlReplayMemory.set_initial_state(state)
-        fl_action = self.pick_fl_action(state, eps)
+        fl_action = self.pick_fl_action(state, eps, masker)
         current_trade[start:end] = fl_action
 
         start = end
         end = start + self.numAirlines
         state[-self.currentTradeSize:] = current_trade
-        self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0, initial=True)
-        air_action = self.pick_air_action(state, eps)
+        self.AirReplayMemory.add_record(next_state=state, action=air_action, mask=masker.airMask, reward=0, initial=True)
+        air_action = self.pick_air_action(state, eps, masker)
         current_trade[start:end] = air_action
 
         start = end
         end = start + self.numCombs
         state[-self.currentTradeSize:] = current_trade
-        self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0, initial=True)
-        fl_action = self.pick_fl_action(state, eps)
+        self.FlReplayMemory.add_record(next_state=state, action=fl_action, mask=masker.flMask, reward=0, initial=True)
+        fl_action = self.pick_fl_action(state, eps, masker)
         current_trade[start:end] = fl_action
+
+        masker.reset()
 
         if not last_step:
             state[-self.currentTradeSize:] = current_trade
-            self.AirReplayMemory.add_record(next_state=state, action=air_action, reward=0)
-            self.FlReplayMemory.add_record(next_state=state, action=fl_action, reward=0)
+            self.AirReplayMemory.add_record(next_state=state, action=air_action,mask=masker.airMask, reward=0)
+            self.FlReplayMemory.add_record(next_state=state, action=fl_action, mask=masker.flMask, reward=0)
             return current_trade
         else:
             state = torch.ones_like(state) * -1
             return current_trade, state, air_action, fl_action
 
-    def assign_end_episode_reward(self, last_state, air_action, fl_action, shared_reward):
-        self.AirReplayMemory.add_record(next_state=last_state, action=air_action, reward=shared_reward, done=1)
-        self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, reward=shared_reward, done=1)
+    def assign_end_episode_reward(self, last_state, air_action, fl_action, air_mask, fl_mask, shared_reward):
+        self.AirReplayMemory.add_record(next_state=last_state, action=air_action, mask=air_mask,
+                                        reward=shared_reward, done=1)
+        self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, mask=fl_mask,
+                                       reward=shared_reward, done=1)
 
     def train(self):
         for i in range(self.trainingsPerStep):

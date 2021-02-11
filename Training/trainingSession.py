@@ -24,7 +24,6 @@ instance = instanceMaker.Instance(triples=False, df=df)
 instance.run()
 
 print(instance.airlines)
-m = masker.Masker(instance)
 print("\n\n\n\n")
 instance.print_performance()
 print(instance.matches[0])

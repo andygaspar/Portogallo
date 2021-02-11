@@ -46,15 +46,16 @@ class AirNet(nn.Module):
     def update_weights(self, batch: tuple, gamma: float=0.9):
         criterion = torch.nn.MSELoss()
 
-        states, next_states, actions, rewards, dones = (element.to(self.device) for element in batch)
+        states, next_states, masks, actions, rewards, dones = (element.to(self.device) for element in batch)
 
 
         self.zero_grad()
         curr_Q = self.forward(states)
-        curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
+        curr_Q = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
 
         with torch.no_grad():
-            next_Q =self.forward(next_states)
+            next_Q = self.forward(next_states)
+            next_Q += masks
             max_next_Q = torch.max(next_Q, 1)[0]
             expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 

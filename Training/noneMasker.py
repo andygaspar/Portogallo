@@ -1,24 +1,18 @@
 import torch
 import numpy as np
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
+from Training.masker import Masker
 
 
-class Masker:
+class NoneMasker(Masker):
 
     def __init__(self, instance):
-        self.instance = instance
-        self.maskDict = self.instance.offerChecker.all_couples_check(self.instance.airlines_pairs, return_info=True)
-        self.airMask = self.initial_air_mask()
-        self.flMask = None
-        self.airAction = []
-        self.flAction = None
+        super().__init__(instance)
+
 
     def initial_air_mask(self):
-        mask = torch.zeros(self.instance.numAirlines)
-        for airline in self.maskDict.keys():
-            if len(self.maskDict[airline][0]) > 0:
-                mask[airline.index] = 1
-        return mask
+        return torch.ones(self.instance.numAirlines)
+
 
     def air_action(self, air_idx):
         if len(self.airAction) == 0:
@@ -32,7 +26,6 @@ class Masker:
         self.flMask = torch.zeros(len(self.airAction[-1].flight_pairs))
         for i in np.unique(fl_idxs):
             self.flMask[i] = 1
-        print("fl in", self.flMask)
 
     def fl_action(self, fl_idx):
         if self.flAction is None:
@@ -42,9 +35,6 @@ class Masker:
             for i in np.unique(airlines_idxs):
                 self.airMask[i] = 1
             self.flAction = fl_idx
-            print(self.airAction[-1], fl_idx)
-            print("air in", self.airMask)
-
         else:
             pass # to implement in case of triples
 

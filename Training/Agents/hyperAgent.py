@@ -38,7 +38,8 @@ class HyperAgent:
 
     def pick_air_action(self, state, eps, masker: Masker):
         if self.trainMode and np.random.rand() < eps:
-            action = np.random.choice([i for i in range(len(masker.airMask)) if masker.airMask[i] == 1])
+            print("air", masker.airMask)
+            action = np.random.choice([i for i in range(len(masker.airMask)) if round(masker.airMask[i].item()) == 1])
             masker.air_action(action)
             return action
         scores = self.AirAgent.pick_action(state)
@@ -46,12 +47,13 @@ class HyperAgent:
         actions = torch.zeros_like(scores)
         action = torch.argmax(scores)
         actions[action] = 1
-        masker.air_action(action)
+        masker.air_action(action.item())
         return actions
 
-    def pick_fl_action(self, state, eps, masker:Masker):
+    def pick_fl_action(self, state, eps, masker: Masker):
         if self.trainMode and np.random.rand() < eps:
-            action = np.random.choice([i for i in range(len(masker.flMask)) if masker.flMask[i] == 1])
+            print("fl", masker.flMask)
+            action = np.random.choice([i for i in range(len(masker.flMask)) if round(masker.flMask[i].item()) == 1])
             masker.fl_action(action)
             return action
         scores = self.FlAgent.pick_action(state)
@@ -59,10 +61,11 @@ class HyperAgent:
         actions = torch.zeros_like(scores)
         action = torch.argmax(scores)
         actions[action] = 1
-        masker.fl_action(action)
+        masker.fl_action(action.item())
         return actions
 
     def step(self, state_list: List, eps, last_step=False, masker=None, train=True):
+        print("\n\n")
         current_trade = torch.zeros(self.singleTradeSize)
         state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
         self.AirReplayMemory.set_initial_state(state)
@@ -98,7 +101,7 @@ class HyperAgent:
 
         if not last_step:
             state[-self.currentTradeSize:] = current_trade
-            self.AirReplayMemory.add_record(next_state=state, action=air_action,mask=masker.airMask, reward=0)
+            self.AirReplayMemory.add_record(next_state=state, action=air_action, mask=masker.airMask, reward=0)
             self.FlReplayMemory.add_record(next_state=state, action=fl_action, mask=masker.flMask, reward=0)
             return current_trade
         else:

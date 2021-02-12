@@ -44,12 +44,11 @@ class Trainer:
                                                   masker.airMask, masker.flMask, shared_reward)
 
     def test_episode(self, schedule_tensor: torch.tensor, instance, eps):
-        masker = Masker(instance)
         self.hyperAgent.trainMode = False
         self.episode(schedule_tensor, instance, eps)
         self.hyperAgent.trainMode = True
 
-    def run(self, num_iterations, df=None, training_start_iteration=10):
+    def run(self, num_iterations, df=None, training_start_iteration=100):
         xp_problem = xp.problem()
         for i in range(training_start_iteration):
             print(i)

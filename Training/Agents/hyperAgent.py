@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import optim
 from Training.Agents.replayMemory import ReplayMemory
-from Training.Agents import flAgent, airAgent
+from Training.Agents import flAgent, airAgent, uniqueNet
 from Training.masker import Masker
 
 
@@ -16,7 +16,7 @@ class HyperAgent:
 
         ETA_info_size = 1
         time_info_size = 1
-        self.singleTradeSize = (num_airlines + num_combs) * 2   # 2 as we are dealing with couples
+        self.singleTradeSize = (num_airlines + num_combs) * 2  # 2 as we are dealing with couples
         self.currentTradeSize = self.singleTradeSize
         self.numCombs = num_combs
         self.numAirlines = num_airlines
@@ -26,11 +26,16 @@ class HyperAgent:
 
         self.weightDecay = weight_decay
 
-        self.AirAgent = airAgent.AirNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
-        self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
+        # self.AirAgent = airAgent.AirNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
+        # self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
+
+        self.AirAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
+                                               num_flights, num_trades, num_combs, num_airlines)
+        self.FlAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
+                                              num_flights, num_trades, num_combs, num_combs)
 
         self.trainMode = train_mode
-        self.trainingsPerStep= trainings_per_step
+        self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
         self.AirReplayMemory = ReplayMemory(self.numAirlines, input_size, size=memory_size)
@@ -83,7 +88,8 @@ class HyperAgent:
         start = end
         end = start + self.numAirlines
         state[-self.currentTradeSize:] = current_trade
-        self.AirReplayMemory.add_record(next_state=state, action=air_action, mask=masker.airMask, reward=0, initial=True)
+        self.AirReplayMemory.add_record(next_state=state, action=air_action, mask=masker.airMask, reward=0,
+                                        initial=True)
         air_action = self.pick_air_action(state, eps, masker)
         current_trade[start:end] = air_action
 

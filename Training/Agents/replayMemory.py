@@ -27,7 +27,7 @@ class ReplayMemory:
         self.actions[self.idx] = action
         self.rewards[self.idx] = reward
         self.done[self.idx] = done
-        self.masks[self.idx] = torch.tensor([-1 if mask[i] == 0 else 0 for i in range(len(mask))])
+        self.masks[self.idx] = mask
 
         self.idx = (self.idx + 1) % self.size
 

@@ -55,7 +55,7 @@ class AirNet(nn.Module):
 
         with torch.no_grad():
             next_Q = self.forward(next_states)
-            next_Q += masks
+            next_Q[masks == 0] = -100
             max_next_Q = torch.max(next_Q, 1)[0]
             expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 

@@ -43,6 +43,6 @@ EPS_DECAY: float = 1000
 eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 3)#30_000)  # np.exp(- 4*i/num_iterations)
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-train.run(500, df, training_start_iteration=500)
+train.run(500_000, df, training_start_iteration=100)
 
 # print(train.episode(instance.get_schedule_tensor()))

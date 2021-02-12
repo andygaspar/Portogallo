@@ -32,7 +32,6 @@ class Masker:
         self.flMask = torch.zeros(len(self.airAction[-1].flight_pairs))
         for i in np.unique(fl_idxs):
             self.flMask[i] = 1
-        print("fl in", self.flMask)
 
     def fl_action(self, fl_idx):
         if self.flAction is None:
@@ -42,8 +41,6 @@ class Masker:
             for i in np.unique(airlines_idxs):
                 self.airMask[i] = 1
             self.flAction = fl_idx
-            print(self.airAction[-1], fl_idx)
-            print("air in", self.airMask)
 
         else:
             pass # to implement in case of triples

@@ -48,29 +48,33 @@ class Trainer:
         self.episode(schedule_tensor, instance, eps)
         self.hyperAgent.trainMode = True
 
-    def run(self, num_iterations, df=None, training_start_iteration=100):
+    def run(self, num_iterations, df=None, training_start_iteration=100, train_t=200):
         xp_problem = xp.problem()
         for i in range(training_start_iteration):
-            print(i)
+            #print(i)
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
             self.episode(schedule, instance, eps=1)
 
+        print('Finished initial exploration')
+
         for i in range(training_start_iteration, num_iterations):
             s = 10_000
-            print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss*s,
-                                                    self.hyperAgent.FlAgent.loss*s, self.eps))
+            #print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss*s,
+            #                                        self.hyperAgent.FlAgent.loss*s, self.eps))
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
             self.eps = self.epsFun(i, num_iterations)
             self.episode(schedule, instance, self.eps)
-            self.hyperAgent.train()
 
-            if i % 25 == 0:
+            if i % train_t == 0:
+                self.hyperAgent.train()
+
+            if i % 500 == 0:
                 self.test_episode(schedule, instance, self.eps)
                 print(instance.matches)
                 instance.print_performance()

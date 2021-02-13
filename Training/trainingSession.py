@@ -38,11 +38,13 @@ hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights,
                                     weight_decay=weight_decay, batch_size=batch_size,
                                     memory_size=memory_size, train_mode=True)
 
+start_training = 1000
 # trainer parameters
 EPS_DECAY: float = 1000
-eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
+#eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
+eps_fun = lambda i, num_iterations: 0.1 if i > start_training else 0.9
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-train.run(500_000, df, training_start_iteration=100)
+train.run(10000, df, training_start_iteration=start_training, train_t=200)
 
 # print(train.episode(instance.get_schedule_tensor()))

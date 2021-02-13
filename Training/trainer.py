@@ -33,6 +33,7 @@ class Trainer:
             trades = self.hyperAgent.step([schedule_tensor, trade_list], eps, masker=masker)
             trade_list[i * trade_size: (i + 1) * trade_size] = trades
 
+
         trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list],
                                                                          eps, masker=masker, last_step=True)
         instance.set_matches(trade_list, self.lengthEpisode, trade_size)

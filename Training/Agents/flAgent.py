@@ -67,7 +67,7 @@ class FlNet(nn.Module):
         torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
         self.optimizer.step()
 
-        if self.loss < self.bestLoss:
-            torch.save(self.state_dict(), "air.pt")
+        # if self.loss < self.bestLoss:
+        #     torch.save(self.state_dict(), "air.pt")
 
 

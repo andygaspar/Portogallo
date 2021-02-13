@@ -31,10 +31,13 @@ print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in
 
 # hyper agent parameters
 weight_decay = 1e-5
-batch_size = 500
+batch_size = 100
 memory_size = 20_000
 
+trainings_per_step = 5
+
 hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
+                                    trainings_per_step=trainings_per_step,
                                     weight_decay=weight_decay, batch_size=batch_size,
                                     memory_size=memory_size, train_mode=True)
 

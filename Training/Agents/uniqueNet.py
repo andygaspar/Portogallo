@@ -29,7 +29,7 @@ class AgentNetwork(nn.Module):
         self.singleTradeSize = (self.numAirlines + self.numCombs) * 2
 
         self.firstConvFlights = nn.Linear(self.flightConvSize, self.flightConvSize * 2).to(self.device)
-        self.secondConvFlights = nn.Linear(self.flightConvSize * 2, 8).to(self.device)
+        self.secondConvFlights = nn.Linear(self.flightConvSize * 2, 4).to(self.device)
 
         self.firstConvTrades = nn.Linear(self.singleTradeSize, self.singleTradeSize * 2).to(self.device)
         self.secondConvTrades = nn.Linear(self.singleTradeSize * 2, 8).to(self.device)
@@ -37,7 +37,7 @@ class AgentNetwork(nn.Module):
         self.firstConvCurrentTrade = nn.Linear(self.singleTradeSize, self.singleTradeSize * 2).to(self.device)
         self.secondConvCurrentTrade = nn.Linear(self.singleTradeSize * 2, 8).to(self.device)
 
-        self.jointInputSize = (self.numFlights + self.numTrades + 1) * 8
+        self.jointInputSize = self.numFlights * 4 + (self.numTrades + 1) * 8
         self.l1 = nn.Linear(self.jointInputSize, self.jointInputSize * 2).to(self.device)
         self.l2 = nn.Linear(self.jointInputSize * 2, self.jointInputSize).to(self.device)
         self.l3 = nn.Linear(self.jointInputSize, int(self.jointInputSize / 2)).to(self.device)

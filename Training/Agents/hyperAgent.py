@@ -26,13 +26,13 @@ class HyperAgent:
 
         self.weightDecay = weight_decay
 
-        # self.AirAgent = airAgent.AirNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
-        # self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
+        self.AirAgent = airAgent.AirNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
+        self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
 
-        self.AirAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
-                                               num_flights, num_trades, num_combs, num_airlines)
-        self.FlAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
-                                              num_flights, num_trades, num_combs, num_combs)
+        # self.AirAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
+        #                                        num_flights, num_trades, num_combs, num_airlines)
+        # self.FlAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
+        #                                       num_flights, num_trades, num_combs, num_combs)
 
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step
@@ -42,26 +42,28 @@ class HyperAgent:
         self.FlReplayMemory = ReplayMemory(self.numCombs, input_size, size=memory_size)
 
     def pick_air_action(self, state, eps, masker: Masker):
+        actions = torch.zeros_like(masker.airMask)
         if self.trainMode and np.random.rand() < eps:
             action = np.random.choice([i for i in range(len(masker.airMask)) if round(masker.airMask[i].item()) == 1])
             masker.air_action(action)
-            return action
+            actions[action] = 1
+            return actions
         scores = self.AirAgent.pick_action(state)
         scores[masker.airMask == 0] = -100
-        actions = torch.zeros_like(scores)
         action = torch.argmax(scores)
         actions[action] = 1
         masker.air_action(action.item())
         return actions
 
     def pick_fl_action(self, state, eps, masker: Masker):
+        actions = torch.zeros_like(masker.flMask)
         if self.trainMode and np.random.rand() < eps:
             action = np.random.choice([i for i in range(len(masker.flMask)) if round(masker.flMask[i].item()) == 1])
             masker.fl_action(action)
-            return action
+            actions[action] = 1
+            return actions
         scores = self.FlAgent.pick_action(state)
         scores[masker.flMask == 0] = -100
-        actions = torch.zeros_like(scores)
         action = torch.argmax(scores)
         actions[action] = 1
         masker.fl_action(action.item())

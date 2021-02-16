@@ -40,7 +40,7 @@ class Trainer:
 
         instance.run()
         # instance.print_performance()
-        shared_reward = - instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts
+        shared_reward = - (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
         self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action,
                                                   masker.airMask, masker.flMask, shared_reward)
 
@@ -60,6 +60,7 @@ class Trainer:
             self.episode(schedule, instance, eps=1)
 
         print('Finished initial exploration')
+        self.hyperAgent.train()
 
         for i in range(training_start_iteration, num_iterations):
             s = 10_000
@@ -75,7 +76,6 @@ class Trainer:
             if i % train_t == 0:
                 self.hyperAgent.train()
 
-            if i % 500 == 0:
                 self.test_episode(schedule, instance, self.eps)
                 print(instance.matches)
                 instance.print_performance()

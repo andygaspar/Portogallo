@@ -1,3 +1,5 @@
+import torch
+
 import trainer
 import masker
 from Agents import hyperAgent
@@ -43,6 +45,11 @@ EPS_DECAY: float = 1000
 eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-train.run(500_000, df, training_start_iteration=100)
+train.run(20, df, training_start_iteration=0)
+
+
+replay = hyper_agent.AirReplayMemory
+replay_df = pd.DataFrame(replay.states.numpy())
+replay_df.to_csv("replay.csv")
 
 # print(train.episode(instance.get_schedule_tensor()))

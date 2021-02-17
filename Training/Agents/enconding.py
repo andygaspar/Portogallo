@@ -34,13 +34,14 @@ class Encoder(nn.Module):
         self.firstConvFlights = nn.Linear(self.flightConvSize, self.flightConvSize * 4).to(self.device)
         self.secondConvFlights = nn.Linear(self.flightConvSize * 4, self.flightConvSize * 8).to(self.device)
         self.thirdConvFlights = nn.Linear(self.flightConvSize * 8, self.flightConvSize * 2).to(self.device)
-        self.fourthConvFlights = nn.Linear(self.flightConvSize * 2, self.flightShrinkSize).to(self.device)
+        self.fourthConvFlights = nn.Linear(self.flightConvSize * 2, self.flightShrinkSize * 2).to(self.device)
+        self.fifthConvFlights = nn.Linear(self.flightShrinkSize * 2, self.flightShrinkSize).to(self.device)
+        self.sixthConvFlights = nn.Linear(self.flightShrinkSize, self.flightShrinkSize).to(self.device)
 
         self.firstConvTrades = nn.Linear(self.singleTradeSize, self.singleTradeSize * 4).to(self.device)
         self.secondConvTrades = nn.Linear(self.singleTradeSize * 4, self.singleTradeSize * 8).to(self.device)
         self.thirdConvTrades = nn.Linear(self.singleTradeSize * 8, self.singleTradeSize * 2).to(self.device)
         self.fourthConvTrades = nn.Linear(self.singleTradeSize * 2, self.tradeShrinkSize).to(self.device)
-
 
         self.firstConvCurrentTrade = nn.Linear(self.singleTradeSize, self.singleTradeSize * 4).to(self.device)
         self.secondConvCurrentTrade = nn.Linear(self.singleTradeSize * 4, self.singleTradeSize * 8).to(self.device)
@@ -49,10 +50,12 @@ class Encoder(nn.Module):
 
         # deconvolution
 
-        self.firstDeConvFlights = nn.Linear(self.flightShrinkSize, self.flightConvSize * 2).to(self.device)
-        self.secondDeConvFlights = nn.Linear(self.flightConvSize * 2, self.flightConvSize * 8).to(self.device)
-        self.thirdDeConvFlights = nn.Linear(self.flightConvSize * 8, self.flightConvSize * 4).to(self.device)
-        self.fourthDeConvFlights = nn.Linear(self.flightConvSize * 4, self.flightConvSize).to(self.device)
+        self.firstDeConvFlights = nn.Linear(self.flightShrinkSize, self.flightShrinkSize).to(self.device)
+        self.secondDeConvFlights = nn.Linear(self.flightShrinkSize, self.flightShrinkSize * 2).to(self.device)
+        self.thirdDeConvFlights = nn.Linear(self.flightShrinkSize * 2, self.flightConvSize * 2).to(self.device)
+        self.fourthDeConvFlights = nn.Linear(self.flightConvSize * 2, self.flightConvSize*8).to(self.device)
+        self.fifthDeConvFlights = nn.Linear(self.flightConvSize * 8, self.flightConvSize*4).to(self.device)
+        self.sixthDeConvFlights = nn.Linear(self.flightConvSize * 4, self.flightConvSize).to(self.device)
 
         self.firstDeConvTrades = nn.Linear(self.tradeShrinkSize, self.singleTradeSize * 2).to(self.device)
         self.secondDeConvTrades = nn.Linear(self.singleTradeSize * 2, self.singleTradeSize*8).to(self.device)
@@ -84,6 +87,8 @@ class Encoder(nn.Module):
         flights = [self.secondConvFlights(flight) for flight in flights]
         flights = [self.thirdConvFlights(flight) for flight in flights]
         flights = [self.fourthConvFlights(flight) for flight in flights]
+        flights = [self.fifthConvFlights(flight) for flight in flights]
+        flights = [self.sixthConvFlights(flight) for flight in flights]
         flights = torch.cat(flights, dim=-1)
 
         trades = [self.firstConvTrades(trade) for trade in trades]
@@ -111,6 +116,8 @@ class Encoder(nn.Module):
         flights = [self.secondDeConvFlights(flight) for flight in flights]
         flights = [self.thirdDeConvFlights(flight) for flight in flights]
         flights = [self.fourthDeConvFlights(flight) for flight in flights]
+        flights = [self.fifthDeConvFlights(flight) for flight in flights]
+        flights = [self.sixthDeConvFlights(flight) for flight in flights]
         flights = torch.cat(flights, dim=-1)
 
         trades = [self.firstDeConvTrades(trade) for trade in trades]
@@ -123,8 +130,9 @@ class Encoder(nn.Module):
         current_trade = self.secondDeConvCurrentTrade(current_trade)
         current_trade = self.thirdDeConvCurrentTrade(current_trade)
         current_trade = self.fourthDeConvCurrentTrade(current_trade)
+        x = torch.cat([flights, trades, current_trade], dim=-1)
 
-        return torch.cat([flights, trades, current_trade], dim=-1)
+        return flights
 
 
 
@@ -140,11 +148,14 @@ class Encoder(nn.Module):
         criterion = torch.nn.MSELoss()
 
         Y_train = X.clone()
+        flights, trades, current_trade = torch.split(Y_train, [self.flightConvSize * self.numFlights,
+                                                             self.singleTradeSize * self.numTrades,
+                                                             self.singleTradeSize], dim=-1)
         for i in range(1):
             self.zero_grad()
             Y = self.forward(X)
 
-            loss = criterion(Y_train, Y)  # .detach()
+            loss = criterion(flights, Y)  # .detach()
             self.loss = loss.item()
             self.optimizer.zero_grad()
 

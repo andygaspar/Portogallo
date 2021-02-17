@@ -88,7 +88,7 @@ class Instance(istop.Istop):
         return [flight for flight in self.flights if flight.airline != airline]
 
     def get_schedule_tensor(self) -> torch.tensor:
-        schedule_tensor = torch.zeros((self.numFlights, 2 + self.numAirlines + len(self.flightTypeDict.keys())))
+        schedule_tensor = torch.zeros((self.numFlights, self.numAirlines + len(self.flightTypeDict.keys()) + 2))
         for i in range(self.numFlights):
             schedule_tensor[i, self.airDict[self.flights[i].airline.name]] = 1
             schedule_tensor[i, self.numAirlines + self.flightTypeDict[self.flights[i].type]] = 1

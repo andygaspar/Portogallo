@@ -7,7 +7,8 @@ from Training.Agents.enconding import Encoder
 
 df = pd.read_csv("replay.csv")
 print(df)
-data = torch.tensor(df.values[:, 1:], dtype=torch.float).to("cuda:0")[:1000]
+data = torch.tensor(df.values[:, 1:], dtype=torch.float).to("cuda:0")[:300]
+
 num_flight_types = len(CostFuns().flightTypeDict)
 num_trades = 6
 num_airlines = 4
@@ -28,7 +29,7 @@ lr = 1e-4
 weight_decay = 1e-5
 output_size = 3
 
-sample_size = 500
+sample_size = 100
 
 enc = Encoder(input_size, lr, weight_decay, num_flight_types, num_airlines, num_flights, num_trades, num_combs, output_size)
 

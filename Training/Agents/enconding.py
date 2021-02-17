@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class Encoder(nn.Module):
-    def __init__(self, input_size, weight_decay, num_flight_types, num_airlines,
+    def __init__(self, input_size,lr,  weight_decay, num_flight_types, num_airlines,
                  num_flights, num_trades, num_combs, output_size):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -54,7 +54,7 @@ class Encoder(nn.Module):
         # self.l3 = nn.Linear(self.jointInputSize, int(self.jointInputSize / 2)).to(self.device)
         # self.l4 = nn.Linear(int(self.jointInputSize / 2), self.outputSize).to(self.device)
 
-        self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
+        self.optimizer = optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
 
     def forward(self, state):
         flights, trades, current_trade = torch.split(state, [self.flightConvSize * self.numFlights,
@@ -108,21 +108,15 @@ class Encoder(nn.Module):
 
         return action
 
-    def update_weights(self, batch: tuple, gamma: float = 0.9):
+    def update_weights(self, X: torch.tensor, gamma: float = 0.9):
         criterion = torch.nn.MSELoss()
 
-        states, next_states, masks, actions, rewards, dones = (element.to(self.device) for element in batch)
-
-        for i in range(10):
+        Y_train = X.clone()
+        for i in range(1):
             self.zero_grad()
-            curr_Q = self.forward(states)
-            curr_Q = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
-            next_Q = self.forward(next_states)
-            next_Q[masks == 0] = -100
-            max_next_Q = torch.max(next_Q, 1)[0]
-            expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
+            Y = self.forward(X)
 
-            loss = criterion(curr_Q, expected_Q)  # .detach()
+            loss = criterion(Y_train, Y)  # .detach()
             self.loss = loss.item()
             self.optimizer.zero_grad()
 

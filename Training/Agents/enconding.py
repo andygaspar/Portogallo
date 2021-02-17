@@ -22,8 +22,8 @@ class Encoder(nn.Module):
         self.numTrades = num_trades
         self.loss = 0
 
-        self.flightShrinkSize = 8
-        self.tradeShrinkSize = 8
+        self.flightShrinkSize = 16
+        self.tradeShrinkSize = 16
 
         ETA_info_size = 1
         time_info_size = 1

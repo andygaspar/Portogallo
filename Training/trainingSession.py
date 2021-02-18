@@ -3,6 +3,7 @@ import torch
 import trainer
 import masker
 from Agents import hyperAgent
+from Agents import hyperAttentiveAgent
 import instanceMaker
 import pandas as pd
 from ModelStructure.Costs.costFunctionDict import CostFuns
@@ -32,20 +33,39 @@ print(instance.matches[0])
 print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches])
 
 # hyper agent parameters
-weight_decay = 1e-5
-batch_size = 500
+weight_decay = 1e-4
+batch_size = 1024
 memory_size = 20_000
 
-hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
+hyper_agent = hyperAttentiveAgent.attentiveHyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
                                     weight_decay=weight_decay, batch_size=batch_size,
                                     memory_size=memory_size, train_mode=True)
+#hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
+#                                    weight_decay=weight_decay, batch_size=batch_size,
+#                                    memory_size=memory_size, train_mode=True)
 
+start_training = 1000
 # trainer parameters
 EPS_DECAY: float = 1000
-eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
+#eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
+eps_fun = lambda i, num_iterations: 0.1 if i > start_training else 1
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-train.run(20, df, training_start_iteration=0)
+train.run(2500, df, training_start_iteration=start_training, train_t=200)
+
+for g in hyper_agent.AirAgent.optimizer.param_groups:
+    g['lr'] = 0.001
+for g in hyper_agent.FlAgent.optimizer.param_groups:
+    g['lr'] = 0.001
+
+train.run(2500, df, training_start_iteration=1000, train_t=200)
+
+for g in hyper_agent.AirAgent.optimizer.param_groups:
+    g['lr'] = 0.00001
+for g in hyper_agent.FlAgent.optimizer.param_groups:
+    g['lr'] = 0.00001
+
+train.run(2500, df, training_start_iteration=1000, train_t=200)
 
 
 replay = hyper_agent.AirReplayMemory

@@ -1,3 +1,5 @@
+import torch
+
 import trainer
 import masker
 from Agents import hyperAgent
@@ -64,5 +66,10 @@ for g in hyper_agent.FlAgent.optimizer.param_groups:
     g['lr'] = 0.00001
 
 train.run(2500, df, training_start_iteration=1000, train_t=200)
+
+
+replay = hyper_agent.AirReplayMemory
+replay_df = pd.DataFrame(replay.states.numpy())
+replay_df.to_csv("replay.csv")
 
 # print(train.episode(instance.get_schedule_tensor()))

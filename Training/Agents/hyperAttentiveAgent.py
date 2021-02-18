@@ -25,8 +25,8 @@ class attentiveHyperAgent:
 
         self.weightDecay = weight_decay
 
-        l_rate = 1e-3
-        hidden_dim = 32
+        l_rate = 1e-2
+        hidden_dim = 64
 
         self.AirAgent = attentionAgent.attentionNet(num_airlines, hidden_dim, schedule_entry_size, self.singleTradeSize, num_flights, num_trades, l_rate, weight_decay=1e-4)
         self.FlAgent = attentionAgent.attentionNet(num_combs, hidden_dim, schedule_entry_size, self.singleTradeSize, num_flights, num_trades, l_rate, weight_decay=1e-4)

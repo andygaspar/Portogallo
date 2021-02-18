@@ -28,25 +28,27 @@ class attentionNet(nn.Module):
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
-                                                nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False)).to(self.device)
 
         self.trade_embedding = nn.Sequential(nn.Linear(self.trade_size, self.hidden_dim),
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim),
                                                 nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, self.hidden_dim),
-                                                nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim)).to(self.device)
 
-        self.value_net = nn.Sequential(nn.Linear(3*self.hidden_dim, self.hidden_dim),
+        #self.value_net = nn.Sequential(nn.Linear(3*self.hidden_dim, self.hidden_dim),
+        self.value_net = nn.Sequential(nn.Linear(2*self.hidden_dim, self.hidden_dim),
+                                       nn.ReLU(),
+                                       nn.Linear(self.hidden_dim, self.hidden_dim),
                                        nn.ReLU(),
                                        nn.Linear(self.hidden_dim, self.hidden_dim),
                                        nn.ReLU(),
                                        nn.Linear(self.hidden_dim, self.hidden_dim),
                                        nn.ReLU(),
                                        nn.Linear(self.hidden_dim, self.output_dim)).to(self.device)
+
+        self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
+        self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
 
         params = list(self.schedule_embedding.parameters()) + list(self.trade_embedding.parameters()) + list(self.value_net.parameters())
 
@@ -74,7 +76,7 @@ class attentionNet(nn.Module):
         schedules_attention = torch.matmul(schedules_e.transpose(1, 2), schedules_w).to(self.device)
 
         value_in = torch.cat((schedules_attention, trades_attention), dim=1).transpose(1,2).squeeze(1).to(self.device)
-        value_in = torch.cat((value_in, current_trades_e), dim = 1).to(self.device)
+        #value_in = torch.cat((value_in, current_trades_e), dim = 1).to(self.device)
 
         return self.value_net(value_in).squeeze()
 
@@ -100,12 +102,12 @@ class attentionNet(nn.Module):
 
         with torch.no_grad():
             next_Q = self.forward(next_states)
-            next_Q[masks == 0] = -1
+            next_Q[masks == 0] = -float('inf')
             max_next_Q = torch.max(next_Q, 1)[0]
             expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 
-        loss = criterion(curr_Q, expected_Q)  #.detach()
-        self.loss = loss.item()
+        loss = criterion(curr_Q, expected_Q)
+        self.loss = self.loss*0.9 + 0.1*loss.item()
         self.optimizer.zero_grad()
 
         loss.backward()
@@ -116,29 +118,3 @@ class attentionNet(nn.Module):
         if self.loss < self.bestLoss:
             torch.save(self.state_dict(), "air.pt")
 
-    #
-    #   super().__init__()
-    #   self.convSchedule = nn.Linear(21, 4)
-    #   self.
-    #   self.convSchedule = nn.Linear(5, 1)
-    #
-    #   self.tradesConv1 = nn.Linear()
-    #
-    #   self.fc1 = nn.Linear(20, 64)
-    #   self.fc2 = nn.Linear(64, 4)
-    #
-    # def forward(self, air, others, trades):
-    #
-    #   first_conv_out = torch.split(air, [17 for _ in range(5)], dim=-1)
-    #   second_conv_out = [F.relu(self.convAir1(t)) for t in first_conv_out]
-    #   to_merge = torch.cat([F.relu(self.convAir2(t)) for t in second_conv_out], dim=-1)
-    #
-    #   first_conv_out = torch.split(others, [21 for _ in range(15)], dim=-1)
-    #   second_conv_out = [F.relu(self.convOthers1(t)) for t in first_conv_out]
-    #   to_merge1 = torch.cat([F.relu(self.convOthers2(t)) for t in second_conv_out], dim=-1)
-    #
-    #   merged_tensor = torch.cat((to_merge, to_merge1), dim=-1)
-    #
-    #   out = F.relu(self.fc1(merged_tensor))
-    #
-    #   # return self.fc2(out)

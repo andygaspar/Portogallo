@@ -31,7 +31,7 @@ print(instance.matches[0])
 print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches])
 
 # hyper agent parameters
-weight_decay = 1e-2
+weight_decay = 1e-4
 batch_size = 1024
 memory_size = 20_000
 
@@ -46,9 +46,23 @@ start_training = 1000
 # trainer parameters
 EPS_DECAY: float = 1000
 #eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
-eps_fun = lambda i, num_iterations: 0.1 if i > start_training else 0.9
+eps_fun = lambda i, num_iterations: 0.1 if i > start_training else 1
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-train.run(5000, df, training_start_iteration=start_training, train_t=200)
+train.run(2500, df, training_start_iteration=start_training, train_t=200)
+
+for g in hyper_agent.AirAgent.optimizer.param_groups:
+    g['lr'] = 0.001
+for g in hyper_agent.FlAgent.optimizer.param_groups:
+    g['lr'] = 0.001
+
+train.run(2500, df, training_start_iteration=1000, train_t=200)
+
+for g in hyper_agent.AirAgent.optimizer.param_groups:
+    g['lr'] = 0.00001
+for g in hyper_agent.FlAgent.optimizer.param_groups:
+    g['lr'] = 0.00001
+
+train.run(2500, df, training_start_iteration=1000, train_t=200)
 
 # print(train.episode(instance.get_schedule_tensor()))

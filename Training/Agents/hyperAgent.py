@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import optim
 from Training.Agents.replayMemory import ReplayMemory
-from Training.Agents import flAgent, airAgent, uniqueNet
+from Training.Agents import flAgent, airAgent
 from Training.masker import Masker
 
 

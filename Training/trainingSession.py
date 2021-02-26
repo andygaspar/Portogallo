@@ -15,6 +15,8 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 
 
 # problem's parameters
+from Training.noneMasker import NoneMasker
+
 num_flight_types = len(CostFuns().flightTypeDict)
 num_trades = 6
 num_airlines = 4
@@ -30,7 +32,8 @@ print(instance.airlines)
 print("\n\n\n\n")
 instance.print_performance()
 print(instance.matches[0])
-print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches])
+print("all feasible matches:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches])
+print("solution:", instance.offers_selected)
 
 # hyper agent parameters
 WEIGHT_DECAY = 1e-4
@@ -48,11 +51,13 @@ hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airl
 # trainer parameters
 START_TRAINING = 100
 EPS_DECAY: float = 1000
-MIN_REWARD = -1000
+MIN_REWARD = -100000
 
 
 #eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
 eps_fun = lambda i, num_iterations: 0.1 if i > START_TRAINING else 1
+
+# masker = NoneMasker
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY)

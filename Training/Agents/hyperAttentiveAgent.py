@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import optim
 from Training.Agents.replayMemory import ReplayMemory
-from Training.Agents import flAgent, airAgent, uniqueNet, attentionAgent
+from Training.Agents import flAgent, airAgent, attentionAgent
 from Training.masker import Masker
 
 
@@ -25,7 +25,7 @@ class AttentiveHyperAgent:
 
         self.weightDecay = weight_decay
 
-        l_rate = 1e-2
+        l_rate = 1e-3
         hidden_dim = 64
 
         self.AirAgent = attentionAgent.attentionNet(num_airlines, hidden_dim, schedule_entry_size, self.singleTradeSize,

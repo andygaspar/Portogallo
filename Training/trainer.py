@@ -21,19 +21,21 @@ from Training.masker import Masker
 class Trainer:
 
     def __init__(self, hyper_agent: Union[HyperAgent, AttentiveHyperAgent], length_episode, eps_fun, min_reward=-1000,
-                 eps_decay=100):
+                 eps_decay=100, masker=Masker):
         self.hyperAgent = hyper_agent
         self.lengthEpisode = length_episode
         self.eps = 1
         self.epsDecay = eps_decay  # not used yet
         self.epsFun = eps_fun
 
+        self.Masker = masker
+
         self.k = min_reward
-        self.a = np.exp(self.k) / (1 + np.exp(self.k))
-        self.b = -np.log(1 / (1 + np.exp(self.k)))
+        self.a = np.exp(self.k) / (1 - np.exp(self.k))
+        self.b = -np.log(1 / (1 - np.exp(self.k)))
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
-        masker = Masker(instance)
+        masker = self.Masker(instance)
         trade_size = self.hyperAgent.singleTradeSize
         trade_list = torch.zeros(trade_size * self.lengthEpisode)
         for i in range(self.lengthEpisode):
@@ -45,9 +47,11 @@ class Trainer:
         instance.set_matches(trade_list, self.lengthEpisode, trade_size)
 
         instance.run()
-        # instance.print_performance()
+        instance.print_performance()
+        print(instance.compute_costs(instance.flights, which="final"), instance.initialTotalCosts)
         shared_reward = mt.log(1 - instance.compute_costs(instance.flights, which="final") /
                                instance.initialTotalCosts + self.a) + self.b
+        print(shared_reward)
         # shared_reward = -10000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
         self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action,
                                                   masker.airMask, masker.flMask, shared_reward)
@@ -63,6 +67,7 @@ class Trainer:
             print(i)
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
+
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
             self.episode(schedule, instance, eps=1)

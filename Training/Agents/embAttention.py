@@ -5,7 +5,7 @@ from torch import optim
 import torch.nn.functional as F
 
 
-class Encoder(nn.Module):
+class EncoderAttention(nn.Module):
     def __init__(self, input_size,lr,  weight_decay, num_flight_types, num_airlines,
                  num_flights, num_trades, num_combs, output_size):
         super().__init__()
@@ -112,14 +112,14 @@ class Encoder(nn.Module):
         # flights = [self.sixthConvFlights(flight) for flight in flights]
         flights = torch.cat(flights, dim=-1)
 
-        trades = [self.firstConvTrades(trade) for trade in trades]
-        trades = [self.secondConvTrades(trade) for trade in trades]
-        trades = [self.thirdConvTrades(trade) for trade in trades]
-        trades = [self.fourthConvTrades(trade) for trade in trades]
-        trades = torch.cat(trades, dim=-1)
+        # trades = [self.firstConvTrades(trade) for trade in trades]
+        # trades = [self.secondConvTrades(trade) for trade in trades]
+        # trades = [self.thirdConvTrades(trade) for trade in trades]
+        # trades = [self.fourthConvTrades(trade) for trade in trades]
+        # trades = torch.cat(trades, dim=-1)
 
-        current_trade = self.firstConvCurrentTrade(current_trade)
-        current_trade = self.secondConvCurrentTrade(current_trade)
+        # current_trade = self.firstConvCurrentTrade(current_trade)
+        # current_trade = self.secondConvCurrentTrade(current_trade)
         # current_trade = self.thirdConvCurrentTrade(current_trade)
         # current_trade = self.fourthConvCurrentTrade(current_trade)
 

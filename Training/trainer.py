@@ -80,7 +80,7 @@ class Trainer:
             self.episode(schedule, instance, self.eps)
             print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss * s,
                                                     self.hyperAgent.FlAgent.loss * s, self.eps))
-
+            self.hyperAgent.train()
             if i % train_t == 0:
                 self.hyperAgent.train()
 

@@ -78,6 +78,8 @@ class Trainer:
             num_airlines = instance.numAirlines
             self.eps = self.epsFun(i, num_iterations)
             self.episode(schedule, instance, self.eps)
+            print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss * s,
+                                                    self.hyperAgent.FlAgent.loss * s, self.eps))
 
             if i % train_t == 0:
                 self.hyperAgent.train()
@@ -85,8 +87,8 @@ class Trainer:
                 self.test_episode(schedule, instance, self.eps)
                 print(instance.matches)
                 instance.print_performance()
-                print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss * s,
-                                                        self.hyperAgent.FlAgent.loss * s, self.eps))
+                # print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss * s,
+                #                                         self.hyperAgent.FlAgent.loss * s, self.eps))
 
     # to do
     def compute_air_reward(self):

@@ -46,7 +46,7 @@ hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airl
 
 
 # trainer parameters
-START_TRAINING = 10
+START_TRAINING = 1000
 EPS_DECAY: float = 1000
 MIN_REWARD = -1000
 

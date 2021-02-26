@@ -9,7 +9,7 @@ from Training.Agents import flAgent, airAgent, uniqueNet, attentionAgent
 from Training.masker import Masker
 
 
-class attentiveHyperAgent:
+class AttentiveHyperAgent:
 
     def __init__(self, num_flight_types, num_airlines, num_flights, num_trades, num_combs, weight_decay,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
@@ -28,8 +28,10 @@ class attentiveHyperAgent:
         l_rate = 1e-2
         hidden_dim = 64
 
-        self.AirAgent = attentionAgent.attentionNet(num_airlines, hidden_dim, schedule_entry_size, self.singleTradeSize, num_flights, num_trades, l_rate, weight_decay=1e-4)
-        self.FlAgent = attentionAgent.attentionNet(num_combs, hidden_dim, schedule_entry_size, self.singleTradeSize, num_flights, num_trades, l_rate, weight_decay=1e-4)
+        self.AirAgent = attentionAgent.attentionNet(num_airlines, hidden_dim, schedule_entry_size, self.singleTradeSize,
+                                                    num_flights, num_trades, l_rate, weight_decay=1e-4)
+        self.FlAgent = attentionAgent.attentionNet(num_combs, hidden_dim, schedule_entry_size, self.singleTradeSize,
+                                                   num_flights, num_trades, l_rate, weight_decay=1e-4)
 
         # self.AirAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
         #                                        num_flights, num_trades, num_combs, num_airlines)
@@ -123,7 +125,9 @@ class attentiveHyperAgent:
 
     def train(self):
         for i in range(self.trainingsPerStep):
-            air_batch = self.AirReplayMemory.sample(self.batchSize)
-            fl_batch = self.FlReplayMemory.sample(self.batchSize)
-            self.AirAgent.update_weights(air_batch)
-            self.FlAgent.update_weights(fl_batch)
+            air_batch, air_idxs = self.AirReplayMemory.sample(self.batchSize)
+            fl_batch, fl_idxs = self.FlReplayMemory.sample(self.batchSize)
+            air_loss = self.AirAgent.update_weights(air_batch)
+            fl_loss = self.FlAgent.update_weights(fl_batch)
+            self.AirReplayMemory.update_losses(air_idxs, air_loss)
+            self.FlReplayMemory.update_losses(fl_idxs, fl_loss)

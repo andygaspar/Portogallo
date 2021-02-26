@@ -118,3 +118,5 @@ class attentionNet(nn.Module):
         if self.loss < self.bestLoss:
             torch.save(self.state_dict(), "air.pt")
 
+        return loss
+

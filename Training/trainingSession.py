@@ -33,25 +33,30 @@ print(instance.matches[0])
 print("the solution should be:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches])
 
 # hyper agent parameters
-weight_decay = 1e-4
-batch_size = 1024
-memory_size = 20_000
+WEIGHT_DECAY = 1e-4
+BATCH_SIZE = 1024
+MEMORY_SIZE = 20_000
 
-hyper_agent = hyperAttentiveAgent.attentiveHyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
-                                    weight_decay=weight_decay, batch_size=batch_size,
-                                    memory_size=memory_size, train_mode=True)
+hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
+                                                      weight_decay=WEIGHT_DECAY, batch_size=BATCH_SIZE,
+                                                      memory_size=MEMORY_SIZE, train_mode=True)
 #hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
 #                                    weight_decay=weight_decay, batch_size=batch_size,
 #                                    memory_size=memory_size, train_mode=True)
 
-start_training = 1000
-# trainer parameters
-EPS_DECAY: float = 1000
-#eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
-eps_fun = lambda i, num_iterations: 0.1 if i > start_training else 1
 
-train = trainer.Trainer(hyper_agent, length_episode=num_trades, eps_fun=eps_fun, eps_decay=EPS_DECAY)
-train.run(2500, df, training_start_iteration=start_training, train_t=200)
+# trainer parameters
+START_TRAINING = 10
+EPS_DECAY: float = 1000
+MIN_REWARD = -1000
+
+
+#eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
+eps_fun = lambda i, num_iterations: 0.1 if i > START_TRAINING else 1
+
+train = trainer.Trainer(hyper_agent, length_episode=num_trades,
+                        eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY)
+train.run(2500, df, training_start_iteration=START_TRAINING, train_t=10)
 
 for g in hyper_agent.AirAgent.optimizer.param_groups:
     g['lr'] = 0.001

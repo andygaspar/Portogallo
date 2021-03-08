@@ -47,11 +47,14 @@ class Trainer:
         instance.set_matches(trade_list, self.lengthEpisode, trade_size)
 
         instance.run()
-        instance.print_performance()
-        print(instance.compute_costs(instance.flights, which="final"), instance.initialTotalCosts)
-        shared_reward = mt.log(1 - instance.compute_costs(instance.flights, which="final") /
-                               instance.initialTotalCosts + self.a) + self.b
-        print(shared_reward)
+        # instance.print_performance()
+        # print(instance.compute_costs(instance.flights, which="final") / instance.initialTotalCosts)
+        # shared_reward = mt.log(1 - instance.compute_costs(instance.flights, which="final") /
+        #                        instance.initialTotalCosts + self.a) + self.b
+        shared_reward = - (1 - instance.compute_costs(instance.flights, which="final") / instance.initialTotalCosts) \
+                        * self.k / 0.04 + self.k
+
+        # print(shared_reward)
         # shared_reward = -10000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
         self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action,
                                                   masker.airMask, masker.flMask, shared_reward)
@@ -83,8 +86,8 @@ class Trainer:
             num_airlines = instance.numAirlines
             self.eps = self.epsFun(i, num_iterations)
             self.episode(schedule, instance, self.eps)
-            print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss * s,
-                                                    self.hyperAgent.FlAgent.loss * s, self.eps))
+            print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss,
+                                                    self.hyperAgent.FlAgent.loss, self.eps))
             self.hyperAgent.train()
             if i % train_t == 0:
                 self.hyperAgent.train()

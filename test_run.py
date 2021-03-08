@@ -36,7 +36,7 @@ for i in range(0, 1):
     max_model = nnBound.NNBoundModel(df_NNB, costFun)
     max_model.run()
     max_model.print_performance()
-
+    max_model.m.write("problem", "lp")
 
     print("UDPP Opt from FPFS")
     udpp_model_xp = udppModel.UDPPmodel(df_UDPP, costFun)

@@ -45,11 +45,13 @@ class Instance(istop.Istop):
 
         super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples, xp_problem=self.xp_problem)
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
+        _, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
 
 
     def set_matches(self, matches: torch.tensor, num_trades, single_trade_len):
+        self.matches = []
         for i in range(num_trades):
             start = i * single_trade_len
             end = start + self.numAirlines
@@ -86,7 +88,7 @@ class Instance(istop.Istop):
         return [flight for flight in self.flights if flight.airline != airline]
 
     def get_schedule_tensor(self) -> torch.tensor:
-        schedule_tensor = torch.zeros((self.numFlights, 2 + self.numAirlines + len(self.flightTypeDict.keys())))
+        schedule_tensor = torch.zeros((self.numFlights, self.numAirlines + len(self.flightTypeDict.keys()) + 2))
         for i in range(self.numFlights):
             schedule_tensor[i, self.airDict[self.flights[i].airline.name]] = 1
             schedule_tensor[i, self.numAirlines + self.flightTypeDict[self.flights[i].type]] = 1

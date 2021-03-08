@@ -52,15 +52,22 @@ class OfferChecker(object):
                                           ctypes.c_short(self.triples.shape[1]),
                                           ctypes.c_short(self.numProcs))
 
-    def air_couple_check(self, air_pair):
+    def air_couple_check(self, air_pair, return_info=False):
         fl_pair_a = air_pair[0].flight_pairs
         fl_pair_b = air_pair[1].flight_pairs
+        len_a = len(fl_pair_a)
+        len_b = len(fl_pair_b)
 
-        air_pairs = []
+        trades = []
         input_vect = []
+
+        trade_indexes_a = []
+        trade_indexes_b = []
+        #trade index
+
         for pairA in fl_pair_a:
             for pairB in fl_pair_b:
-                air_pairs.append([pairA, pairB])
+                trades.append([pairA, pairB])
                 input_vect += [fl.slot.index for fl in pairA] + [fl.slot.index for fl in pairB]
 
         len_array = int(len(input_vect) / 4)
@@ -71,18 +78,53 @@ class OfferChecker(object):
             answer = self.lib.air_couple_check_(ctypes.c_void_p(self.obj),
                                                 ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
 
-            return [air_pairs[i] for i in range(len_array) if answer[i]]
+            if not return_info:
+                return [trades[i] for i in range(len_array) if answer[i]], list(answer)
+            else:
+                return [i for i in range(len_a) for j in range(len_b) if answer[i * len_b + j]], \
+                       [j for i in range(len_a) for j in range(len_b) if answer[i * len_b + j]]
         else:
-            return []
+            if not return_info:
+                return [], [0 for _ in range(len_array)]
+            else:
+                return [], []
 
-    def all_couples_check(self, airlines_pairs):
+    def all_couples_check(self, airlines_pairs, return_info=False):
         matches = []
-        for air_pair in airlines_pairs:
-            match = self.air_couple_check(air_pair)
-            if len(match) > 0:
-                matches += match
+        matches_vect = []
+        if not return_info:
+            for air_pair in airlines_pairs:
+                match, match_vect = self.air_couple_check(air_pair)
+                if len(match) > 0:
+                    matches += match
+                matches_vect += match_vect
+            return matches, matches_vect
+        else:
+            air_trade_dict = {}
+            for air_pair in airlines_pairs:
+                air_a_trade_idx, air_b_trade_idx = self.air_couple_check(air_pair, return_info)
+                if len(air_a_trade_idx) > 0:
+                    if air_pair[0] in air_trade_dict.keys():
+                        air_trade_dict[air_pair[0]][0] += [air_pair[1].index for _ in range(len(air_a_trade_idx))]
+                        air_trade_dict[air_pair[0]][1] += air_a_trade_idx
+                        air_trade_dict[air_pair[0]][2] += air_b_trade_idx
+                    else:
+                        air_trade_dict[air_pair[0]] = \
+                            [[air_pair[1].index for _ in range(len(air_a_trade_idx))],
+                             copy.copy(air_b_trade_idx), copy.copy(air_a_trade_idx)]
+                    if air_pair[1] in air_trade_dict.keys():
+                        air_trade_dict[air_pair[1]][0] += [air_pair[0].index for _ in range(len(air_b_trade_idx))]
+                        air_trade_dict[air_pair[1]][1] += air_b_trade_idx
+                        air_trade_dict[air_pair[1]][2] += air_a_trade_idx
+                    else:
+                        air_trade_dict[air_pair[1]] = \
+                            [[air_pair[0].index for _ in range(len(air_b_trade_idx))],
+                             copy.copy(air_b_trade_idx), copy.copy(air_a_trade_idx)]
+            return air_trade_dict
 
-        return matches
+# [[(FA6, FA12), (FB9, FB14)], [(FA6, FA12), (FD4, FD10)], [(FB1, FB5), (FC2, FC11)], [(FC3, FC11), (FD7, FD15)], [(FC2, FC11), (FD7, FD15)], [(FC11, FC8), (FD7, FD15)]]
+
+
 
     def air_triple_check(self, air_triple):
         fl_pair_a = air_triple[0].flight_pairs

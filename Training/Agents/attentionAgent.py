@@ -133,11 +133,12 @@ class attentionNet(nn.Module):
             expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 
         loss = criterion(curr_Q, expected_Q)
-        self.loss = self.loss*0.9 + 0.1*loss.item()
+        # self.loss = self.loss*0.9 + 0.1*loss.item()
+        self.loss = loss.item()
         self.optimizer.zero_grad()
 
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
+        torch.nn.utils.clip_grad_norm_(self.parameters(), 0.2)
         self.optimizer.step()
 
 

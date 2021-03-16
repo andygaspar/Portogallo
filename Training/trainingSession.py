@@ -16,6 +16,10 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 
 # problem's parameters
 from Training.noneMasker import NoneMasker
+import random
+
+random.seed(0)
+torch.manual_seed(0)
 
 num_flight_types = len(CostFuns().flightTypeDict)
 num_trades = 6
@@ -36,9 +40,9 @@ print("all feasible matches:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in i
 print("solution:", instance.offers_selected)
 
 # hyper agent parameters
-WEIGHT_DECAY = 1e-4
+WEIGHT_DECAY = 1e-5
 BATCH_SIZE = 1024
-MEMORY_SIZE = 20_000
+MEMORY_SIZE = 200_000
 
 hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
                                                       weight_decay=WEIGHT_DECAY, batch_size=BATCH_SIZE,
@@ -49,7 +53,7 @@ hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airl
 
 
 # trainer parameters
-START_TRAINING = 2
+START_TRAINING = 20
 EPS_DECAY: float = 1000
 MIN_REWARD = -100
 

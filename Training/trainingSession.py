@@ -53,13 +53,14 @@ hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airl
 
 
 # trainer parameters
-START_TRAINING = 20
+START_TRAINING = 2
 EPS_DECAY: float = 1000
 MIN_REWARD = -100
+ITERATIONS = 2500
 
 
-#eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
-eps_fun = lambda i, num_iterations: 0.1 if i > START_TRAINING else 1
+eps_fun = lambda i, num_iterations: max(0.05, 1 - i / ITERATIONS)  # np.exp(- 4*i/num_iterations)
+# eps_fun = lambda i, num_iterations: 0.1 if i > START_TRAINING else 1
 
 # masker = NoneMasker
 

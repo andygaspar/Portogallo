@@ -5,12 +5,15 @@ from torch import optim
 import torch.nn.functional as F
 import sys
 import numpy
+
 numpy.set_printoptions(threshold=sys.maxsize)
 
 sMax = nn.Softmax(dim=1)
 
+
 class attentionNet(nn.Module):
-    def __init__(self, output_dim, hidden_dim, schedule_entry_size, trade_size, n_entries, n_trades, l_rate, weight_decay=1e-4):
+    def __init__(self, output_dim, hidden_dim, schedule_entry_size, trade_size, n_entries, n_trades, l_rate,
+                 weight_decay=1e-4):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
@@ -21,6 +24,7 @@ class attentionNet(nn.Module):
         self.schedule_len = self.schedule_entry_size * n_entries
         self.trade_size = trade_size
         self.trades_len = self.schedule_len + self.trade_size * n_trades
+        self.singleTradeOutput = 2
         self.loss = 0
         self.bestLoss = 100_000_000
 
@@ -45,35 +49,57 @@ class attentionNet(nn.Module):
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False)).to(self.device)
 
-        # self.firstConvTrades = nn.Linear(self.singleTradeSize, self.singleTradeSize * 2).to(self.device)
-        # self.secondConvTrades = nn.Linear(self.singleTradeSize * 2, 8).to(self.device)
+        # self.firstConvTrades = nn.Linear(self.singleTradeSize, self.singleTradeSize * 4).to(self.device)
+        # self.secondConvTrades = nn.Linear(self.singleTradeSize * 4, self.singleTradeSize * 8).to(self.device)
+        # self.thirdConvTrades = nn.Linear(self.singleTradeSize * 8, self.singleTradeSize * 2).to(self.device)
+        # self.fourthConvTrades = nn.Linear(self.singleTradeSize * 2, 1).to(self.device)
         #
-        # self.firstConvCurrentTrade = nn.Linear(self.singleTradeSize, self.singleTradeSize * 2).to(self.device)
-        # self.secondConvCurrentTrade = nn.Linear(self.singleTradeSize * 2, 8).to(self.device)
+        # self.firstConvCurrentTrade = nn.Linear(self.singleTradeSize, self.singleTradeSize * 4).to(self.device)
+        # self.secondConvCurrentTrade = nn.Linear(self.singleTradeSize * 4, self.singleTradeSize * 8).to(self.device)
+        # self.thirdConvCurrentTrade = nn.Linear(self.singleTradeSize * 8, self.singleTradeSize * 2).to(self.device)
+        # self.fourthConvCurrentTrade = nn.Linear(self.singleTradeSize * 2, 1).to(self.device)
+
+        self.firstConvTrades = nn.Sequential(nn.Linear(24, self.singleTradeSize * 4),
+                                             nn.ReLU(),
+                                             nn.Linear(self.singleTradeSize * 4, self.singleTradeOutput),
+                                             nn.ReLU(),
+                                             ).to(self.device)
+
+        self.firstConvCurrentTrades = nn.Sequential(
+            nn.Linear(24, self.singleTradeSize * 4),
+            nn.ReLU(),
+            nn.Linear(self.singleTradeSize * 4, self.singleTradeOutput),
+            nn.ReLU(), ).to(self.device)
+        # self.secondConvTrades = nn.Linear(self.singleTradeSize * 4, self.singleTradeSize * 8).to(self.device)
 
         self.trade_embedding = nn.Sequential(nn.Linear(self.trade_size, self.hidden_dim),
-                                                nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, self.hidden_dim),
-                                                nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, self.hidden_dim)).to(self.device)
+                                             nn.ReLU(),
+                                             nn.Linear(self.hidden_dim, self.hidden_dim),
+                                             nn.ReLU(),
+                                             nn.Linear(self.hidden_dim, self.hidden_dim)).to(self.device)
 
-        #self.value_net = nn.Sequential(nn.Linear(3*self.hidden_dim, self.hidden_dim),
-        self.value_net = nn.Sequential(nn.Linear((self.numTrades+1)*self.singleTradeSize, self.hidden_dim),
-                                       nn.ReLU(),
-                                       nn.Linear(self.hidden_dim, 4*self.hidden_dim),
-                                       nn.ReLU(),
-                                       nn.Linear(4*self.hidden_dim, 2*self.hidden_dim),
-                                       nn.ReLU(),
-                                       nn.Linear(2*self.hidden_dim, self.hidden_dim),
-                                       nn.ReLU(),
-                                       nn.Linear(self.hidden_dim, self.output_dim)).to(self.device)
+        # self.value_net = nn.Sequential(nn.Linear(3*self.hidden_dim, self.hidden_dim),
+        # self.value_net = nn.Sequential(nn.Linear((self.numTrades+1)*self.singleTradeSize, self.hidden_dim),
+        #                                nn.ReLU(),
+        #                                nn.Linear(self.hidden_dim, 4*self.hidden_dim),
+        #                                nn.ReLU(),
+        #                                nn.Linear(4*self.hidden_dim, 2*self.hidden_dim),
+        #                                nn.ReLU(),
+        #                                nn.Linear(2*self.hidden_dim, self.hidden_dim),
+        #                                nn.ReLU(),
+        #                                nn.Linear(self.hidden_dim, self.output_dim)).to(self.device)
+        #
+        # self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
+        # self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
 
-        self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
-        self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
+        self.trade_outer = nn.Sequential(nn.Linear((self.numTrades + 1)*self.singleTradeOutput, self.hidden_dim),
+                                         nn.ReLU(),
+                                         nn.Linear(self.hidden_dim, self.output_dim)).to(self.device)
+        #
+        # params = list(self.schedule_embedding.parameters()) + list(self.trade_embedding.parameters()) + list(
+        #     self.value_net.parameters())
 
-        params = list(self.schedule_embedding.parameters()) + list(self.trade_embedding.parameters()) + list(self.value_net.parameters())
-
-        self.optimizer = optim.Adam(params, weight_decay=weight_decay, lr=l_rate)
+        self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay, lr=l_rate)
 
     def forward(self, state):
         # state = state.reshape((-1, state.shape[-1]))
@@ -82,9 +108,55 @@ class attentionNet(nn.Module):
         # current_trades = state[:, self.trades_len : ].to(self.device)
         # print(trades.to("cpu").numpy())
         # print(current_trades.to("cpu").numpy())
-        flights, trades = torch.split(state, [self.flightConvSize * self.numFlights,
-                                                             self.singleTradeSize * self.numTrades +
+        # flights, trades = torch.split(state, [self.flightConvSize * self.numFlights,
+        #                                       self.singleTradeSize * self.numTrades +
+        #                                       self.singleTradeSize], dim=-1)
+
+        flights, trades, current_trade = torch.split(state, [self.flightConvSize * self.numFlights,
+                                                             self.singleTradeSize * self.numTrades,
                                                              self.singleTradeSize], dim=-1)
+
+        trades = torch.split(trades, [self.singleTradeSize for _ in range(self.numTrades)], dim=-1)
+
+        new_trades = []
+
+        for trade in trades:
+            new_trades.append(torch.zeros((len(trades[0]), 24)).to(self.device))
+
+            first_idx = torch.nonzero(trade[:, :4])
+            first_idx[:, 1] = first_idx[:, 1] * 6
+            first_idx[:, 1] = first_idx[:, 1] + torch.nonzero(trade[:, 4:10])[:, 1]
+
+            sec_idx = torch.nonzero(trade[:, 10:14])
+            sec_idx[:, 1] = sec_idx[:, 1] * 6
+            sec_idx[:, 1] += torch.nonzero(trade[:, 14:20])[:, 1]
+
+            new_trades[-1][tuple(first_idx.T)] = 1
+            new_trades[-1][tuple(sec_idx.T)] = 1
+
+            print(new_trades)
+
+        trades = [self.firstConvTrades(trade) for trade in new_trades]
+        trades = torch.cat(trades, dim=-1)
+
+        curr = torch.zeros((len(trades[0]), 24)).to(self.device)
+
+        first_idx = torch.nonzero(current_trade[:, :4])
+        first_idx[:, 1] = first_idx[:, 1] * 6
+        first_idx[:, 1] = first_idx[:, 1] + torch.nonzero(current_trade[:, 4:10])[:, 1]
+
+        sec_idx = torch.nonzero(current_trade[:, 10:14])
+        sec_idx[:, 1] = sec_idx[:, 1] * 6
+        sec_idx[:, 1] += torch.nonzero(current_trade[:, 14:20])[:, 1]
+
+        curr[tuple(first_idx.T)] = 1
+        curr[tuple(sec_idx.T)] = 1
+
+        current_trade = self.firstConvCurrentTrades(curr)
+
+        trades = torch.cat([trades, current_trade], dim=-1)/1000
+        # current_trade = self.thirdConvCurrentTrade(current_trade)
+        # current_trade = self.fourthConvCurrentTrade(current_trade)
 
         # schedules = schedules.reshape((schedules.shape[0], -1, self.schedule_entry_size)).to(self.device)
         # trades = trades.reshape((trades.shape[0], -1, self.trade_size)).to(self.device)
@@ -102,11 +174,10 @@ class attentionNet(nn.Module):
         # schedules_attention = torch.matmul(schedules_e.transpose(1, 2), schedules_w).to(self.device)
 
         # value_in = torch.cat((schedules_attention, trades_attention), dim=1).transpose(1,2).squeeze(1).to(self.device)
-        #value_in = torch.cat((value_in, current_trades_e), dim = 1).to(self.device)
+        # value_in = torch.cat((value_in, current_trades_e), dim = 1).to(self.device)
+        # self.value_net(trades)
 
-        return self.value_net(trades)
-
-
+        return self.trade_outer(trades)
 
     def pick_action(self, state):
         with torch.no_grad():
@@ -116,11 +187,10 @@ class attentionNet(nn.Module):
 
         return scores
 
-    def update_weights(self, batch: tuple, gamma: float=1.0):
+    def update_weights(self, batch: tuple, gamma: float = 1.0):
         criterion = torch.nn.MSELoss()
 
         states, next_states, masks, actions, rewards, dones = (element.to(self.device) for element in batch)
-
 
         self.zero_grad()
         curr_Q = self.forward(states)
@@ -141,9 +211,7 @@ class attentionNet(nn.Module):
         torch.nn.utils.clip_grad_norm_(self.parameters(), 0.2)
         self.optimizer.step()
 
-
         if self.loss < self.bestLoss:
             torch.save(self.state_dict(), "air.pt")
 
         return loss
-

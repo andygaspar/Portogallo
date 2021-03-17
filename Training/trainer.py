@@ -37,7 +37,7 @@ class Trainer:
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         masker = self.Masker(instance)
         trade_size = self.hyperAgent.singleTradeSize
-        trade_list = torch.zeros(trade_size * self.lengthEpisode)
+        trade_list = torch.zeros(self.lengthEpisode*trade_size)
         for i in range(self.lengthEpisode):
             trades = self.hyperAgent.step([schedule_tensor, trade_list], eps, masker=masker)
             trade_list[i * trade_size: (i + 1) * trade_size] = trades

@@ -69,7 +69,8 @@ class attentionNet(nn.Module):
             nn.Linear(24, self.singleTradeSize * 4),
             nn.ReLU(),
             nn.Linear(self.singleTradeSize * 4, self.singleTradeOutput),
-            nn.ReLU(), ).to(self.device)
+            nn.ReLU(),
+        ).to(self.device)
         # self.secondConvTrades = nn.Linear(self.singleTradeSize * 4, self.singleTradeSize * 8).to(self.device)
 
         self.trade_embedding = nn.Sequential(nn.Linear(self.trade_size, self.hidden_dim),
@@ -113,47 +114,14 @@ class attentionNet(nn.Module):
         #                                       self.singleTradeSize], dim=-1)
 
         flights, trades, current_trade = torch.split(state, [self.flightConvSize * self.numFlights,
-                                                             self.singleTradeSize * self.numTrades,
-                                                             self.singleTradeSize], dim=-1)
+                                                             24 * self.numTrades,
+                                                             24], dim=-1)
 
-        trades = torch.split(trades, [self.singleTradeSize for _ in range(self.numTrades)], dim=-1)
+        trades = torch.split(trades, [24 for _ in range(self.numTrades)], dim=-1)
 
-        new_trades = []
-
-        for trade in trades:
-            new_trades.append(torch.zeros((len(trades[0]), 24)).to(self.device))
-
-            first_idx = torch.nonzero(trade[:, :4])
-            first_idx[:, 1] = first_idx[:, 1] * 6
-            first_idx[:, 1] = first_idx[:, 1] + torch.nonzero(trade[:, 4:10])[:, 1]
-
-            sec_idx = torch.nonzero(trade[:, 10:14])
-            sec_idx[:, 1] = sec_idx[:, 1] * 6
-            sec_idx[:, 1] += torch.nonzero(trade[:, 14:20])[:, 1]
-
-            new_trades[-1][tuple(first_idx.T)] = 1
-            new_trades[-1][tuple(sec_idx.T)] = 1
-
-            print(new_trades)
-
-        trades = [self.firstConvTrades(trade) for trade in new_trades]
+        trades = [self.firstConvTrades(trade) for trade in trades]
         trades = torch.cat(trades, dim=-1)
-
-        curr = torch.zeros((len(trades[0]), 24)).to(self.device)
-
-        first_idx = torch.nonzero(current_trade[:, :4])
-        first_idx[:, 1] = first_idx[:, 1] * 6
-        first_idx[:, 1] = first_idx[:, 1] + torch.nonzero(current_trade[:, 4:10])[:, 1]
-
-        sec_idx = torch.nonzero(current_trade[:, 10:14])
-        sec_idx[:, 1] = sec_idx[:, 1] * 6
-        sec_idx[:, 1] += torch.nonzero(current_trade[:, 14:20])[:, 1]
-
-        curr[tuple(first_idx.T)] = 1
-        curr[tuple(sec_idx.T)] = 1
-
-        current_trade = self.firstConvCurrentTrades(curr)
-
+        current_trade = self.firstConvCurrentTrades(current_trade)
         trades = torch.cat([trades, current_trade], dim=-1)/1000
         # current_trade = self.thirdConvCurrentTrade(current_trade)
         # current_trade = self.fourthConvCurrentTrade(current_trade)
@@ -180,6 +148,7 @@ class attentionNet(nn.Module):
         return self.trade_outer(trades)
 
     def pick_action(self, state):
+        state = self.redef_state(state)
         with torch.no_grad():
             scores = self.forward(state.to(self.device))
         # action = torch.zeros_like(scores)
@@ -192,7 +161,7 @@ class attentionNet(nn.Module):
 
         states, next_states, masks, actions, rewards, dones = (element.to(self.device) for element in batch)
 
-        self.zero_grad()
+        self.optimizer.zero_grad()
         curr_Q = self.forward(states)
         curr_Q = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
 
@@ -215,3 +184,53 @@ class attentionNet(nn.Module):
             torch.save(self.state_dict(), "air.pt")
 
         return loss
+
+
+    def redef_state(self, state):
+
+        flights, trades, current_trade = torch.split(state, [(4+15+2)*16,
+                                                             20 * 6,
+                                                             20], dim=-1)
+
+        trades = torch.split(trades, [20 for _ in range(6)], dim=-1)
+
+        new_trades = []
+        for trade in trades:
+            new_trades.append(torch.zeros(24))
+
+            if len(torch.nonzero(trade[:4])) > 0:
+
+                first_idx = torch.nonzero(trade[:4])[0].item()
+                first_idx = first_idx * 6
+                first_idx = first_idx + torch.nonzero(trade[4:10])[0].item()
+
+                sec_idx = torch.nonzero(trade[10:14])[0].item()
+                sec_idx = sec_idx * 6
+                sec_idx = sec_idx + torch.nonzero(trade[14:20])[0].item()
+
+                new_trades[-1][first_idx] = 1
+                new_trades[-1][sec_idx] = 1
+
+        trades = torch.cat(new_trades, dim=-1)
+
+        curr = torch.zeros(24)
+        if len(torch.nonzero(current_trade[:4])) > 0 and len(torch.nonzero(current_trade[4:10])) > 0:
+            first_idx = torch.nonzero(current_trade[:4])[0].item()
+            first_idx = first_idx * 6
+            first_idx = first_idx + torch.nonzero(current_trade[4:10])[0].item()
+            curr[first_idx] = 1
+
+            if len(torch.nonzero(current_trade[10:14])) > 0 and len(torch.nonzero(current_trade[14:20])) > 0:
+                sec_idx = torch.nonzero(current_trade[10:14])[0].item()
+                sec_idx = sec_idx * 6
+                sec_idx = sec_idx + torch.nonzero(current_trade[14:20])[0].item()
+                curr[sec_idx] = 1
+
+        final = torch.cat([flights, trades, curr])
+
+        return final
+
+
+        def custom_loss(output, target,rewards):
+            r = rewards[(rewards == 0).nonzero()]
+            return torch.mean((output-target)**(2 + 1))

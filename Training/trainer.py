@@ -90,7 +90,6 @@ class Trainer:
                                                     self.hyperAgent.FlAgent.loss, self.eps))
             self.hyperAgent.train()
             if i % train_t == 0:
-                self.hyperAgent.train()
 
                 self.test_episode(schedule, instance, self.eps)
                 print(instance.matches)

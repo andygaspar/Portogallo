@@ -52,8 +52,11 @@ class AttentiveHyperAgent:
             masker.air_action(action)
             actions[action] = 1
             return actions
+
         scores = self.AirAgent.pick_action(state)
         scores[masker.airMask == 0] = -float('inf')
+        if not self.trainMode:
+            print(scores)
         action = torch.argmax(scores)
         actions[action] = 1
         masker.air_action(action.item())
@@ -68,6 +71,8 @@ class AttentiveHyperAgent:
             return actions
         scores = self.FlAgent.pick_action(state)
         scores[masker.flMask == 0] = -float('inf')
+        if not self.trainMode:
+            print(scores)
         action = torch.argmax(scores)
         actions[action] = 1
         masker.fl_action(action.item())

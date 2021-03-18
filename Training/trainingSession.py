@@ -53,7 +53,7 @@ hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airl
 
 
 # trainer parameters
-START_TRAINING = 2
+START_TRAINING = 20
 EPS_DECAY: float = 1000
 MIN_REWARD = -100
 ITERATIONS = 2500
@@ -66,7 +66,7 @@ eps_fun = lambda i, num_iterations: max(0.05, 1 - i / ITERATIONS)  # np.exp(- 4*
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY)
-train.run(2500, df, training_start_iteration=START_TRAINING, train_t=10)
+train.run(ITERATIONS, df, training_start_iteration=START_TRAINING, train_t=10)
 
 for g in hyper_agent.AirAgent.optimizer.param_groups:
     g['lr'] = 0.001
@@ -75,16 +75,16 @@ for g in hyper_agent.FlAgent.optimizer.param_groups:
 
 train.run(2500, df, training_start_iteration=1000, train_t=200)
 
-for g in hyper_agent.AirAgent.optimizer.param_groups:
-    g['lr'] = 0.00001
-for g in hyper_agent.FlAgent.optimizer.param_groups:
-    g['lr'] = 0.00001
-
-train.run(2500, df, training_start_iteration=1000, train_t=200)
-
-
-replay = hyper_agent.AirReplayMemory
-replay_df = pd.DataFrame(replay.states.numpy())
-replay_df.to_csv("replay.csv")
+# for g in hyper_agent.AirAgent.optimizer.param_groups:
+#     g['lr'] = 0.00001
+# for g in hyper_agent.FlAgent.optimizer.param_groups:
+#     g['lr'] = 0.00001
+#
+# train.run(2500, df, training_start_iteration=1000, train_t=200)
+#
+#
+# replay = hyper_agent.AirReplayMemory
+# replay_df = pd.DataFrame(replay.states.numpy())
+# replay_df.to_csv("replay.csv")
 
 # print(train.episode(instance.get_schedule_tensor()))

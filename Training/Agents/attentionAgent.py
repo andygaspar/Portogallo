@@ -231,6 +231,6 @@ class attentionNet(nn.Module):
         return final
 
 
-        def custom_loss(output, target,rewards):
-            r = rewards[(rewards == 0).nonzero()]
-            return torch.mean((output-target)**(2 + 1))
+    def custom_loss(output, target,rewards):
+        r = rewards[(rewards == 0).nonzero()]
+        return torch.mean((output-target)**(2 + 1))

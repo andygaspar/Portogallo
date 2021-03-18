@@ -37,7 +37,7 @@ class Trainer:
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         masker = self.Masker(instance)
         trade_size = self.hyperAgent.singleTradeSize
-        trade_list = torch.zeros(self.lengthEpisode*trade_size)
+        trade_list = torch.zeros(self.lengthEpisode * trade_size)
         for i in range(self.lengthEpisode):
             trades = self.hyperAgent.step([schedule_tensor, trade_list], eps, masker=masker)
             trade_list[i * trade_size: (i + 1) * trade_size] = trades
@@ -90,10 +90,11 @@ class Trainer:
                                                     self.hyperAgent.FlAgent.loss, self.eps))
             self.hyperAgent.train()
             if i % train_t == 0:
-
                 self.test_episode(schedule, instance, self.eps)
                 print(instance.matches)
                 instance.print_performance()
+                print(- (1 - instance.compute_costs(instance.flights, which="final") / instance.initialTotalCosts) \
+                      * self.k / 0.04 + self.k)
                 # print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss * s,
                 #                                         self.hyperAgent.FlAgent.loss * s, self.eps))
 

@@ -41,11 +41,11 @@ class ReplayMemory:
         losses = self.losses.squeeze().numpy()[:self.current_size]
         p = losses/losses.sum()
         sample_idxs = np.random.choice(range(self.current_size), sample_size, p=p)
-        # sample_idxs = np.random.choice(sample_idxs, 2*self.current_size//3)
-        # non_zero_rewards_idx = torch.nonzero(self.rewards)[:, 0]
-        # non_zero_rewards = self.rewards[non_zero_rewards_idx]
-        # sample_idxs = np.append(sample_idxs, non_zero_rewards_idx[
-        #     torch.argsort(non_zero_rewards, dim=0, descending=True)][:(self.current_size-2*self.current_size//3)])
+        sample_idxs = np.random.choice(sample_idxs, 2*self.current_size//3)
+        non_zero_rewards_idx = torch.nonzero(self.rewards)[:, 0]
+        non_zero_rewards = self.rewards[non_zero_rewards_idx]
+        sample_idxs = np.append(sample_idxs, non_zero_rewards_idx[
+            torch.argsort(non_zero_rewards, dim=0, descending=True)][:(self.current_size-2*self.current_size//3)])
         return (self.states[sample_idxs], self.nextStates[sample_idxs], self.masks[sample_idxs],
                 self.actions[sample_idxs], self.rewards[sample_idxs], self.done[sample_idxs]), sample_idxs
 

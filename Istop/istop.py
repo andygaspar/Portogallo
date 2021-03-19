@@ -91,12 +91,6 @@ class Istop(mS.ModelStructure):
         if self.triples:
             self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
 
-    def check_and_set_matches(self):
-        start = time.time()
-
-        if not self.preprocessed:
-            self.get_matches()
-
         for match in self.matches:
             for couple in match:
                 if not self.is_in(couple, self.couples):
@@ -105,6 +99,13 @@ class Istop(mS.ModelStructure):
                         self.flights_in_matches.append(couple[0])
                     if not self.f_in_matched(couple[1]):
                         self.flights_in_matches.append(couple[1])
+
+    def check_and_set_matches(self):
+
+        if not self.preprocessed:
+            self.get_matches()
+
+
 
         # print("preprocess concluded in sec:", time.time()-start, "   Number of possible offers: ", len(self.matches))
         return len(self.matches) > 0

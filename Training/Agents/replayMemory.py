@@ -24,17 +24,19 @@ class ReplayMemory:
         self.states[self.idx] = state
         self.current_size = min(self.current_size + 1, self.size)
 
-    def add_record(self, next_state, action, reward, mask, done=0, initial=False):
+    def add_record(self, next_state, action, mask, reward, final=False):
         self.nextStates[self.idx] = next_state
         self.actions[self.idx] = action
         self.rewards[self.idx] = reward
-        self.done[self.idx] = done
+        self.done[self.idx] = 0
         self.masks[self.idx] = mask
 
         self.idx = (self.idx + 1) % self.size
 
-        if initial:
+        if not final:
             self.set_initial_state(next_state)
+        else:
+            self.done[self.idx] = 1
 
     def sample(self, sample_size):
         losses = self.losses.squeeze().numpy()[:self.current_size]

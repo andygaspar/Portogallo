@@ -39,10 +39,10 @@ class Trainer:
         num_flights = instance.numFlights
         trade_list = torch.zeros(num_flights * self.lengthEpisode)
         for i in range(self.lengthEpisode):
-            trade = self.hyperAgent.step([schedule_tensor, trade_list], eps, masker=masker)
+            trade = self.hyperAgent.step(schedule_tensor, trade_list, eps, masker=masker)
             trade_list[i * num_flights: (i + 1) * num_flights] = trade
 
-        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list],
+        trades, last_state, air_action, fl_action = self.hyperAgent.step(schedule_tensor, trade_list,
                                                                          eps, masker=masker, last_step=True)
         instance.set_matches(trade_list, self.lengthEpisode, num_flights)
         instance.run()

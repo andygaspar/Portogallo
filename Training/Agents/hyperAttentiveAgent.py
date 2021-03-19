@@ -36,7 +36,7 @@ class AttentiveHyperAgent:
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.replayMemory = ReplayMemory(self.numAirlines, input_size, size=memory_size)
+        self.replayMemory = ReplayMemory(50*50, size=memory_size)
 
     def pick_flight(self, state, eps, masker: Masker):
         actions = torch.zeros_like(masker.flMask)
@@ -57,7 +57,8 @@ class AttentiveHyperAgent:
 
         current_trade = torch.zeros(self.numFlights)
         state = torch.cat([schedule, trade_list, current_trade], dim=-1)
-        self.replayMemory.set_initial_state(state)
+        print(state.shape[0])
+        self.replayMemory.set_initial_state(state, state.shape[0])
 
         for _ in range(len_step - 1):
             action = self.pick_flight(state, eps, masker)

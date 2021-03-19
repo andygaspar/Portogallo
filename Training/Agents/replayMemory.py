@@ -7,12 +7,14 @@ from sklearn.preprocessing import normalize
 
 class ReplayMemory:
 
-    def __init__(self, action_size, state_size, size=1000):
+    def __init__(self, max_num_flights, size=1000):
         size = int(size)
-        self.states = torch.zeros((size, state_size))
-        self.nextStates = torch.zeros((size, state_size))
-        self.masks = torch.zeros((size, action_size))
-        self.actions = torch.zeros((size, action_size))
+        self.states = torch.zeros((size, max_num_flights))
+        self.nextStates = torch.zeros((size, max_num_flights))
+        self.masks = torch.zeros((size, max_num_flights))
+        self.actions = torch.zeros((size, max_num_flights))
+        self.num_airlines = torch.zeros((size, 1))
+        self.sizes = torch.zeros((size, 1))
         self.rewards = torch.zeros((size, 1))
         self.losses = torch.ones((size, 1)) * 20_000
         self.done = torch.zeros((size, 1))
@@ -20,13 +22,15 @@ class ReplayMemory:
         self.size = size
         self.current_size = 0
 
-    def set_initial_state(self, state):
-        self.states[self.idx] = state
+    def set_initial_state(self, state, instance_size):
+        self.states[self.idx, :instance_size] = state
         self.current_size = min(self.current_size + 1, self.size)
 
     def add_record(self, next_state, action, mask, reward, final=False):
-        self.nextStates[self.idx] = next_state
-        self.actions[self.idx] = action
+        instance_size = next_state.shape[0]
+        self.sizes[self.idx] = instance_size
+        self.nextStates[self.idx, :instance_size] = next_state
+        self.actions[self.idx, :instance_size] = action
         self.rewards[self.idx] = reward
         self.done[self.idx] = 0
         self.masks[self.idx] = mask
@@ -34,7 +38,7 @@ class ReplayMemory:
         self.idx = (self.idx + 1) % self.size
 
         if not final:
-            self.set_initial_state(next_state)
+            self.set_initial_state(next_state, instance_size)
         else:
             self.done[self.idx] = 1
 

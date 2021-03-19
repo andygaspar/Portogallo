@@ -8,13 +8,13 @@ class Masker:
     def __init__(self, instance):
         self.instance = instance
         self.maskDict = self.instance.offerChecker.all_couples_check(self.instance.airlines_pairs, return_info=True)
-        self.airMask = self.initial_air_mask()
+        self.airMask = self.initial_mask()
         self.flMask = None
         self.airAction = []
         self.flAction = None
 
-    def initial_air_mask(self):
-        mask = torch.zeros(self.instance.numAirlines)
+    def initial_mask(self):
+        mask = torch.zeros(self.instance.numFlights)
         for airline in self.maskDict.keys():
             if len(self.maskDict[airline][0]) > 0:
                 mask[airline.index] = 1

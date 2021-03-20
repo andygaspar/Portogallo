@@ -22,17 +22,19 @@ class AirNet(nn.Module):
 
         self.l1 = nn.Linear(self.inputSize, self.inputSize * 2).to(self.device)
         self.l2 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
-        self.l3 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
-        self.l4 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
+        #self.l3 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
+        #self.l4 = nn.Linear(self.inputSize * 2, self.inputSize * 2).to(self.device)
         self.l5 = nn.Linear(self.inputSize * 2, self.numAirlines).to(self.device)
+        self.l5.weight.data = torch.abs(self.l5.weight.data)
+        self.l5.bias.data = torch.abs(self.l5.bias.data)
 
-        self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
+        self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay, lr=1e-5)
 
     def forward(self, state):
         x = F.relu(self.l1(state))
         x = F.relu(self.l2(x))
-        x = F.relu(self.l3(x))
-        x = F.relu(self.l4(x))
+        #x = F.relu(self.l3(x))
+        #x = F.relu(self.l4(x))
         return self.l5(x)
 
     def pick_action(self, state):
@@ -43,7 +45,7 @@ class AirNet(nn.Module):
 
         return action
 
-    def update_weights(self, batch: tuple, gamma: float=0.9):
+    def update_weights(self, batch: tuple, gamma: float=1.0):
         criterion = torch.nn.MSELoss()
 
         states, next_states, masks, actions, rewards, dones = (element.to(self.device) for element in batch)
@@ -55,7 +57,7 @@ class AirNet(nn.Module):
 
         with torch.no_grad():
             next_Q = self.forward(next_states)
-            next_Q[masks == 0] = -100
+            next_Q[masks == 0] = -float('inf')
             max_next_Q = torch.max(next_Q, 1)[0]
             expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 
@@ -64,7 +66,7 @@ class AirNet(nn.Module):
         self.optimizer.zero_grad()
 
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
+        torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
         self.optimizer.step()
 
 

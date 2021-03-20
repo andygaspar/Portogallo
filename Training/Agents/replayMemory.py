@@ -2,7 +2,7 @@ import copy
 
 import torch
 import numpy as np
-from sklearn.preprocessing import normalize
+#from sklearn.preprocessing import normalize
 
 
 class ReplayMemory:

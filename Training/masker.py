@@ -8,6 +8,12 @@ class Masker:
     def __init__(self, instance):
         self.instance = instance
         self.maskDict = self.instance.offerChecker.all_couples_check(self.instance.airlines_pairs, return_info=True)
+        print(self.maskDict)
+
+        # for key in self.maskDict.keys():
+        #     for i in range(len(self.maskDict[key][0])):
+        #         print(instance.airlines[])
+
         self.airMask = self.initial_mask()
         self.flMask = None
         self.airAction = []

@@ -26,13 +26,13 @@ class HyperAgent:
 
         self.weightDecay = weight_decay
 
-        self.AirAgent = airAgent.AirNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
-        self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
+        # self.AirAgent = airAgent.AirNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
+        # self.FlAgent = flAgent.FlNet(input_size, self.weightDecay, num_flight_types, num_airlines, num_flights, num_trades, num_combs)
 
-        # self.AirAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
-        #                                        num_flights, num_trades, num_combs, num_airlines)
-        # self.FlAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
-        #                                       num_flights, num_trades, num_combs, num_combs)
+        self.AirAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
+                                               num_flights, num_trades, num_combs, num_airlines)
+        self.FlAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
+                                              num_flights, num_trades, num_combs, num_combs)
 
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step

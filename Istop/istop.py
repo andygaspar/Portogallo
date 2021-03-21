@@ -52,6 +52,9 @@ class Istop(mS.ModelStructure):
             j += 1
         return indexes
 
+    def p(self,prob, obj, parent, newnode, branch):
+        print("nodo", obj.getObjVal())
+
     def __init__(self, df_init, costFun: Union[Callable, List[Callable]], alpha=1, triples=False, xp_problem=None):
         self.preference_function = lambda x, y: x * (y ** alpha)
         self.offers = None
@@ -73,6 +76,18 @@ class Istop(mS.ModelStructure):
             self.m = xp.problem()
         else:
             self.m = xp_problem
+        # self.m.controls.presolve = 0
+        # self.m.controls.maxnode = 1
+        # self.m.mipoptimize('p')
+        #
+        # self.m.setControl('maxnode', 1)
+        # self.m.setControl('cutstrategy', 0)
+        # self.m.setControl('mippresolve', 0)
+        # print(self.m.getControl('defaultalg'))
+        # print(self.m.getControl('cutdepth'))
+        # print("controllo ", self.m.controls.presolve)
+        #
+        # self.m.addcbnewnode(self.p, self.m, 1)
 
         self.x = None
         self.c = None

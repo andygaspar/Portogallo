@@ -100,31 +100,18 @@ class OfferChecker(object):
                 matches_vect += match_vect
             return matches, matches_vect
         else:
-            air_trade_dict = {}
+            fl_trade_dict = {}
+            trade_dict = {}
             for air_pair in airlines_pairs:
-                air_a_trade_idx, air_b_trade_idx = self.air_couple_check(air_pair, return_info)
-                if len(air_a_trade_idx) > 0:
-                    if air_pair[0] in air_trade_dict.keys():
-                        air_trade_dict[air_pair[0]][0] += [air_pair[1].index for _ in range(len(air_a_trade_idx))]
-                        air_trade_dict[air_pair[0]][1] += air_a_trade_idx
-                        air_trade_dict[air_pair[0]][2] += air_b_trade_idx
-                    else:
-                        air_trade_dict[air_pair[0]] = \
-                            [[air_pair[1].index for _ in range(len(air_a_trade_idx))],
-                             copy.copy(air_b_trade_idx), copy.copy(air_a_trade_idx)]
-                    if air_pair[1] in air_trade_dict.keys():
-                        air_trade_dict[air_pair[1]][0] += [air_pair[0].index for _ in range(len(air_b_trade_idx))]
-                        air_trade_dict[air_pair[1]][1] += air_b_trade_idx
-                        air_trade_dict[air_pair[1]][2] += air_a_trade_idx
-                    else:
-                        air_trade_dict[air_pair[1]] = \
-                            [[air_pair[0].index for _ in range(len(air_b_trade_idx))],
-                             copy.copy(air_b_trade_idx), copy.copy(air_a_trade_idx)]
-            return air_trade_dict
-
-# [[(FA6, FA12), (FB9, FB14)], [(FA6, FA12), (FD4, FD10)], [(FB1, FB5), (FC2, FC11)], [(FC3, FC11), (FD7, FD15)], [(FC2, FC11), (FD7, FD15)], [(FC11, FC8), (FD7, FD15)]]
-
-
+                trades, _ = self.air_couple_check(air_pair)
+                for trade in trades:
+                    for couple in trade:
+                        for flight in couple:
+                            if flight.slot.index in fl_trade_dict.keys():
+                                fl_trade_dict[flight.slot.index].append(trade)
+                            else:
+                                fl_trade_dict[flight.slot.index] = [trade]
+            return fl_trade_dict
 
     def air_triple_check(self, air_triple):
         fl_pair_a = air_triple[0].flight_pairs
@@ -253,3 +240,34 @@ class OfferChecker(object):
                                             ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
 
         return [air_trips[i] for i in range(len_array) if answer[i]]
+
+
+
+
+
+
+"""
+air_trade_dict = {}
+            fl_trade_dict = {}
+            trade_dict = {}
+            for air_pair in airlines_pairs:
+                air_a_trade_idx, air_b_trade_idx = self.air_couple_check(air_pair, return_info)
+                if len(air_a_trade_idx) > 0:
+                    if air_pair[0].index in air_trade_dict.keys():
+                        air_trade_dict[air_pair[0]][0] += [air_pair[1].index for _ in range(len(air_a_trade_idx))]
+                        air_trade_dict[air_pair[0]][1] += air_a_trade_idx
+                        air_trade_dict[air_pair[0]][2] += air_b_trade_idx
+                    else:
+                        air_trade_dict[air_pair[0].index] = \
+                            [[air_pair[1].index for _ in range(len(air_a_trade_idx))],
+                             copy.copy(air_b_trade_idx), copy.copy(air_a_trade_idx)]
+                    if air_pair[1].index in air_trade_dict.keys():
+                        air_trade_dict[air_pair[1]][0] += [air_pair[0].index for _ in range(len(air_b_trade_idx))]
+                        air_trade_dict[air_pair[1]][1] += air_b_trade_idx
+                        air_trade_dict[air_pair[1]][2] += air_a_trade_idx
+                    else:
+                        air_trade_dict[air_pair[1].index] = \
+                            [[air_pair[0].index for _ in range(len(air_b_trade_idx))],
+                             copy.copy(air_b_trade_idx), copy.copy(air_a_trade_idx)]
+            return air_trade_dict
+"""

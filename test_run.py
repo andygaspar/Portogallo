@@ -21,7 +21,7 @@ ISTOP = offer provider
 np.random.seed(0)
 scheduleType = scheduleMaker.schedule_types(show=True)
 
-num_flights = 25
+num_flights = 50
 num_airlines = 9
 
 for i in range(0, 1):

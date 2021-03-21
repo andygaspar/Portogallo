@@ -39,32 +39,32 @@ class AttentiveHyperAgent:
         self.replayMemory = ReplayMemory(50*50, size=memory_size)
 
     def pick_flight(self, state, eps, masker: Masker):
-        actions = torch.zeros_like(masker.flMask)
-        if self.trainMode and np.random.rand() < eps:
-            action = np.random.choice([i for i in range(len(masker.flMask)) if round(masker.flMask[i].item()) == 1])
-            masker.fl_action(action)
+        actions = torch.zeros_like(masker.mask)
+        if self.trainMode and np.random.rand() < 20:
+            action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
+            masker.set_action(action)
             actions[action] = 1
             return actions
         scores = self.network.pick_action(state)
-        scores[masker.flMask == 0] = -float('inf')
+        scores[masker.mask == 0] = -float('inf')
         action = torch.argmax(scores)
         actions[action] = 1
-        masker.fl_action(action.item())
+        masker.set_action(action.item())
         return actions
 
     def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, len_step=4,
-             masker=None, last_step=True, train=True):
+             masker=None, last_step=False, train=True):
 
         current_trade = torch.zeros(self.numFlights)
         state = torch.cat([schedule, trade_list, current_trade], dim=-1)
-        print(state.shape[0])
+        masker.set_initial_mask()
         self.replayMemory.set_initial_state(state, state.shape[0])
 
         for _ in range(len_step - 1):
             action = self.pick_flight(state, eps, masker)
             current_trade += action
-            state[-self.currentTradeSize:] = current_trade
-            self.replayMemory.add_record(next_state=state, action=action, mask=masker.airMask, reward=0)
+            state[-self.numFlights:] = current_trade
+            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
 
         action = self.pick_flight(state, eps, masker)
         current_trade += action
@@ -72,11 +72,11 @@ class AttentiveHyperAgent:
 
         if not last_step:
             state[-self.numFlights:] = current_trade
-            self.replayMemory.add_record(next_state=state, action=action, mask=masker.airMask, reward=0)
+            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
             return current_trade
         else:
             last_state = torch.ones_like(state) * -1
-            return current_trade, last_state
+            return current_trade, last_state, action
 
     def assign_end_episode_reward(self, last_state, action, mask, shared_reward):
         self.replayMemory.add_record(next_state=last_state, action=action, mask=mask,

@@ -30,10 +30,10 @@ class ReplayMemory:
         instance_size = next_state.shape[0]
         self.sizes[self.idx] = instance_size
         self.nextStates[self.idx, :instance_size] = next_state
-        self.actions[self.idx, :instance_size] = action
+        self.actions[self.idx, :action.shape[0]] = action
         self.rewards[self.idx] = reward
         self.done[self.idx] = 0
-        self.masks[self.idx] = mask
+        self.masks[self.idx, :mask.shape[0]] = mask
 
         self.idx = (self.idx + 1) % self.size
 

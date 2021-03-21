@@ -15,7 +15,7 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 
 
 # problem's parameters
-from Training.noneMasker import NoneMasker
+# from Training.noneMasker import NoneMasker
 
 num_flight_types = len(CostFuns().flightTypeDict)
 num_trades = 6

@@ -50,19 +50,18 @@ class Instance(istop.Istop):
         _, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
-
-    def set_matches(self, matches: torch.tensor, num_trades):
+    def set_matches(self, matches, num_trades, triples=False):
         self.matches = []
-        matches = matches.reshape((num_trades, self.numFlights)).numpy()
-        matches = np.nonzero(matches)
+        size = 4 if not triples else 6
+        matches = np.array(matches).reshape(num_trades, size)
         for i in range(num_trades):
-            if len(matches[0]) == 2:
-                flights = [self.flights[j] for j in self.matches]
+            if not triples:
+                flights = [self.flights[j] for j in matches[i]]
                 couple_1 = [flight for flight in flights if flight.airline == flights[0].airline]
                 couple_2 = [flight for flight in flights if flight.airline != couple_1[0].airline]
                 self.matches.append([couple_1, couple_2])
             else:
-                flights = [self.flights[j] for j in self.matches]
+                flights = [self.flights[j] for j in matches[i]]
                 couple_1 = [flight for flight in flights if flight.airline == flights[0].airline]
 
                 flights = [flight for flight in flights if flight.airline != couple_1[0].airline]

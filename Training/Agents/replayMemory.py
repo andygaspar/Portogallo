@@ -26,7 +26,7 @@ class ReplayMemory:
         self.states[self.idx, :instance_size] = state
         self.current_size = min(self.current_size + 1, self.size)
 
-    def add_record(self, next_state, action, mask, reward, final=False):
+    def add_record(self, next_state, action, mask, reward, actions_in_episode=0, final=False):
         instance_size = next_state.shape[0]
         self.sizes[self.idx] = instance_size
         self.nextStates[self.idx, :instance_size] = next_state
@@ -40,6 +40,8 @@ class ReplayMemory:
         if not final:
             self.set_initial_state(next_state, instance_size)
         else:
+            for i in range(1, actions_in_episode+1):
+                self.rewards[self.idx-i] = reward
             self.done[self.idx] = 1
 
     def sample(self, sample_size):

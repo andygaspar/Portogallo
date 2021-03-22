@@ -78,9 +78,9 @@ class AttentiveHyperAgent:
             last_state = torch.ones_like(state) * -1
             return current_trade, last_state, action
 
-    def assign_end_episode_reward(self, last_state, action, mask, shared_reward):
+    def assign_end_episode_reward(self, last_state, action, mask, shared_reward, actions_in_episode):
         self.replayMemory.add_record(next_state=last_state, action=action, mask=mask,
-                                     reward=shared_reward, final=True)
+                                     reward=shared_reward, actions_in_episode=actions_in_episode, final=True)
 
     def train(self):
         for i in range(self.trainingsPerStep):

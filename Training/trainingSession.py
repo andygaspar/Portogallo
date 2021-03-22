@@ -38,7 +38,7 @@ print("solution:", instance.offers_selected)
 # hyper agent parameters
 WEIGHT_DECAY = 1e-4
 BATCH_SIZE = 1024
-MEMORY_SIZE = 20_000
+MEMORY_SIZE = 200
 
 hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
                                                       weight_decay=WEIGHT_DECAY, batch_size=BATCH_SIZE,

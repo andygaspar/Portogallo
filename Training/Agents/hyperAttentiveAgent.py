@@ -11,7 +11,7 @@ from Training.masker import Masker
 
 class AttentiveHyperAgent:
 
-    def __init__(self, num_airlines, num_flights, num_trades, weight_decay,
+    def __init__(self, num_airlines, num_flights, num_trades, weight_decay,l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
         ETA_info_size = 1
@@ -26,11 +26,10 @@ class AttentiveHyperAgent:
 
         self.weightDecay = weight_decay
 
-        l_rate = 1e-3
         hidden_dim = 64
 
         self.network = attentionAgent.attentionNet(hidden_dim, num_flights, self.numAirlines, num_trades, l_rate,
-                                                   weight_decay=1e-4)
+                                                   weight_decay=weight_decay)
 
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step

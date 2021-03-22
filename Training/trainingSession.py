@@ -18,9 +18,8 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 # from Training.noneMasker import NoneMasker
 
 num_flight_types = len(CostFuns().flightTypeDict)
-num_trades = 6
+num_trades = 2
 num_airlines = 4
-num_combs = 6
 num_flights = 16
 
 # fixed particular instance (copied inside the trainer - trainer must be changed in the future)
@@ -37,11 +36,13 @@ print("solution:", instance.offers_selected)
 
 # hyper agent parameters
 WEIGHT_DECAY = 1e-4
+LEARNING_RATE = 1e-3
 BATCH_SIZE = 1024
 MEMORY_SIZE = 200
 
 hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
-                                                      weight_decay=WEIGHT_DECAY, batch_size=BATCH_SIZE,
+                                                      weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
+                                                      batch_size=BATCH_SIZE,
                                                       memory_size=MEMORY_SIZE, train_mode=True)
 #hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
 #                                    weight_decay=weight_decay, batch_size=batch_size,
@@ -62,7 +63,7 @@ eps_fun = lambda i, num_iterations: 1 - i/num_iterations
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY)
-train.run(2500, df, training_start_iteration=START_TRAINING, train_t=10)
+train.run(5000, df, training_start_iteration=START_TRAINING, train_t=10)
 
 for g in hyper_agent.AirAgent.optimizer.param_groups:
     g['lr'] = 0.001

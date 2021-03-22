@@ -35,7 +35,7 @@ class attentionNet(nn.Module):
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, 1, bias=False)).to(self.device)
+                                                nn.Linear(self.hidden_dim, 4, bias=False)).to(self.device)
 
         self.schedule_embedding = nn.Sequential(nn.Linear(self.singleFlightSize, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
@@ -48,18 +48,18 @@ class attentionNet(nn.Module):
                                              nn.ReLU(),
                                              nn.Linear(self.hidden_dim, self.hidden_dim),
                                              nn.ReLU(),
-                                             nn.Linear(self.hidden_dim, 1)).to(self.device)
+                                             nn.Linear(self.hidden_dim, 2)).to(self.device)
 
         # self.value_net = nn.Sequential(nn.Linear(3*self.hidden_dim, self.hidden_dim),
-        self.value_net = nn.Sequential(nn.Linear(self.numTrades + 1 + 1, self.hidden_dim),
+        self.value_net = nn.Sequential(nn.Linear(self.numTrades*2 + 2 + 4, self.hidden_dim*2),
                                        nn.ReLU(),
-                                       nn.Linear(self.hidden_dim, self.hidden_dim),
+                                       nn.Linear(self.hidden_dim*2, self.hidden_dim),
                                        nn.ReLU(),
-                                       nn.Linear(self.hidden_dim, self.hidden_dim),
+                                       nn.Linear(self.hidden_dim, 16),
                                        nn.ReLU(),
-                                       nn.Linear(self.hidden_dim, self.hidden_dim),
+                                       nn.Linear(16, 16),
                                        nn.ReLU(),
-                                       nn.Linear(self.hidden_dim, 1)).to(self.device)
+                                       nn.Linear(16, 1)).to(self.device)
 
         self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
         self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
@@ -100,6 +100,10 @@ class attentionNet(nn.Module):
         actions = self.action_embedding(actions)
         trades = torch.cat([self.trade_embedding(trade) for trade in trades], dim=-1)
         current_trade = self.trade_embedding(current_trade)
+
+        trades_w = torch.matmul(trades, current_trade.unsqueeze(2))
+        trades_w = sMax(trades_w)
+        trades_attention = torch.matmul(trades_e.transpose(1, 2), trades_w).to(self.device)
 
         joint = torch.cat([actions, trades, current_trade], dim=-1)
         result = self.value_net(joint)

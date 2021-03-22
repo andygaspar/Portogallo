@@ -40,7 +40,7 @@ WEIGHT_DECAY = 1e-4
 BATCH_SIZE = 1024
 MEMORY_SIZE = 200
 
-hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
+hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
                                                       weight_decay=WEIGHT_DECAY, batch_size=BATCH_SIZE,
                                                       memory_size=MEMORY_SIZE, train_mode=True)
 #hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
@@ -49,13 +49,14 @@ hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_flight_types, num_airl
 
 
 # trainer parameters
-START_TRAINING = 100
+START_TRAINING = 1
 EPS_DECAY: float = 1000
 MIN_REWARD = -100000
 
 
 #eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
-eps_fun = lambda i, num_iterations: 0.1 if i > START_TRAINING else 1
+# eps_fun = lambda i, num_iterations: 0.1 if i > START_TRAINING else 1
+eps_fun = lambda i, num_iterations: 1 - i/num_iterations
 
 # masker = NoneMasker
 

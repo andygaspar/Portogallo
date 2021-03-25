@@ -46,6 +46,13 @@ class Instance(istop.Istop):
             self.xp_problem.reset()
 
         super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples, xp_problem=self.xp_problem)
+        flights = [0 for i in range(self.numFlights)]
+
+        for flight in self.flights:
+            flights[flight.slot.index] = flight
+        self.flights = flights
+
+
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
         _, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))

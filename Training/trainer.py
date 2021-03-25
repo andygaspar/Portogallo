@@ -28,6 +28,7 @@ class Trainer:
         self.epsDecay = eps_decay  # not used yet
         self.epsFun = eps_fun
         self.triples = triples
+        self.lenStep = 4 if not self.triples else 6
         self.actionsInEpisodes = 4 * self.lengthEpisode if not self.triples else 6 * self.lengthEpisode
 
         self.Masker = masker
@@ -37,28 +38,27 @@ class Trainer:
         self.b = -np.log(1 / (1 - np.exp(self.k)))
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
-        masker = self.Masker(instance)
+        masker = self.Masker(instance, self.triples)
         trade_list = torch.zeros(instance.numFlights * self.lengthEpisode)
         flight_trade_idx = []
         self.hyperAgent.replayMemory.init_episode(self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
                                                   self.lengthEpisode)
         for i in range(self.lengthEpisode - 1):
-            trade = self.hyperAgent.step(schedule_tensor, trade_list, eps, masker=masker)
+            trade = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
+                                         len_step=self.lenStep, masker=masker)
             trade_list[i * instance.numFlights: (i + 1) * instance.numFlights] = trade
             flight_trade_idx += masker.actions
 
-        trade, last_state, action = self.hyperAgent.step(schedule_tensor, trade_list, eps, masker=masker, last_step=True)
+        trade, last_state, action = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
+                                                         len_step=self.lenStep, masker=masker, last_step=True)
         flight_trade_idx += masker.actions
         trade_list[-instance.numFlights:] = trade
-        instance.set_matches(flight_trade_idx, self.lengthEpisode)
+        instance.set_matches(flight_trade_idx, self.lengthEpisode, self.triples)
         instance.run()
         # instance.print_performance()
-
         # print(instance.compute_costs(instance.flights, which="final"), instance.initialTotalCosts)
-
         # shared_reward = mt.log(1 - instance.compute_costs(instance.flights, which="final") /
         #                        instance.initialTotalCosts + self.a) + self.b
-
         # print(shared_reward)
         shared_reward = -1000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
         self.hyperAgent.assign_end_episode_reward(last_state, action, masker.mask, shared_reward,
@@ -88,6 +88,7 @@ class Trainer:
             self.episode(schedule, instance, self.eps)
             print("{0} {1:2f} {2:2f}".format(i, self.hyperAgent.network.loss, self.eps))
             if i % train_t == 0:
+                print("\n TEST")
                 self.test_episode(schedule, instance, self.eps)
                 print(instance.matches)
                 instance.print_performance()

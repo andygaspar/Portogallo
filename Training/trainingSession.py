@@ -20,12 +20,36 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 num_flight_types = len(CostFuns().flightTypeDict)
 num_trades = 2
 num_airlines = 4
-num_flights = 16
+num_flights = 20
 
 # fixed particular instance (copied inside the trainer - trainer must be changed in the future)
-df = pd.read_csv("custom_4_4.csv")
-instance = instanceMaker.Instance(triples=False, df=df)
+df = pd.read_csv("custom_5_5.csv")
+instance = instanceMaker.Instance(triples=True, df=df)
 instance.run()
+
+"""
+FD0 0
+FA1 1
+FD2 2
+FB6 3
+FC4 4
+FD5 5
+FB10 6
+FC7 7
+FA8 8
+FA9 9
+FB13 10
+FC11 11
+FB12 12
+FB3 13
+FD14 14
+FC19 15
+FA17 16
+FA16 17
+FD18 18
+FC15 19
+"""
+
 
 print(instance.airlines)
 print("\n\n\n\n")
@@ -62,7 +86,7 @@ eps_fun = lambda i, num_iterations: 1 - i/num_iterations
 # masker = NoneMasker
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
-                        eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY)
+                        eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY, triples=True)
 train.run(5000, df, training_start_iteration=START_TRAINING, train_t=10)
 
 for g in hyper_agent.AirAgent.optimizer.param_groups:

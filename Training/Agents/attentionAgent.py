@@ -72,7 +72,7 @@ class attentionNet(nn.Module):
     def forward(self, state, actions):
 
         state = state.reshape((-1, state.shape[-1]))
-        actions = actions.reshape((-1, actions.shape[-1]))
+        actions = actions.reshape((-1, actions.shape[-1]))/302200
         # schedules = state[:, : self.scheduleLen].to(self.device)
         trades = state[:, self.scheduleLen: self.tradeLen].to(self.device)
         current_trade = state[:, self.tradeLen:].to(self.device)
@@ -101,9 +101,9 @@ class attentionNet(nn.Module):
         trades = torch.cat([self.trade_embedding(trade) for trade in trades], dim=-1)
         current_trade = self.trade_embedding(current_trade)
 
-        trades_w = torch.matmul(trades, current_trade.unsqueeze(2))
-        trades_w = sMax(trades_w)
-        trades_attention = torch.matmul(trades_e.transpose(1, 2), trades_w).to(self.device)
+        # trades_w = torch.matmul(trades, current_trade.unsqueeze(2))
+        # trades_w = sMax(trades_w)
+        # trades_attention = torch.matmul(trades.transpose(1, 2), trades_w).to(self.device)
 
         joint = torch.cat([actions, trades, current_trade], dim=-1)
         result = self.value_net(joint)

@@ -111,7 +111,10 @@ class OfferChecker(object):
                                 fl_trade_dict[flight.slot.index].append(trade)
                             else:
                                 fl_trade_dict[flight.slot.index] = [trade]
-            return fl_trade_dict
+                    trade_dict[str(trade)] = \
+                        [[fl.slot.index for couple in trade for fl in couple],
+                         [len(fl_trade_dict[fl.slot.index])-1 for couple in trade for fl in couple]]
+            return fl_trade_dict, trade_dict
 
     def air_triple_check(self, air_triple):
         fl_pair_a = air_triple[0].flight_pairs
@@ -135,14 +138,31 @@ class OfferChecker(object):
                                             ctypes.c_void_p(input_vect.ctypes.data), ctypes.c_uint(len_array))
         return [air_trips[i] for i in range(len_array) if answer[i]]
 
-    def all_triples_check(self, airlines_triples):
+    def all_triples_check(self, airlines_triples, return_info=False):
         matches = []
+        if not return_info:
+            for air_triple in airlines_triples:
+                match = self.air_triple_check(air_triple)
+                if len(match) > 0:
+                    matches += match
+            return matches
 
-        for air_triple in airlines_triples:
-            match = self.air_triple_check(air_triple)
-            if len(match) > 0:
-                matches += match
-        return matches
+        else:
+            fl_trade_dict = {}
+            trade_dict = {}
+            for air_triple in airlines_triples:
+                trades = self.air_triple_check(air_triple)
+                for trade in trades:
+                    for couple in trade:
+                        for flight in couple:
+                            if flight.slot.index in fl_trade_dict.keys():
+                                fl_trade_dict[flight.slot.index].append(trade)
+                            else:
+                                fl_trade_dict[flight.slot.index] = [trade]
+                    trade_dict[str(trade)] = \
+                        [[fl.slot.index for couple in trade for fl in couple],
+                         [len(fl_trade_dict[fl.slot.index]) - 1 for couple in trade for fl in couple]]
+            return fl_trade_dict, trade_dict
 
     def check_couple_in_pairs(self, couple, airlines_pairs):
         other_airline = None

@@ -25,7 +25,7 @@ class ReplayMemory:
         self.losses = torch.ones(size) * 20_000
         self.done = torch.zeros(size)
         self.idx = 0
-        self.size = 24
+        self.size = size
         self.current_size = 0
 
     def init_episode(self, act_in_episode, num_flights, num_airlines, num_trades):
@@ -35,7 +35,8 @@ class ReplayMemory:
         self.episode_idx = 0
 
     def set_initial_state(self, state):
-        self.episodeStates[self.episode_idx] = state
+        instance_size = state.shape[0]
+        self.episodeStates[self.episode_idx, : instance_size] = state
 
         self.states[self.idx, :state.shape[0]] = state
         self.current_size = min(self.current_size + 1, self.size)

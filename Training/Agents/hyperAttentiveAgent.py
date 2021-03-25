@@ -22,7 +22,7 @@ class AttentiveHyperAgent:
         self.singleFlightSize = num_airlines + num_flights
         input_size = self.singleFlightSize * num_flights + num_trades * self.singleTradeSize + self.currentTradeSize
 
-        self.numFlights = 16  # da sistemare
+        self.numFlights = num_flights  # da sistemare
 
         self.weightDecay = weight_decay
 
@@ -54,10 +54,11 @@ class AttentiveHyperAgent:
         masker.set_action(action.item())
         return actions
 
-    def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, len_step=4,
-             masker=None, last_step=False, train=True):
+    def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
+             len_step, masker=None, last_step=False, train=True):
 
-        current_trade = torch.zeros(self.numFlights)
+        num_flights = instance.numFlights
+        current_trade = torch.zeros(num_flights)
         state = torch.cat([schedule, trade_list, current_trade], dim=-1)
         masker.set_initial_mask()
 
@@ -66,15 +67,15 @@ class AttentiveHyperAgent:
         for _ in range(len_step - 1):
             action = self.pick_flight(state, eps, masker)
             current_trade += action
-            state[-self.numFlights:] = current_trade
+            state[-num_flights:] = current_trade
             self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
 
         action = self.pick_flight(state, eps, masker)
         current_trade += action
-        state[-self.numFlights:] = current_trade
+        state[-num_flights:] = current_trade
 
         if not last_step:
-            state[-self.numFlights:] = current_trade
+            state[-num_flights:] = current_trade
             self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
             return current_trade
         else:

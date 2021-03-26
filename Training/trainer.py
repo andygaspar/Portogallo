@@ -59,8 +59,11 @@ class Trainer:
         # print(instance.compute_costs(instance.flights, which="final"), instance.initialTotalCosts)
         # shared_reward = mt.log(1 - instance.compute_costs(instance.flights, which="final") /
         #                        instance.initialTotalCosts + self.a) + self.b
+        # print("pippo", 1 - instance.compute_costs(instance.flights, which="final") / instance.initialTotalCosts)
+        shared_reward = -1000 * \
+                        (0.08 - (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))
+                         / instance.initialTotalCosts) / 0.08
         # print(shared_reward)
-        shared_reward = -1000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
         self.hyperAgent.assign_end_episode_reward(last_state, action, masker.mask, shared_reward,
                                                   self.actionsInEpisodes)
         self.hyperAgent.episode_training()

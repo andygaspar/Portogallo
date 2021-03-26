@@ -49,6 +49,7 @@ class AttentiveHyperAgent:
         scores = torch.tensor([self.network.pick_action(state, actions_tensor[i]).item() if masker.mask[i] == 1 else -float('inf')
                             for i in range(actions_tensor.shape[0])
                             ])
+        print(scores)
         action = torch.argmax(scores)
         actions[action] = 1
         masker.set_action(action.item())

@@ -5,47 +5,122 @@ from Istop.AirlineAndFlight.istopAirline import IstopAirline
 
 class Masker:
 
-    def __init__(self, instance):
+    def __init__(self, instance, triples):
         self.instance = instance
-        self.maskDict = self.instance.offerChecker.all_couples_check(self.instance.airlines_pairs, return_info=True)
-        self.airMask = self.initial_air_mask()
-        self.flMask = None
-        self.airAction = []
-        self.flAction = None
-
-    def initial_air_mask(self):
-        mask = torch.zeros(self.instance.numAirlines)
-        for airline in self.maskDict.keys():
-            if len(self.maskDict[airline][0]) > 0:
-                mask[airline.index] = 1
-        return mask
-
-    def air_action(self, air_idx):
-        if len(self.airAction) == 0:
-            airline_action: IstopAirline
-            self.airAction.append(self.instance.airlines[air_idx])
-            fl_idxs = self.maskDict[self.airAction[-1]][1]
+        if not triples:
+            self.maskDict, self.tradeDict = \
+                self.instance.offerChecker.all_couples_check(self.instance.airlines_pairs, return_info=True)
         else:
-            fl_idxs = [self.maskDict[self.airAction[-1]][2][i] for i in range(len(self.maskDict[self.airAction[-1]][0]))
-                       if self.maskDict[self.airAction[-1]][0][i] == air_idx and
-                       self.maskDict[self.airAction[-1]][1][i] == self.flAction]
-        self.flMask = torch.zeros(len(self.airAction[-1].flight_pairs))
-        for i in np.unique(fl_idxs):
-            self.flMask[i] = 1
+            self.maskDict, self.tradeDict = \
+                self.instance.offerChecker.all_triples_check(self.instance.airlines_triples, return_info=True)
+        # print(self.maskDict)
 
-    def fl_action(self, fl_idx):
-        if self.flAction is None:
-            airlines_idxs = [self.maskDict[self.airAction[-1]][0][i] for i in range(len(self.maskDict[self.airAction[-1]][0]))
-                             if self.maskDict[self.airAction[-1]][1][i] == fl_idx]
-            self.airMask = torch.zeros(self.instance.numAirlines)
-            for i in np.unique(airlines_idxs):
-                self.airMask[i] = 1
-            self.flAction = fl_idx
+        # for key in self.maskDict.keys():
+        #     for i in range(len(self.maskDict[key][0])):
+        #         print(instance.airlines[])
 
+        self.mask = None
+        self.numFlights = self.instance.numFlights
+        self.actions = None
+        self.airlines = None
+        self.trades = None
+        self.selectedTrade = None
+
+    def set_initial_mask(self):
+        self.actions = []
+        self.airlines = []
+        self.mask = torch.zeros(self.numFlights)
+
+        # print("\n",self.selectedTrade)
+        if self.selectedTrade is not None:
+            trade_indexes = self.tradeDict[str(self.selectedTrade)]
+            # print(trade_indexes)
+            for i in range(len(trade_indexes[0])):
+                # print("ciao ", self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]])
+                self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]] = []
+                non_empty = sum([1 if len(trade) > 0 else 0 for trade in self.maskDict[trade_indexes[0][i]]])
+                if non_empty == 0:
+                    del self.maskDict[trade_indexes[0][i]]
+
+        # for key in self.maskDict.keys():
+        #     print(self.instance.flights[key], self.maskDict[key])
+
+        for fl in self.maskDict.keys():
+            self.mask[fl] = 1
+
+        return self.mask
+
+    def set_action(self, action):
+        self.actions.append(action)
+        flight = self.instance.flights[action]
+        if len(self.actions) == 1:
+            self.trades = self.maskDict[flight.slot.index]
+        self.airlines.append(flight.airline)
+        self.mask = torch.zeros(self.numFlights)
+        trades = []
+        idxs = []
+
+        if len(self.actions) % 2 == 1:
+            for trade in self.trades:
+                if len(trade) > 0:
+                    found_trade, new_idxs = self.check_intra_trade(trade)
+                    if found_trade:
+                        trades.append(trade)
+                        idxs += new_idxs
         else:
-            pass # to implement in case of triples
+            for trade in self.trades:
+                if len(trade) > 0:
+                    found_trade, new_idxs = self.check_inter_trade(trade)
+                    if found_trade:
+                        trades.append(trade)
+                        idxs += new_idxs
 
-    def reset(self):
-        self.airMask = self.initial_air_mask()
-        self.airAction = []
-        self.flAction = None
+        if len(trades) == 0:
+            self.selectedTrade = self.trades[0]
+        self.trades = trades
+        idxs = np.unique(idxs)
+        self.mask[idxs] = 1
+        return self.mask
+
+    def check_intra_trade(self, trade):
+        idxs = []
+        found_trade = False
+        valid_trade = False
+        for couple in trade:
+            for fl in couple:
+                if fl.slot.index not in self.actions and fl.airline == self.airlines[-1]:
+                    idxs.append(fl.slot.index)
+                    found_trade = True
+                if fl.slot.index == self.actions[-1]:
+                    valid_trade = True
+        if found_trade and valid_trade:
+            return True, idxs
+        else:
+            return False, None
+
+    def check_inter_trade(self, trade):
+        idxs = []
+        found_trade = False
+        valid_trade = False
+        for couple in trade:
+            for fl in couple:
+                if fl.slot.index not in self.actions and fl.airline not in self.airlines:
+                    idxs.append(fl.slot.index)
+                    found_trade = True
+                if fl.slot.index == self.actions[-1]:
+                    valid_trade = True
+        if found_trade and valid_trade:
+            return True, idxs
+        else:
+            return False, None
+
+
+class NoneMasker(Masker):
+
+    def __init__(self, instance):
+        super().__init__(instance)
+
+    def set_action(self, action):
+        self.mask = torch.ones(self.numFlights)
+        self.mask[action] = 0
+        return self.mask

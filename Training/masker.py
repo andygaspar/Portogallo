@@ -27,21 +27,45 @@ class Masker:
         self.selectedTrade = None
 
     def set_initial_mask(self):
+        # print("\n",self.selectedTrade)
+        # <>
+        # trade_indexes = self.tradeDict[str(self.selectedTrade)]
+        # # print(trade_indexes)
+        # for i in range(len(trade_indexes[0])):
+        #     # print("ciao ", self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]])
+        #     self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]] = []
+        #     non_empty = sum([1 if len(trade) > 0 else 0 for trade in self.maskDict[trade_indexes[0][i]]])
+        #     if non_empty == 0:
+        #         del self.maskDict[trade_indexes[0][i]]
+
+        keys_to_delete = []
+        if self.actions is not None:
+            for fl_index in self.actions:
+                if fl_index in self.maskDict.keys():
+                    del self.maskDict[fl_index]
+
+            for fl_index in self.actions:
+                for key in self.maskDict.keys():
+                    new_trades = []
+                    for trade in self.maskDict[key]:
+                        found = False
+                        for couple in trade:
+                            for fl in couple:
+                                if fl_index == fl.slot.index:
+                                    found = True
+                        if not found:
+                            new_trades.append(trade)
+
+                    self.maskDict[key] = new_trades
+                    if len(new_trades) == 0:
+                        keys_to_delete.append(key)
+
+            for key in keys_to_delete:
+                del self.maskDict[key]
+
         self.actions = []
         self.airlines = []
         self.mask = torch.zeros(self.numFlights)
-
-        # print("\n",self.selectedTrade)
-        if self.selectedTrade is not None:
-            trade_indexes = self.tradeDict[str(self.selectedTrade)]
-            # print(trade_indexes)
-            for i in range(len(trade_indexes[0])):
-                # print("ciao ", self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]])
-                self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]] = []
-                non_empty = sum([1 if len(trade) > 0 else 0 for trade in self.maskDict[trade_indexes[0][i]]])
-                if non_empty == 0:
-                    del self.maskDict[trade_indexes[0][i]]
-
         # for key in self.maskDict.keys():
         #     print(self.instance.flights[key], self.maskDict[key])
 

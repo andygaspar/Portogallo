@@ -9,6 +9,7 @@ class AirNet(nn.Module):
     def __init__(self, input_size, weight_decay ,num_flight_types, num_airlines, num_flights, num_trades, num_combs):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.cpu = torch.device("cpu")
         self.to(self.device)
 
         self.numFlightTypes = num_flight_types
@@ -58,7 +59,6 @@ class AirNet(nn.Module):
             loss.backward()
             # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
             self.optimizer.step()
-        print(self.loss)
     #
     #   super().__init__()
     #   self.convSchedule = nn.Linear(21, 4)

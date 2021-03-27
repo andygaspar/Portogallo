@@ -59,5 +59,4 @@ class FlNet(nn.Module):
 
             # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
             self.optimizer.step()
-        print(self.loss)
 

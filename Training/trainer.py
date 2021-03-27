@@ -30,32 +30,34 @@ class Trainer:
                 return
             trade_list[i * 28: (i + 1) * 28] = trades
 
-        trades, last_state, air_action, fl_action = self.hyperAgent.step([schedule_tensor, trade_list], eps,
-                                                                         instance, last_step=True)
-        instance.set_matches(trade_list, self.lengthEpisode, 28)
-
-        instance.run()
-        # instance.print_performance()
-        print("semo rivai qua")
-        shared_reward = - instance.compute_costs(instance.flights, which="final")
-        self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action, shared_reward)
+        result, ended = self.hyperAgent.step([schedule_tensor, trade_list], eps, instance, last_step=True)
+        if ended:
+            trades, last_state, air_action, fl_action = result
+            instance.set_matches(trade_list, self.lengthEpisode, 28)
+            instance.run()
+            # instance.print_performance()
+            print("semo rivai qua")
+            shared_reward = - instance.compute_costs(instance.flights, which="final")
+            self.hyperAgent.assign_end_episode_reward(last_state, air_action, fl_action, shared_reward)
 
 
     def run(self, num_iterations, df=None):
         xp_problem = xp.problem()
         for i in range(num_iterations):
-            print(i)
-
             instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             num_flights = instance.numFlights
             num_airlines = instance.numAirlines
-            self.eps = np.exp(- 4*i/num_iterations)
+            self.eps = max(0.1, abs(1 - i/5000)) #np.exp(1 - (num_iterations+1)/(i+1))
             self.episode(schedule, instance, self.eps)
-            if i >= 30:
-                self.hyperAgent.train()
 
-            if i >= 100 and i % 25 == 0:
+            if i >= 100:
+                self.hyperAgent.train()
+                print(i, self.hyperAgent.AirAgent.loss, self.hyperAgent.FlAgent.loss, self.eps)
+            else:
+                print(i, self.eps)
+
+            if i >= 100 and i % 500 == 0:
                 instance.run()
                 print(instance.matches)
                 instance.print_performance()

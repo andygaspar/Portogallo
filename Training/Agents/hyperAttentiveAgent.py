@@ -63,6 +63,9 @@ class AttentiveHyperAgent:
         state = torch.cat([schedule, trade_list, current_trade], dim=-1)
         masker.set_initial_mask()
 
+        if masker.mask is None:
+            return None, torch.ones_like(state) * -1, None
+
         self.replayMemory.set_initial_state(state)
 
         for _ in range(len_step - 1):
@@ -78,7 +81,7 @@ class AttentiveHyperAgent:
         if not last_step:
             state[-num_flights:] = current_trade
             self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
-            return current_trade
+            return current_trade, None, None
         else:
             last_state = torch.ones_like(state) * -1
             return current_trade, last_state, action
@@ -87,12 +90,15 @@ class AttentiveHyperAgent:
         self.replayMemory.add_record(next_state=last_state, action=action, mask=mask,
                                      reward=shared_reward, actions_in_episode=actions_in_episode, final=True)
 
+    def assign_shorter_episode_reward(self, reward, instance_size, actions_in_episode):
+        self.replayMemory.end_short_episode(reward, instance_size, actions_in_episode)
+
     def train(self):
         for i in range(self.trainingsPerStep):
             batch, idxs = self.replayMemory.sample(self.batchSize)
             loss = self.network.update_weights(batch)
             self.replayMemory.update_losses(idxs, loss)
 
-    def episode_training(self):
-        batch = self.replayMemory.get_last_episode()
+    def episode_training(self, num_actions):
+        batch = self.replayMemory.get_last_episode(num_actions)
         self.network.update_weights_episode(batch)

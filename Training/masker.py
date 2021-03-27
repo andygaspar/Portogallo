@@ -60,8 +60,13 @@ class Masker:
                     if len(new_trades) == 0:
                         keys_to_delete.append(key)
 
-            for key in keys_to_delete:
+            for key in np.unique(keys_to_delete):
                 del self.maskDict[key]
+
+        if len(self.maskDict) == 0:
+            print("arrivato")
+            self.mask = None
+            return
 
         self.actions = []
         self.airlines = []
@@ -72,7 +77,6 @@ class Masker:
         for fl in self.maskDict.keys():
             self.mask[fl] = 1
 
-        return self.mask
 
     def set_action(self, action):
         self.actions.append(action)
@@ -104,7 +108,7 @@ class Masker:
         self.trades = trades
         idxs = np.unique(idxs)
         self.mask[idxs] = 1
-        return self.mask
+
 
     def check_intra_trade(self, trade):
         idxs = []

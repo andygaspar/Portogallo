@@ -71,8 +71,15 @@ class ReplayMemory:
         return (self.states[sample_idxs], self.nextStates[sample_idxs], self.masks[sample_idxs],
                 self.actions[sample_idxs], self.rewards[sample_idxs], self.done[sample_idxs]), sample_idxs
 
-    def get_last_episode(self):
-        return self.episodeStates, self.episodeActions, self.episodeRewards
+    def get_last_episode(self, num_actions):
+        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions]
 
     def update_losses(self, idxs, loss):
         self.losses[idxs] = loss.item()
+
+    def end_short_episode(self, reward, instance_size, actions_in_episode):
+        self.nextStates[self.idx, :instance_size] = -torch.ones(instance_size) * 1
+        for i in range(1, actions_in_episode + 1):
+            self.rewards[self.idx - i] = reward
+            self.episodeRewards[self.episode_idx - i] = reward
+        self.done[self.idx] = 1

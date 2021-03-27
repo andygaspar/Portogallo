@@ -43,5 +43,8 @@ class Airline:
         return self.name
 
     def __eq__(self, other: Airline):
-        return self.index == other.index
+        return self.name == other.name
+
+    def __hash__(self):
+        return self.index
 

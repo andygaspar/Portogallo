@@ -11,123 +11,87 @@ from Training.masker import Masker
 
 class AttentiveHyperAgent:
 
-    def __init__(self, num_flight_types, num_airlines, num_flights, num_trades, num_combs, weight_decay,
+    def __init__(self, num_airlines, num_flights, num_trades, weight_decay,l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
         ETA_info_size = 1
         time_info_size = 1
-        self.singleTradeSize = (num_airlines + num_combs) * 2  # 2 as we are dealing with couples
+        self.singleTradeSize = num_flights  # 2 as we are dealing with couples
         self.currentTradeSize = self.singleTradeSize
-        self.numCombs = num_combs
         self.numAirlines = num_airlines
-        schedule_entry_size = num_flight_types + ETA_info_size + time_info_size + num_airlines
-        input_size =  schedule_entry_size * num_flights + num_trades * self.singleTradeSize + self.currentTradeSize
+        self.singleFlightSize = num_airlines + num_flights
+        input_size = self.singleFlightSize * num_flights + num_trades * self.singleTradeSize + self.currentTradeSize
+
+        self.numFlights = num_flights  # da sistemare
 
         self.weightDecay = weight_decay
 
-        l_rate = 1e-3
         hidden_dim = 64
 
-        self.AirAgent = attentionAgent.attentionNet(num_airlines, hidden_dim, schedule_entry_size, self.singleTradeSize,
-                                                    num_flights, num_trades, l_rate, weight_decay=1e-4)
-        self.FlAgent = attentionAgent.attentionNet(num_combs, hidden_dim, schedule_entry_size, self.singleTradeSize,
-                                                   num_flights, num_trades, l_rate, weight_decay=1e-4)
-
-        # self.AirAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
-        #                                        num_flights, num_trades, num_combs, num_airlines)
-        # self.FlAgent = uniqueNet.AgentNetwork(input_size, self.weightDecay, num_flight_types, num_airlines,
-        #                                       num_flights, num_trades, num_combs, num_combs)
+        self.network = attentionAgent.attentionNet(hidden_dim, num_flights, self.numAirlines, num_trades, l_rate,
+                                                   weight_decay=weight_decay)
 
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.AirReplayMemory = ReplayMemory(self.numAirlines, input_size, size=memory_size)
-        self.FlReplayMemory = ReplayMemory(self.numCombs, input_size, size=memory_size)
+        self.replayMemory = ReplayMemory(50 * 50, size=memory_size)
 
-    def pick_air_action(self, state, eps, masker: Masker):
-        actions = torch.zeros_like(masker.airMask)
+    def pick_flight(self, state, eps, masker: Masker):
+        actions = torch.zeros_like(masker.mask)
         if self.trainMode and np.random.rand() < eps:
-            action = np.random.choice([i for i in range(len(masker.airMask)) if round(masker.airMask[i].item()) == 1])
-            masker.air_action(action)
+            action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
+            masker.set_action(action)
             actions[action] = 1
             return actions
-        scores = self.AirAgent.pick_action(state)
-        scores[masker.airMask == 0] = -float('inf')
+        actions_tensor = state[:self.singleFlightSize * self.numFlights]
+        actions_tensor = actions_tensor.reshape((self.numFlights, self.singleFlightSize))
+        scores = torch.tensor([self.network.pick_action(state, actions_tensor[i]).item() if masker.mask[i] == 1 else -float('inf')
+                            for i in range(actions_tensor.shape[0])
+                            ])
         action = torch.argmax(scores)
         actions[action] = 1
-        masker.air_action(action.item())
+        masker.set_action(action.item())
         return actions
 
-    def pick_fl_action(self, state, eps, masker: Masker):
-        actions = torch.zeros_like(masker.flMask)
-        if self.trainMode and np.random.rand() < eps:
-            action = np.random.choice([i for i in range(len(masker.flMask)) if round(masker.flMask[i].item()) == 1])
-            masker.fl_action(action)
-            actions[action] = 1
-            return actions
-        scores = self.FlAgent.pick_action(state)
-        scores[masker.flMask == 0] = -float('inf')
-        action = torch.argmax(scores)
-        actions[action] = 1
-        masker.fl_action(action.item())
-        return actions
+    def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
+             len_step, masker=None, last_step=False, train=True):
 
-    def step(self, state_list: List, eps, last_step=False, masker=None, train=True):
-        current_trade = torch.zeros(self.singleTradeSize)
-        state = torch.cat((state_list[0], state_list[1], current_trade), dim=-1)
-        self.AirReplayMemory.set_initial_state(state)
+        num_flights = instance.numFlights
+        current_trade = torch.zeros(num_flights)
+        state = torch.cat([schedule, trade_list, current_trade], dim=-1)
+        masker.set_initial_mask()
 
-        start = 0
-        end = start + self.numAirlines
+        self.replayMemory.set_initial_state(state)
 
-        air_action = self.pick_air_action(state, eps, masker)
-        current_trade[start:end] = air_action
-        state[-self.currentTradeSize:] = current_trade
+        for _ in range(len_step - 1):
+            action = self.pick_flight(state, eps, masker)
+            current_trade += action
+            state[-num_flights:] = current_trade
+            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
 
-        start = end
-        end = start + self.numCombs
-        self.FlReplayMemory.set_initial_state(state)
-        fl_action = self.pick_fl_action(state, eps, masker)
-        current_trade[start:end] = fl_action
-
-        start = end
-        end = start + self.numAirlines
-        state[-self.currentTradeSize:] = current_trade
-        self.AirReplayMemory.add_record(next_state=state, action=air_action, mask=masker.airMask, reward=0,
-                                        initial=True)
-        air_action = self.pick_air_action(state, eps, masker)
-        current_trade[start:end] = air_action
-
-        start = end
-        end = start + self.numCombs
-        state[-self.currentTradeSize:] = current_trade
-        self.FlReplayMemory.add_record(next_state=state, action=fl_action, mask=masker.flMask, reward=0, initial=True)
-        fl_action = self.pick_fl_action(state, eps, masker)
-        current_trade[start:end] = fl_action
-
-        masker.reset()
+        action = self.pick_flight(state, eps, masker)
+        current_trade += action
+        state[-num_flights:] = current_trade
 
         if not last_step:
-            state[-self.currentTradeSize:] = current_trade
-            self.AirReplayMemory.add_record(next_state=state, action=air_action, mask=masker.airMask, reward=0)
-            self.FlReplayMemory.add_record(next_state=state, action=fl_action, mask=masker.flMask, reward=0)
+            state[-num_flights:] = current_trade
+            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
             return current_trade
         else:
-            state = torch.ones_like(state) * -1
-            return current_trade, state, air_action, fl_action
+            last_state = torch.ones_like(state) * -1
+            return current_trade, last_state, action
 
-    def assign_end_episode_reward(self, last_state, air_action, fl_action, air_mask, fl_mask, shared_reward):
-        self.AirReplayMemory.add_record(next_state=last_state, action=air_action, mask=air_mask,
-                                        reward=shared_reward, done=1)
-        self.FlReplayMemory.add_record(next_state=last_state, action=fl_action, mask=fl_mask,
-                                       reward=shared_reward, done=1)
+    def assign_end_episode_reward(self, last_state, action, mask, shared_reward, actions_in_episode):
+        self.replayMemory.add_record(next_state=last_state, action=action, mask=mask,
+                                     reward=shared_reward, actions_in_episode=actions_in_episode, final=True)
 
     def train(self):
         for i in range(self.trainingsPerStep):
-            air_batch, air_idxs = self.AirReplayMemory.sample(self.batchSize)
-            fl_batch, fl_idxs = self.FlReplayMemory.sample(self.batchSize)
-            air_loss = self.AirAgent.update_weights(air_batch)
-            fl_loss = self.FlAgent.update_weights(fl_batch)
-            self.AirReplayMemory.update_losses(air_idxs, air_loss)
-            self.FlReplayMemory.update_losses(fl_idxs, fl_loss)
+            batch, idxs = self.replayMemory.sample(self.batchSize)
+            loss = self.network.update_weights(batch)
+            self.replayMemory.update_losses(idxs, loss)
+
+    def episode_training(self):
+        batch = self.replayMemory.get_last_episode()
+        self.network.update_weights_episode(batch)

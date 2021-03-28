@@ -27,7 +27,6 @@ def compute(flight, slot):
     return y1 + (delay - x1)*(y2 - y1)/(x2 - x1)
 
 
-
 class CostFuns:
 
     def __init__(self):

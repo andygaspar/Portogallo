@@ -47,7 +47,7 @@ class AttentiveHyperAgent:
         actions_tensor = state[:self.singleFlightSize * self.numFlights]
         actions_tensor = actions_tensor.reshape((self.numFlights, self.singleFlightSize))
         scores = torch.tensor(
-            [self.network.pick_action(state, actions_tensor[i]).item() if masker.mask[i] == 1 else -float('inf')
+            [self.network.pick_action(state, actions_tensor[i], masker.mask).item() if masker.mask[i] == 1 else -float('inf')
              for i in range(actions_tensor.shape[0])
              ])
         print(scores)
@@ -70,10 +70,11 @@ class AttentiveHyperAgent:
         self.replayMemory.set_initial_state(state)
 
         for _ in range(len_step - 1):
+            mask = masker.mask.clone()
             action = self.pick_flight(state, eps, masker)
             current_trade += action
             state[-num_flights:] = current_trade
-            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
+            self.replayMemory.add_record(next_state=state, action=action, mask=mask, reward=0)
 
         action = self.pick_flight(state, eps, masker)
         current_trade += action
@@ -103,3 +104,8 @@ class AttentiveHyperAgent:
     def episode_training(self, num_actions):
         batch = self.replayMemory.get_last_episode(num_actions)
         self.network.update_weights_episode(batch)
+
+    def compute_reward(self, instance):
+        shared_reward = -1000 * \
+                        (0.08 - (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))
+                         / instance.initialTotalCosts) / 0.08

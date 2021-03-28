@@ -77,7 +77,7 @@ class attentionNet(nn.Module):
 
         self.optimizer = optim.Adam(params, weight_decay=weight_decay, lr=l_rate)
 
-    def forward(self, state, actions):
+    def forward(self, state, actions, mask):
         state = state.reshape((-1, state.shape[-1]))
         actions = actions.reshape((-1, actions.shape[-1]))  # /302200
         schedules = state[:, : self.scheduleLen].to(self.device)
@@ -147,9 +147,9 @@ class attentionNet(nn.Module):
 
         return result
 
-    def pick_action(self, state, mask):
+    def pick_action(self, state, action, mask):
         with torch.no_grad():
-            scores = self.forward(state.to(self.device), actions=mask.to(self.device))
+            scores = self.forward(state.to(self.device), action.to(self.device), mask.to(self.device))
         return scores
 
     def update_weights(self, batch: tuple, gamma: float = 1.0):
@@ -183,7 +183,7 @@ class attentionNet(nn.Module):
     def update_weights_episode(self, batch: tuple, gamma: float = 1.0):
         criterion = torch.nn.MSELoss()
 
-        states, actions, rewards = (element.to(self.device) for element in batch)
+        states, actions, rewards, masks = (element.to(self.device) for element in batch)
         actions_tensor = states[:, :self.singleFlightSize * self.numFlights]
         actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], self.numFlights, self.singleFlightSize))
 
@@ -192,7 +192,7 @@ class attentionNet(nn.Module):
         loss = 0
 
         self.zero_grad()
-        Q = self.forward(states, actions_tensor)
+        Q = self.forward(states, actions_tensor, masks)
         rewards = rewards.reshape((rewards.shape[0], -1))
         loss = criterion(Q, rewards)
         self.loss = self.loss * 0.9 + 0.1 * loss.item()

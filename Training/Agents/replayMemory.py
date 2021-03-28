@@ -31,6 +31,7 @@ class ReplayMemory:
     def init_episode(self, act_in_episode, num_flights, num_airlines, num_trades):
         self.episodeStates = torch.zeros((act_in_episode, (50 + num_airlines + num_trades+1) * num_flights))
         self.episodeActions = torch.zeros((act_in_episode, num_flights))
+        self.episodeMask = torch.zeros((act_in_episode, num_flights))
         self.episodeRewards = torch.zeros(act_in_episode)
         self.episode_idx = 0
 
@@ -50,7 +51,7 @@ class ReplayMemory:
         self.rewards[self.idx] = reward
         self.done[self.idx] = 0
         self.masks[self.idx, :mask.shape[0]] = mask
-
+        self.episodeMask[self.episode_idx] = mask.clone()
         self.episodeActions[self.episode_idx] = action.clone()
 
         self.idx = (self.idx + 1) % self.size
@@ -72,7 +73,7 @@ class ReplayMemory:
                 self.actions[sample_idxs], self.rewards[sample_idxs], self.done[sample_idxs]), sample_idxs
 
     def get_last_episode(self, num_actions):
-        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions]
+        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions], self.episodeMask[:num_actions]
 
     def update_losses(self, idxs, loss):
         self.losses[idxs] = loss.item()

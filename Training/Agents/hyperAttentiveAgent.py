@@ -11,7 +11,7 @@ from Training.masker import Masker
 
 class AttentiveHyperAgent:
 
-    def __init__(self, num_airlines, num_flights, num_trades, weight_decay,l_rate,
+    def __init__(self, num_airlines, num_flights, num_trades, weight_decay, l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
         ETA_info_size = 1
@@ -19,7 +19,7 @@ class AttentiveHyperAgent:
         self.singleTradeSize = num_flights  # 2 as we are dealing with couples
         self.currentTradeSize = self.singleTradeSize
         self.numAirlines = num_airlines
-        self.singleFlightSize = num_airlines + num_flights
+        self.singleFlightSize = num_airlines + 50
         input_size = self.singleFlightSize * num_flights + num_trades * self.singleTradeSize + self.currentTradeSize
 
         self.numFlights = num_flights  # da sistemare
@@ -46,9 +46,10 @@ class AttentiveHyperAgent:
             return actions
         actions_tensor = state[:self.singleFlightSize * self.numFlights]
         actions_tensor = actions_tensor.reshape((self.numFlights, self.singleFlightSize))
-        scores = torch.tensor([self.network.pick_action(state, actions_tensor[i]).item() if masker.mask[i] == 1 else -float('inf')
-                            for i in range(actions_tensor.shape[0])
-                            ])
+        scores = torch.tensor(
+            [self.network.pick_action(state, actions_tensor[i]).item() if masker.mask[i] == 1 else -float('inf')
+             for i in range(actions_tensor.shape[0])
+             ])
         print(scores)
         action = torch.argmax(scores)
         actions[action] = 1

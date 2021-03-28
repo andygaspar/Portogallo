@@ -29,7 +29,7 @@ class ReplayMemory:
         self.current_size = 0
 
     def init_episode(self, act_in_episode, num_flights, num_airlines, num_trades):
-        self.episodeStates = torch.zeros((act_in_episode, (num_flights + num_airlines + num_trades+1) * num_flights))
+        self.episodeStates = torch.zeros((act_in_episode, (50 + num_airlines + num_trades+1) * num_flights))
         self.episodeActions = torch.zeros((act_in_episode, num_flights))
         self.episodeRewards = torch.zeros(act_in_episode)
         self.episode_idx = 0

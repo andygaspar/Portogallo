@@ -107,8 +107,8 @@ class Instance(istop.Istop):
     def get_schedule_tensor(self) -> torch.tensor:
         flights: List[IstopFlight]
         flights = self.flights
-        schedule_tensor = torch.zeros((self.numFlights, self.numAirlines + self.numFlights))
+        schedule_tensor = torch.zeros((self.numFlights, 50 + self.numAirlines))
         for i in range(self.numFlights):
             schedule_tensor[i, self.flights[i].airline.index] = 1
-            schedule_tensor[i, -self.numFlights:] = torch.tensor(flights[i].costVect)
+            schedule_tensor[i, -50:] = torch.tensor(flights[i].netInput)
         return schedule_tensor.flatten()

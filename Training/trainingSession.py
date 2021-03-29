@@ -16,7 +16,7 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 
 # problem's parameters
 # from Training.noneMasker import NoneMasker
-
+DISCRETISATION_SIZE = 50
 num_flight_types = len(CostFuns().flightTypeDict)
 num_trades = 2
 num_airlines = 4
@@ -24,7 +24,7 @@ num_flights = 20
 
 # fixed particular instance (copied inside the trainer - trainer must be changed in the future)
 df = pd.read_csv("custom_5_5.csv")
-instance = instanceMaker.Instance(triples=True, df=df)
+instance = instanceMaker.Instance(discretisation_size=DISCRETISATION_SIZE, triples=True, df=df)
 instance.run()
 
 """

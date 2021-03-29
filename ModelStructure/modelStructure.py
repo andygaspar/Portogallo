@@ -101,13 +101,7 @@ class ModelStructure:
     def set_flights_cost_vect(self):
         for flight in self.flights:
             flight.costVect = [flight.costFun(flight, slot) for slot in self.slots]
-            flight.netInput = [self.get_slot_cost(flight, time) for time in np.linspace(0, self.slots[-1].time)]
 
-    def get_slot_cost(self, flight, time):
-        for i in range(len(self.slots) - 1):
-            if self.slots[i].time <= time < self.slots[i + 1].time:
-                return flight.costVect[i]
-        return flight.costVect[-1]
 
 
 

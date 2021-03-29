@@ -52,7 +52,7 @@ class Istop(mS.ModelStructure):
             j += 1
         return indexes
 
-    def p(self,prob, obj, parent, newnode, branch):
+    def p(self, prob, obj, parent, newnode, branch):
         print("nodo", obj.getObjVal())
 
     def __init__(self, df_init, costFun: Union[Callable, List[Callable]], alpha=1, triples=False, xp_problem=None):

@@ -37,12 +37,13 @@ class Trainer:
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         masker = self.Masker(instance, self.triples)
-        self.hyperAgent.replayMemory.init_episode(self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
+        self.hyperAgent.replayMemory.init_episode(self.hyperAgent.discretisationSize,
+                                                  self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
                                                   self.lengthEpisode)
         trade, last_state, flight_trade_idx = None, None, []
         for i in range(self.lengthEpisode - 1):
             trade, last_state, _ = self.hyperAgent.step(schedule_tensor, eps, instance,
-                                         len_step=self.lenStep, masker=masker)
+                                                        len_step=self.lenStep, masker=masker)
             if trade is not None:
                 flight_trade_idx += masker.actions
             else:
@@ -61,7 +62,7 @@ class Trainer:
         # shared_reward = mt.log(1 - instance.compute_costs(instance.flights, which="final") /
         #                        instance.initialTotalCosts + self.a) + self.b
         # print("pippo", 1 - instance.compute_costs(instance.flights, which="final") / instance.initialTotalCosts)
-        shared_reward = -1000 * \
+        shared_reward = -100 * \
                         (0.08 - (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))
                          / instance.initialTotalCosts) / 0.08
         # print(shared_reward)
@@ -80,25 +81,24 @@ class Trainer:
 
     def run(self, num_iterations, df=None, training_start_iteration=100, train_t=200):
         xp_problem = xp.problem()
-        for i in range(training_start_iteration):
-            print(i)
-            instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
-            schedule = instance.get_schedule_tensor()
-            self.episode(schedule, instance, eps=1)
 
-        print('Finished initial exploration')
+        N = num_iterations // 50
+        idx = 0
+        instance = None
+        schedule = None
+        for k in range(N):
+            for j in range(5):
+                for i in range(10):
+                    instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
+                    schedule = instance.get_schedule_tensor()
+                    self.eps = self.epsFun(idx, num_iterations)
+                    self.episode(schedule, instance, self.eps)
+                    idx += 1
+                print("{0} {1:2f} {2:2f}".format(idx, self.hyperAgent.network.loss, self.eps))
 
-        s = 10_000
-        for i in range(training_start_iteration, num_iterations):
-            instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
-            schedule = instance.get_schedule_tensor()
-            self.eps = self.epsFun(i, num_iterations)
-            self.episode(schedule, instance, self.eps)
-            print("{0} {1:2f} {2:2f}".format(i, self.hyperAgent.network.loss, self.eps))
-            if i % train_t == 0:
-                print("\n TEST")
-                self.test_episode(schedule, instance, self.eps)
-                print(instance.matches)
-                instance.print_performance()
+            print("\n TEST")
+            self.test_episode(schedule, instance, self.eps)
+            print(instance.matches)
+            instance.print_performance()
                 # print("{0} {1:2f} {2:2f} {3:4f}".format(i, self.hyperAgent.AirAgent.loss * s,
                 #                                         self.hyperAgent.FlAgent.loss * s, self.eps))

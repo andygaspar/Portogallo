@@ -17,18 +17,14 @@ class AttentiveHyperAgent:
         MAX_NUM_FLIGHTS = 200
         self.singleTradeSize = num_flights  # 2 as we are dealing with couples
         self.currentTradeSize = self.singleTradeSize
-        self.numAirlines = num_airlines
-        self.singleFlightSize = num_airlines + discretisation_size
         self.discretisationSize = discretisation_size
-
-        self.numFlights = num_flights  # da sistemare
 
         self.weightDecay = weight_decay
 
         hidden_dim = 64
 
-        self.network = attentionAgent.attentionNet(hidden_dim, num_flights, self.numAirlines, num_trades, l_rate,
-                                                   weight_decay=weight_decay)
+        self.network = attentionAgent.AttentionNet(hidden_dim, len_discretisation=self.discretisationSize,
+                                                   l_rate=l_rate, weight_decay=weight_decay)
 
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step
@@ -36,31 +32,30 @@ class AttentiveHyperAgent:
 
         self.replayMemory = ReplayMemory(MAX_NUM_FLIGHTS * self.discretisationSize, size=memory_size)
 
-    def pick_flight(self, state, eps, masker: Masker):
+    def pick_flight(self, state, eps, masker: Masker, num_flights, num_airlines):
         actions = torch.zeros_like(masker.mask)
         if self.trainMode and np.random.rand() < eps:
             action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
             masker.set_action(action)
             actions[action] = 1
             return actions
-        actions_tensor = state[:self.singleFlightSize * self.numFlights]
-        actions_tensor = actions_tensor.reshape((self.numFlights, self.singleFlightSize))
+        actions_tensor = state[:(self.discretisationSize+num_airlines) * num_flights]
+        actions_tensor = actions_tensor.reshape((num_flights, self.discretisationSize + num_airlines))
         scores = torch.tensor(
-            [self.network.pick_action(state, actions_tensor[i], masker.mask).item() if masker.mask[i] == 1 else -float('inf')
-             for i in range(actions_tensor.shape[0])
+            [self.network.pick_action(state, actions_tensor[i], masker.mask, num_flights, num_airlines).item()
+             if masker.mask[i] == 1 else -float('inf') for i in range(actions_tensor.shape[0])
              ])
-        print(scores)
         action = torch.argmax(scores)
         actions[action] = 1
         masker.set_action(action.item())
         return actions
 
-    def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
+    def step(self, schedule: torch.tensor, eps, instance,
              len_step, masker=None, last_step=False, train=True):
 
         num_flights = instance.numFlights
         current_trade = torch.zeros(num_flights)
-        state = torch.cat([schedule, trade_list, current_trade], dim=-1)
+        state = torch.cat([schedule, current_trade], dim=-1)
         masker.set_initial_mask()
 
         if masker.mask is None:
@@ -70,12 +65,12 @@ class AttentiveHyperAgent:
 
         for _ in range(len_step - 1):
             mask = masker.mask.clone()
-            action = self.pick_flight(state, eps, masker)
+            action = self.pick_flight(state, eps, masker, instance.numFlights, instance.numAirlines)
             current_trade += action
             state[-num_flights:] = current_trade
             self.replayMemory.add_record(next_state=state, action=action, mask=mask, reward=0)
 
-        action = self.pick_flight(state, eps, masker)
+        action = self.pick_flight(state, eps, masker, instance.numFlights, instance.numAirlines)
         current_trade += action
         state[-num_flights:] = current_trade
 

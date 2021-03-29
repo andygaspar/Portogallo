@@ -64,7 +64,6 @@ class Masker:
                 del self.maskDict[key]
 
         if len(self.maskDict) == 0:
-            print("arrivato")
             self.mask = None
             return
 

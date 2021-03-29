@@ -8,8 +8,8 @@ from torch.autograd import Variable
 sMax = nn.Softmax(dim=1)
 
 
-class attentionNet(nn.Module):
-    def __init__(self, hidden_dim, len_discretisation, n_trades, l_rate,
+class AttentionNet(nn.Module):
+    def __init__(self, hidden_dim, len_discretisation, l_rate,
                  weight_decay=1e-4):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -23,7 +23,7 @@ class attentionNet(nn.Module):
         torch.cuda.current_device()
         print("Running on GPU:", torch.cuda.is_available())
 
-        self.schedule_embedding = nn.Sequential(nn.Linear(self.flightDiscretisation, self.hidden_dim, bias=False),
+        self.schedule_embedding = nn.Sequential(nn.Linear(self.flightDiscretisation+1, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
@@ -71,18 +71,16 @@ class attentionNet(nn.Module):
     def forward(self, state, actions, mask, num_flights, num_airlines):
         state = state.reshape((-1, state.shape[-1]))
         actions = actions.reshape((-1, actions.shape[-1]))  # /302200
-        schedules = state[:, : self.scheduleLen].to(self.device)
-        trades = state[:, self.scheduleLen: self.tradeLen].to(self.device)
-        trades = trades.reshape((-1, self.numTrades, self.numFlights))
-        trades = trades - 1
-        trades = trades[:, 0, :]+trades[:, 1, :]
-        current_trade = state[:, self.tradeLen:].to(self.device)
+        schedule_len = (num_airlines+self.flightDiscretisation)*num_flights
 
-        trades_ = torch.nonzero(trades, as_tuple=True)
-        # trades_ = (trades_[0], trades[2])
+        schedules = state[:, : schedule_len]
+        current_trade = state[:, -num_flights:]
 
-        schedules = schedules.reshape((schedules.shape[0], self.numFlights, actions.shape[-1]))
-        embedded = self.schedule_embedding(schedules)
+
+        schedules = schedules.reshape((schedules.shape[0], num_flights, self.flightDiscretisation + num_airlines))
+        schedules = schedules[:, :, num_airlines:]
+        schedules_with_current = torch.cat([schedules, current_trade.unsqueeze(-1)], dim=-1)
+        embedded = self.schedule_embedding(schedules_with_current)
         k = torch.matmul(embedded, self.Wk)
         q = torch.matmul(embedded, self.Wq)
         v = torch.matmul(embedded, self.Wv)
@@ -103,6 +101,7 @@ class attentionNet(nn.Module):
         q = torch.matmul(second_add_norm, self.WqT)
         action_attention = sMax(torch.matmul(k, q.transpose(1, 2)))
 
+        actions = actions[:, num_airlines:]
         embedded_actions = self.action_embedding(actions)
         v = torch.matmul(embedded_actions, self.WvT).unsqueeze(-1)
         action_self_attention = torch.matmul(action_attention, v).transpose(1, 2).squeeze(-2)
@@ -135,9 +134,10 @@ class attentionNet(nn.Module):
 
         return result
 
-    def pick_action(self, state, action, mask):
+    def pick_action(self, state, action, mask, num_flights, num_airlines):
         with torch.no_grad():
-            scores = self.forward(state.to(self.device), action.to(self.device), mask.to(self.device))
+            scores = self.forward(state.to(self.device), action.to(self.device), mask.to(self.device),
+                                  num_flights, num_airlines)
         return scores
 
     def update_weights(self, batch: tuple, gamma: float = 1.0):
@@ -171,16 +171,18 @@ class attentionNet(nn.Module):
     def update_weights_episode(self, batch: tuple, gamma: float = 1.0):
         criterion = torch.nn.MSELoss()
 
-        states, actions, rewards, masks = (element.to(self.device) for element in batch)
-        actions_tensor = states[:, :self.singleFlightSize * self.numFlights]
-        actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], self.numFlights, self.singleFlightSize))
+        states, actions, rewards, masks = (element.to(self.device) for element in batch[:-2])
+        num_flights, num_airlines = batch[-2], batch[-1]
+        actions_tensor = states[:, :(self.flightDiscretisation + num_airlines) * num_flights]
+        actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], num_flights,
+                                                 self.flightDiscretisation + num_airlines))
 
         ciccio = torch.nonzero(actions)
         actions_tensor = actions_tensor[torch.nonzero(actions, as_tuple=True)]
         loss = 0
 
         self.zero_grad()
-        Q = self.forward(states, actions_tensor, masks)
+        Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines)
         rewards = rewards.reshape((rewards.shape[0], -1))
         loss = criterion(Q, rewards)
         self.loss = self.loss * 0.9 + 0.1 * loss.item()

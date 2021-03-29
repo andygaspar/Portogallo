@@ -7,8 +7,6 @@ import math as mt
 from Training import instanceMaker
 from Training.Agents.hyperAttentiveAgent import AttentiveHyperAgent
 from Training.Agents.replayMemory import ReplayMemory
-from Training.Agents.airAgent import AirNet
-from Training.Agents.hyperAgent import HyperAgent
 
 import torch
 from torch import nn, optim
@@ -20,7 +18,7 @@ from Training.masker import Masker
 
 class Trainer:
 
-    def __init__(self, hyper_agent: Union[HyperAgent, AttentiveHyperAgent], length_episode, eps_fun, min_reward=-1000,
+    def __init__(self, hyper_agent: Union[AttentiveHyperAgent], length_episode, eps_fun, min_reward=-1000,
                  eps_decay=100, masker=Masker, triples=False):
         self.hyperAgent = hyper_agent
         self.lengthEpisode = length_episode

@@ -14,7 +14,7 @@ import numpy as np
 
 class Instance(istop.Istop):
     def __init__(self, num_flights=50, num_airlines=5, triples=True,
-                 reduction_factor=100, custom_schedule=None, df=None, xp_problem=None):
+                 reduction_factor=100, discretisation_size=50, custom_schedule=None, df=None, xp_problem=None):
         scheduleTypes = scheduleMaker.schedule_types(show=False)
         # init variables, schedule and cost function
         if custom_schedule is None and df is None:
@@ -28,7 +28,7 @@ class Instance(istop.Istop):
         self.reductionFactor = reduction_factor
         self.costFun = CostFuns().costFun["realistic"]
         self.flightTypeDict = CostFuns().flightTypeDict
-
+        self.discretisationSize = discretisation_size
 
         if xp_problem is None:
             self.xp_problem = xp.problem()
@@ -46,12 +46,12 @@ class Instance(istop.Istop):
             self.xp_problem.reset()
 
         super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples, xp_problem=self.xp_problem)
-        flights = [0 for i in range(self.numFlights)]
+        flights = [flight for flight in self.flights]
+        self.set_flight_net_input(self.discretisationSize)
 
         for flight in self.flights:
             flights[flight.slot.index] = flight
         self.flights = flights
-
 
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
         _, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
@@ -112,3 +112,14 @@ class Instance(istop.Istop):
             schedule_tensor[i, self.flights[i].airline.index] = 1
             schedule_tensor[i, -50:] = torch.tensor(flights[i].netInput)
         return schedule_tensor.flatten()
+
+    def set_flight_net_input(self, discretisation_size):
+        for flight in self.flights:
+            flight.netInput = [self.get_slot_cost(flight, time)
+                               for time in np.linspace(0, self.slots[-1].time, discretisation_size)]
+
+    def get_slot_cost(self, flight, time):
+        for i in range(len(self.slots)-1):
+            if self.slots[i].time <= time < self.slots[i+1].time:
+                return flight.costVect[i]
+        return flight.costVect[-1]

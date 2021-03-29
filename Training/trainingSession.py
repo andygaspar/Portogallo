@@ -2,7 +2,6 @@ import torch
 
 import trainer
 import masker
-from Agents import hyperAgent
 from Agents import hyperAttentiveAgent
 import instanceMaker
 import pandas as pd
@@ -88,24 +87,24 @@ eps_fun = lambda i, num_iterations: 1 - i/num_iterations
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY, triples=True)
 train.run(5000, df, training_start_iteration=START_TRAINING, train_t=10)
-
-for g in hyper_agent.AirAgent.optimizer.param_groups:
-    g['lr'] = 0.001
-for g in hyper_agent.FlAgent.optimizer.param_groups:
-    g['lr'] = 0.001
-
-train.run(2500, df, training_start_iteration=1000, train_t=200)
-
-for g in hyper_agent.AirAgent.optimizer.param_groups:
-    g['lr'] = 0.00001
-for g in hyper_agent.FlAgent.optimizer.param_groups:
-    g['lr'] = 0.00001
-
-train.run(2500, df, training_start_iteration=1000, train_t=200)
-
-
-replay = hyper_agent.AirReplayMemory
-replay_df = pd.DataFrame(replay.states.numpy())
-replay_df.to_csv("replay.csv")
+#
+# for g in hyper_agent.AirAgent.optimizer.param_groups:
+#     g['lr'] = 0.001
+# for g in hyper_agent.FlAgent.optimizer.param_groups:
+#     g['lr'] = 0.001
+#
+# train.run(2500, df, training_start_iteration=1000, train_t=200)
+#
+# for g in hyper_agent.AirAgent.optimizer.param_groups:
+#     g['lr'] = 0.00001
+# for g in hyper_agent.FlAgent.optimizer.param_groups:
+#     g['lr'] = 0.00001
+#
+# train.run(2500, df, training_start_iteration=1000, train_t=200)
+#
+#
+# replay = hyper_agent.AirReplayMemory
+# replay_df = pd.DataFrame(replay.states.numpy())
+# replay_df.to_csv("replay.csv")
 
 # print(train.episode(instance.get_schedule_tensor()))

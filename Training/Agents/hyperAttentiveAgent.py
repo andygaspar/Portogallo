@@ -4,8 +4,9 @@ from typing import List
 import numpy as np
 import torch
 from torch import optim
+
+from Training.Agents import attentionAgent
 from Training.Agents.replayMemory import ReplayMemory
-from Training.Agents import flAgent, airAgent, attentionAgent
 from Training.masker import Masker
 
 
@@ -14,8 +15,9 @@ class AttentiveHyperAgent:
     def __init__(self, num_airlines, num_flights, num_trades, weight_decay,l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
-        ETA_info_size = 1
-        time_info_size = 1
+        MAX_DISCRETISATION_SIZE = 100
+        MAX_NUM_FLIGHTS = 200
+
         self.singleTradeSize = num_flights  # 2 as we are dealing with couples
         self.currentTradeSize = self.singleTradeSize
         self.numAirlines = num_airlines
@@ -35,7 +37,7 @@ class AttentiveHyperAgent:
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.replayMemory = ReplayMemory(50 * 50, size=memory_size)
+        self.replayMemory = ReplayMemory(MAX_DISCRETISATION_SIZE*MAX_NUM_FLIGHTS, size=memory_size)
 
     def pick_flight(self, state, eps, masker: Masker):
         actions = torch.zeros_like(masker.mask)

@@ -55,7 +55,6 @@ class attentionNet(nn.Module):
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False)).to(self.device)
 
-
         self.trade_embedding = nn.Sequential(nn.Linear(self.singleTradeSize, self.hidden_dim),
                                              nn.ReLU(),
                                              nn.Linear(self.hidden_dim, self.hidden_dim),
@@ -88,8 +87,6 @@ class attentionNet(nn.Module):
         schedules = state[:, : self.scheduleLen].to(self.device)
         trades = state[:, self.scheduleLen: self.tradeLen].to(self.device)
         current_trade = state[:, self.tradeLen:].to(self.device)
-
-
 
         p = torch.mean(actions[:, 4:], dim=1).reshape((actions.shape[0], 1))#/302200
         p = self.mean_embedding(p)

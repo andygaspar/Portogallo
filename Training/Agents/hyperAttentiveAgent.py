@@ -66,7 +66,7 @@ class AttentiveHyperAgent:
         if masker.mask is None:
             return None, torch.ones_like(state) * -1, None
 
-        self.replayMemory.set_initial_state(state)
+        self.replayMemory.set_initial_state(state, masker.mask)
 
         for _ in range(len_step - 1):
             mask = masker.mask.clone()

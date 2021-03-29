@@ -9,30 +9,21 @@ sMax = nn.Softmax(dim=1)
 
 
 class attentionNet(nn.Module):
-    def __init__(self, hidden_dim, n_flights, n_airlines, n_trades, l_rate,
+    def __init__(self, hidden_dim, len_discretisation, n_trades, l_rate,
                  weight_decay=1e-4):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
 
         self.hidden_dim = hidden_dim
-        self.numFlights = n_flights
-        self.numAirlines = n_airlines
-        self.singleFlightSize = 50 + self.numAirlines
-
-        self.singleTradeSize = self.numFlights
-        self.numTrades = n_trades
-
-        self.scheduleLen = self.singleFlightSize * self.numFlights
-        self.tradeLen = self.scheduleLen + self.singleTradeSize * self.numTrades
-
+        self.flightDiscretisation = len_discretisation
         self.loss = 0
         self.bestLoss = 100_000_000
 
         torch.cuda.current_device()
         print("Running on GPU:", torch.cuda.is_available())
 
-        self.schedule_embedding = nn.Sequential(nn.Linear(self.singleFlightSize, self.hidden_dim, bias=False),
+        self.schedule_embedding = nn.Sequential(nn.Linear(self.flightDiscretisation, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
@@ -46,7 +37,7 @@ class attentionNet(nn.Module):
                                                  nn.ReLU(),
                                                  nn.Linear(20, 20)).to(self.device)
 
-        self.action_embedding = nn.Sequential(nn.Linear(self.singleFlightSize, self.hidden_dim, bias=False),
+        self.action_embedding = nn.Sequential(nn.Linear(self.flightDiscretisation, self.hidden_dim, bias=False),
                                               nn.ReLU(),
                                               nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                               nn.ReLU(),
@@ -77,7 +68,7 @@ class attentionNet(nn.Module):
 
         self.optimizer = optim.Adam(params, weight_decay=weight_decay, lr=l_rate)
 
-    def forward(self, state, actions, mask):
+    def forward(self, state, actions, mask, num_flights, num_airlines):
         state = state.reshape((-1, state.shape[-1]))
         actions = actions.reshape((-1, actions.shape[-1]))  # /302200
         schedules = state[:, : self.scheduleLen].to(self.device)
@@ -90,10 +81,7 @@ class attentionNet(nn.Module):
         trades_ = torch.nonzero(trades, as_tuple=True)
         # trades_ = (trades_[0], trades[2])
 
-
-
         schedules = schedules.reshape((schedules.shape[0], self.numFlights, actions.shape[-1]))
-        s = schedules[trades_, :]
         embedded = self.schedule_embedding(schedules)
         k = torch.matmul(embedded, self.Wk)
         q = torch.matmul(embedded, self.Wq)

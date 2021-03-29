@@ -37,25 +37,22 @@ class Trainer:
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         masker = self.Masker(instance, self.triples)
-        trade_list = torch.zeros(instance.numFlights * self.lengthEpisode)
         self.hyperAgent.replayMemory.init_episode(self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
                                                   self.lengthEpisode)
         trade, last_state, flight_trade_idx = None, None, []
         for i in range(self.lengthEpisode - 1):
-            trade, last_state, _ = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
+            trade, last_state, _ = self.hyperAgent.step(schedule_tensor, eps, instance,
                                          len_step=self.lenStep, masker=masker)
             if trade is not None:
-                trade_list[i * instance.numFlights: (i + 1) * instance.numFlights] = trade
                 flight_trade_idx += masker.actions
             else:
                 break
 
         if trade is not None:
-            trade, last_state, action = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
+            trade, last_state, action = self.hyperAgent.step(schedule_tensor, eps, instance,
                                                              len_step=self.lenStep, masker=masker, last_step=True)
             if trade is not None:
                 flight_trade_idx += masker.actions
-                trade_list[-instance.numFlights:] = trade
 
         instance.set_matches(flight_trade_idx, len(flight_trade_idx)//self.lenStep, self.triples)
         instance.run()

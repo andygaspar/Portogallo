@@ -10,9 +10,12 @@ class ReplayMemory:
     def __init__(self, max_num_flights, size=1000):
         size = int(size)
         self.episodeStates = None
+        self.episodeMask = None
         self.episodeActions = None
         self.episodeRewards = None
         self.episode_idx = None
+
+        self.currentMask = None
 
         self.states = torch.zeros((size, max_num_flights))
         self.nextStates = torch.zeros((size, max_num_flights))
@@ -35,12 +38,12 @@ class ReplayMemory:
         self.episodeRewards = torch.zeros(act_in_episode)
         self.episode_idx = 0
 
-    def set_initial_state(self, state):
+    def set_initial_state(self, state, mask):
         instance_size = state.shape[0]
         self.episodeStates[self.episode_idx, : instance_size] = state
-
         self.states[self.idx, :state.shape[0]] = state
         self.current_size = min(self.current_size + 1, self.size)
+        self.currentMask = mask.clone()
 
     def add_record(self, next_state, action, mask, reward, actions_in_episode=0, final=False):
         instance_size = next_state.shape[0]
@@ -51,7 +54,8 @@ class ReplayMemory:
         self.rewards[self.idx] = reward
         self.done[self.idx] = 0
         self.masks[self.idx, :mask.shape[0]] = mask
-        self.episodeMask[self.episode_idx] = mask.clone()
+        self.episodeMask[self.episode_idx] = self.currentMask.clone()
+        self.currentMask = mask
         self.episodeActions[self.episode_idx] = action.clone()
 
         self.idx = (self.idx + 1) % self.size
@@ -73,7 +77,8 @@ class ReplayMemory:
                 self.actions[sample_idxs], self.rewards[sample_idxs], self.done[sample_idxs]), sample_idxs
 
     def get_last_episode(self, num_actions):
-        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions], self.episodeMask[:num_actions]
+        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions],\
+               self.episodeMask[:num_actions]
 
     def update_losses(self, idxs, loss):
         self.losses[idxs] = loss.item()

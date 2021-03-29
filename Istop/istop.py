@@ -52,6 +52,9 @@ class Istop(mS.ModelStructure):
             j += 1
         return indexes
 
+    def p(self,prob, obj, parent, newnode, branch):
+        print("nodo", obj.getObjVal())
+
     def __init__(self, df_init, costFun: Union[Callable, List[Callable]], alpha=1, triples=False, xp_problem=None):
         self.preference_function = lambda x, y: x * (y ** alpha)
         self.offers = None
@@ -73,6 +76,18 @@ class Istop(mS.ModelStructure):
             self.m = xp.problem()
         else:
             self.m = xp_problem
+        # self.m.controls.presolve = 0
+        # self.m.controls.maxnode = 1
+        # self.m.mipoptimize('p')
+        #
+        # self.m.setControl('maxnode', 1)
+        # self.m.setControl('cutstrategy', 0)
+        # self.m.setControl('mippresolve', 0)
+        # print(self.m.getControl('defaultalg'))
+        # print(self.m.getControl('cutdepth'))
+        # print("controllo ", self.m.controls.presolve)
+        #
+        # self.m.addcbnewnode(self.p, self.m, 1)
 
         self.x = None
         self.c = None
@@ -87,15 +102,9 @@ class Istop(mS.ModelStructure):
         self.preprocessed = False
 
     def get_matches(self):
-        self.matches = self.offerChecker.all_couples_check(self.airlines_pairs)
+        self.matches, _ = self.offerChecker.all_couples_check(self.airlines_pairs)
         if self.triples:
             self.matches += self.offerChecker.all_triples_check(self.airlines_triples)
-
-    def check_and_set_matches(self):
-        start = time.time()
-
-        if not self.preprocessed:
-            self.get_matches()
 
         for match in self.matches:
             for couple in match:
@@ -105,6 +114,13 @@ class Istop(mS.ModelStructure):
                         self.flights_in_matches.append(couple[0])
                     if not self.f_in_matched(couple[1]):
                         self.flights_in_matches.append(couple[1])
+
+    def check_and_set_matches(self):
+
+        if not self.preprocessed:
+            self.get_matches()
+
+
 
         # print("preprocess concluded in sec:", time.time()-start, "   Number of possible offers: ", len(self.matches))
         return len(self.matches) > 0

@@ -31,6 +31,8 @@ class UDPPmodel(ModelStructure):
         # print(time.time() - start)
         solution.make_solution(self)
 
+
+
     def get_new_df(self):
         self.df: pd.DataFrame
         new_df = self.solution.copy(deep=True)

@@ -3,11 +3,13 @@ import xpress as xp
 from GlobalFuns.globalFuns import HiddenPrints
 from Istop import istop
 from Istop.AirlineAndFlight.istopAirline import IstopAirline
+from Istop.AirlineAndFlight.istopFlight import IstopFlight
 from ModelStructure.Costs.costFunctionDict import CostFuns
 from ModelStructure.ScheduleMaker import scheduleMaker
 from UDPP import udppModel
 from OfferChecker import checkOffer
 import torch
+import numpy as np
 
 
 class Instance(istop.Istop):
@@ -44,29 +46,46 @@ class Instance(istop.Istop):
             self.xp_problem.reset()
 
         super().__init__(udpp_model_xp.get_new_df(), self.costFun, triples=triples, xp_problem=self.xp_problem)
+        flights = [0 for i in range(self.numFlights)]
+
+        for flight in self.flights:
+            flights[flight.slot.index] = flight
+        self.flights = flights
+
+
         self.offerChecker = checkOffer.OfferChecker(self.scheduleMatrix)
+        _, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
-
-
-    def set_matches(self, matches: torch.tensor, num_trades, single_trade_len):
+    def set_matches(self, matches, num_trades, triples=False):
+        self.matches = []
+        size = 4 if not triples else 6
+        matches = np.array(matches).reshape(num_trades, size)
         for i in range(num_trades):
-            start = i * single_trade_len
-            end = start + self.numAirlines
-            airline_1 = self.airlines[torch.argmax(matches[start: end]).item()]
+            if not triples:
+                flights = [self.flights[j] for j in matches[i]]
+                couple_1 = [flight for flight in flights if flight.airline == flights[0].airline]
+                couple_2 = [flight for flight in flights if flight.airline != couple_1[0].airline]
+                self.matches.append([couple_1, couple_2])
+            else:
+                flights = [self.flights[j] for j in matches[i]]
+                couple_1 = [flight for flight in flights if flight.airline == flights[0].airline]
 
-            start = end
-            end = start + len(airline_1.flight_pairs)
-            couple_1 = airline_1.flight_pairs[torch.argmax(matches[start: end])]
+                flights = [flight for flight in flights if flight.airline != couple_1[0].airline]
+                couple_2 = [flight for flight in flights if flight.airline == flights[0].airline]
 
-            start = end
-            end = start + self.numAirlines
-            airline_2 = self.airlines[torch.argmax(matches[start: end])]
+                couple_3 = [flight for flight in flights if flight.airline != couple_2[0].airline]
+                self.matches.append([couple_1, couple_2, couple_3])
 
-            start = end
-            end = start + len(airline_2.flight_pairs)
-            couple_2 = airline_2.flight_pairs[torch.argmax(matches[start: end])]
-            self.matches.append([couple_1, couple_2])
+        for match in self.matches:
+            for couple in match:
+                if not self.is_in(couple, self.couples):
+                    self.couples.append(couple)
+                    if not self.f_in_matched(couple[0]):
+                        self.flights_in_matches.append(couple[0])
+                    if not self.f_in_matched(couple[1]):
+                        self.flights_in_matches.append(couple[1])
+
         self.preprocessed = True
         return
 
@@ -86,10 +105,10 @@ class Instance(istop.Istop):
         return [flight for flight in self.flights if flight.airline != airline]
 
     def get_schedule_tensor(self) -> torch.tensor:
-        schedule_tensor = torch.zeros((self.numFlights, 2 + self.numAirlines + len(self.flightTypeDict.keys())))
+        flights: List[IstopFlight]
+        flights = self.flights
+        schedule_tensor = torch.zeros((self.numFlights, 50 + self.numAirlines))
         for i in range(self.numFlights):
-            schedule_tensor[i, self.airDict[self.flights[i].airline.name]] = 1
-            schedule_tensor[i, self.numAirlines + self.flightTypeDict[self.flights[i].type]] = 1
-            schedule_tensor[i, -2] = self.flights[i].slot.time / self.reductionFactor
-            schedule_tensor[i, -1] = self.flights[i].eta / self.reductionFactor
+            schedule_tensor[i, self.flights[i].airline.index] = 1
+            schedule_tensor[i, -50:] = torch.tensor(flights[i].netInput)
         return schedule_tensor.flatten()

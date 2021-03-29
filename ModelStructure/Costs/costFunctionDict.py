@@ -17,13 +17,14 @@ def get_interval(time):
     return i
 
 def compute(flight, slot):
-    i = get_interval(slot.time)
+    delay = slot.time - flight.eta
+    delay = delay if delay >= 0 else 0
+    i = get_interval(delay)
     y2 = at_gate[at_gate["flight"] == flight.type][str(delay_range[i+1])].values[0]
     y1 = at_gate[at_gate["flight"] == flight.type][str(delay_range[i])].values[0]
     x2 = delay_range[i+1]
     x1 = delay_range[i]
-    return y1 + (slot.time - x1)*(y2 - y1)/(x2 - x1)
-
+    return y1 + (delay - x1)*(y2 - y1)/(x2 - x1)
 
 
 class CostFuns:

@@ -117,8 +117,8 @@ class Masker:
 
 class NoneMasker(Masker):
 
-    def __init__(self, instance):
-        super().__init__(instance)
+    def __init__(self, instance, triple):
+        super().__init__(instance, triple)
 
     def set_action(self, action):
         self.mask = torch.ones(self.numFlights)

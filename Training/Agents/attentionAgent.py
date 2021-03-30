@@ -53,18 +53,22 @@ class AttentionNet(nn.Module):
                                        nn.ReLU(),
                                        nn.Linear(16, 1)).to(self.device)
 
-        self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
-        self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
+        # self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
+        # self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
 
-        self.Wk = Variable(torch.ones(20, 1), requires_grad=True).to(self.device)
-        self.Wq = Variable(torch.ones(20, 1), requires_grad=True).to(self.device)
-        self.Wv = Variable(torch.ones(20, 1), requires_grad=True).to(self.device)
+        self.Wk = nn.Linear(20, 20, bias=False).to(self.device)
+        self.Wq = nn.Linear(20, 20, bias=False).to(self.device)
+        self.Wv = nn.Linear(20, 20, bias=False).to(self.device)
 
-        self.WkT = Variable(torch.ones(20, 1), requires_grad=True).to(self.device)
-        self.WqT = Variable(torch.ones(20, 1), requires_grad=True).to(self.device)
-        self.WvT = Variable(torch.ones(20, 20), requires_grad=True).to(self.device)
+        self.WkT = nn.Linear(20, 20, bias=False).to(self.device)
+        self.WqT = nn.Linear(20, 20, bias=False).to(self.device)
+        self.WvT = nn.Linear(20, 20, bias=False).to(self.device)
 
-        params = list(self.schedule_embedding.parameters()) + list(self.value_net.parameters())
+        params = list(self.schedule_embedding.parameters()) + list(self.attention_ff.parameters()) \
+                 + list(self.action_attention_ff.parameters()) + list(self.action_embedding.parameters()) \
+                 + list(self.Wk.parameters()) + list(self.Wq.parameters()) + list(self.Wv.parameters()) \
+                 + list(self.WkT.parameters()) + list(self.WqT.parameters()) + list(self.WvT.parameters()) \
+                 + list(self.value_net.parameters()) \
 
         self.optimizer = optim.Adam(params, weight_decay=weight_decay, lr=l_rate)
 
@@ -76,14 +80,13 @@ class AttentionNet(nn.Module):
         schedules = state[:, : schedule_len]
         current_trade = state[:, -num_flights:]
 
-
         schedules = schedules.reshape((schedules.shape[0], num_flights, self.flightDiscretisation + num_airlines))
         schedules = schedules[:, :, num_airlines:]
         schedules_with_current = torch.cat([schedules, current_trade.unsqueeze(-1)], dim=-1)
         embedded = self.schedule_embedding(schedules_with_current)
-        k = torch.matmul(embedded, self.Wk)
-        q = torch.matmul(embedded, self.Wq)
-        v = torch.matmul(embedded, self.Wv)
+        k = self.Wk(embedded)
+        q = self.Wq(embedded)
+        v = self.Wv(embedded)
 
         attention_matrix = sMax(torch.matmul(k, q.transpose(1, 2)))
         self_attention = torch.matmul(attention_matrix, v).transpose(1, 2)
@@ -97,19 +100,21 @@ class AttentionNet(nn.Module):
 
         second_add_norm = nn.functional.normalize(second_add_norm, p=2, dim=-1)
 
-        k = torch.matmul(second_add_norm, self.WkT)
-        q = torch.matmul(second_add_norm, self.WqT)
-        action_attention = sMax(torch.matmul(k, q.transpose(1, 2)))
+        k = self.WkT(second_add_norm)
+        v = self.WvT(second_add_norm)
 
         actions = actions[:, num_airlines:]
         embedded_actions = self.action_embedding(actions)
-        v = torch.matmul(embedded_actions, self.WvT).unsqueeze(-1)
+        q = self.WqT(embedded_actions)
+        action_attention = sMax(torch.matmul(k, q.unsqueeze(-2).transpose(1, 2)))
+
         action_self_attention = torch.matmul(action_attention, v).transpose(1, 2).squeeze(-2)
 
         add_norm = action_self_attention + embedded_actions
         add_norm = nn.functional.normalize(add_norm, p=2, dim=-1)
 
         post_attention = self.action_attention_ff(add_norm)
+
         post_attention += add_norm
         post_attention = nn.functional.normalize(post_attention, p=2, dim=-1)
 
@@ -177,9 +182,7 @@ class AttentionNet(nn.Module):
         actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], num_flights,
                                                  self.flightDiscretisation + num_airlines))
 
-        ciccio = torch.nonzero(actions)
         actions_tensor = actions_tensor[torch.nonzero(actions, as_tuple=True)]
-        loss = 0
 
         self.zero_grad()
         Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines)

@@ -8,11 +8,13 @@ import numpy as np
 class ReplayMemory:
 
     def __init__(self, max_num_flights, size=1000):
+
         size = int(size)
         self.episodeStates = None
         self.episodeMask = None
         self.episodeActions = None
         self.episodeRewards = None
+        self.episodePartialRewards = None
         self.episode_idx = None
         self.episodeNumFlights = None
         self.episodeNumAirlines = None
@@ -38,6 +40,7 @@ class ReplayMemory:
         self.episodeActions = torch.zeros((act_in_episode, num_flights))
         self.episodeMask = torch.zeros((act_in_episode, num_flights))
         self.episodeRewards = torch.zeros(act_in_episode)
+        self.episodePartialRewards = torch.zeros(act_in_episode)
         self.episodeNumFlights = num_flights
         self.episodeNumAirlines = num_airlines
         self.episode_idx = 0
@@ -85,6 +88,12 @@ class ReplayMemory:
 
     def update_losses(self, idxs, loss):
         self.losses[idxs] = loss.item()
+
+    def partial_reward(self, len_step, partial_reward):
+        for i in range(1, len_step + 1):
+            self.rewards[self.idx - i] = partial_reward
+            self.episodePartialRewards[self.episode_idx - i] = partial_reward
+
 
     def end_short_episode(self, reward, instance_size, actions_in_episode):
         self.nextStates[self.idx, :instance_size] = -torch.ones(instance_size) * 1

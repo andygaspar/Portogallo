@@ -22,6 +22,8 @@ df = pd.read_csv("custom_5_5.csv")
 instance = instanceMaker.Instance(triples=True, df=df)
 instance.run()
 
+
+
 """
 FD0 0
 FA1 1
@@ -43,6 +45,12 @@ FA17 16
 FA16 17
 FD18 18
 FC15 19
+
+solution: [[[FD2, FD5],[FA1, FA8], [FC4, FC11])], [[FA17, FA16],[FB13, FB3],[FC7, FC15]]]
+
+or 
+
+solution: [[[FD2, FD5],[FA1, FA8], [FC4, FC19])], [[FA17, FA16],[FB13, FB3],[FC7, FC15]]]
 """
 
 
@@ -50,8 +58,11 @@ print(instance.airlines)
 print("\n\n\n\n")
 instance.print_performance()
 print(instance.matches[0])
-print("all feasible matches:\n", [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches])
+triples_in_sol = [[tuple(pair[0]), tuple(pair[1])] for pair in instance.matches]
+print("all feasible matches:", len(triples_in_sol))
+print(triples_in_sol)
 print("solution:", instance.offers_selected)
+
 
 # hyper agent parameters
 WEIGHT_DECAY = 1e-4

@@ -48,6 +48,8 @@ class AttentiveHyperAgent:
         action = torch.argmax(scores)
         actions[action] = 1
         masker.set_action(action.item())
+        if not self.trainMode:
+            print(scores)
         return actions
 
     def step(self, schedule: torch.tensor, eps, instance,

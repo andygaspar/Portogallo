@@ -151,9 +151,7 @@ class attentionNet(nn.Module):
         actions_tensor = states[:, :self.singleFlightSize * self.numFlights]
         actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], self.numFlights, self.singleFlightSize))
 
-        ciccio = torch.nonzero(actions)
         actions_tensor = actions_tensor[torch.nonzero(actions, as_tuple=True)]
-        loss = 0
 
         self.zero_grad()
         Q = self.forward(states, actions_tensor)

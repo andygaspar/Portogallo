@@ -114,11 +114,10 @@ class Masker:
         else:
             return False, None
 
-
 class NoneMasker(Masker):
 
-    def __init__(self, instance):
-        super().__init__(instance)
+    def __init__(self, instance, triples=False):
+        super().__init__(instance, triples)
 
     def set_action(self, action):
         self.mask = torch.ones(self.numFlights)

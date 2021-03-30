@@ -59,9 +59,8 @@ class ReplayMemory:
         if not final:
             self.set_initial_state(next_state)
         else:
-            for i in range(1, actions_in_episode+1):
-                self.rewards[self.idx-i] = reward
-                self.episodeRewards[self.episode_idx - i] = reward
+            self.rewards[self.idx] = reward
+            self.episodeRewards = torch.ones(actions_in_episode)*reward
             self.done[self.idx] = 1
 
     def sample(self, sample_size):

@@ -66,7 +66,6 @@ class Masker:
         for fl in self.maskDict.keys():
             self.mask[fl] = 1
 
-
     def set_action(self, action):
         self.actions.append(action)
         flight = self.instance.flights[action]

@@ -7,16 +7,21 @@ import numpy as np
 
 class ReplayMemory:
 
-    def __init__(self, max_num_flights, size=1000):
+    def __init__(self, max_num_flights, discretisation_size, size=1000):
         size = int(size)
+        self.discretisationSize = discretisation_size
+        max_size = max_num_flights * self.discretisationSize
+
         self.episodeStates = None
         self.episodeActions = None
         self.episodeRewards = None
         self.episode_idx = None
+        self.episodeNumFlights = None
+        self.episodeNumAirlines = None
 
-        self.states = torch.zeros((size, max_num_flights))
-        self.nextStates = torch.zeros((size, max_num_flights))
-        self.masks = torch.zeros((size, max_num_flights))
+        self.states = torch.zeros((size, max_size))
+        self.nextStates = torch.zeros((size, max_size))
+        self.masks = torch.zeros((size, max_size))
         self.actions = torch.zeros((size, 50))
         self.num_airlines = torch.zeros(size)
         self.sizes = torch.zeros(size)
@@ -29,9 +34,12 @@ class ReplayMemory:
         self.current_size = 0
 
     def init_episode(self, act_in_episode, num_flights, num_airlines, num_trades):
-        self.episodeStates = torch.zeros((act_in_episode, (num_flights + num_airlines + num_trades+1) * num_flights))
+        self.episodeStates = torch.zeros((act_in_episode, (self.discretisationSize + num_airlines + num_trades+1)
+                                          * num_flights))
         self.episodeActions = torch.zeros((act_in_episode, num_flights))
         self.episodeRewards = torch.zeros(act_in_episode)
+        self.episodeNumFlights = num_flights
+        self.episodeNumAirlines = num_airlines
         self.episode_idx = 0
 
     def set_initial_state(self, state):
@@ -72,7 +80,8 @@ class ReplayMemory:
                 self.actions[sample_idxs], self.rewards[sample_idxs], self.done[sample_idxs]), sample_idxs
 
     def get_last_episode(self, num_actions):
-        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions]
+        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions],\
+               self.episodeNumFlights, self.episodeNumAirlines
 
     def update_losses(self, idxs, loss):
         self.losses[idxs] = loss.item()

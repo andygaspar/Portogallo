@@ -7,8 +7,7 @@ import math as mt
 from Training import instanceMaker
 from Training.Agents.hyperAttentiveAgent import AttentiveHyperAgent
 from Training.Agents.replayMemory import ReplayMemory
-from Training.Agents.airAgent import AirNet
-from Training.Agents.hyperAgent import HyperAgent
+
 
 import torch
 from torch import nn, optim
@@ -20,7 +19,7 @@ from Training.masker import Masker
 
 class Trainer:
 
-    def __init__(self, hyper_agent: Union[HyperAgent, AttentiveHyperAgent], length_episode, eps_fun, min_reward=-1000,
+    def __init__(self, hyper_agent: Union[AttentiveHyperAgent], length_episode, eps_fun, min_reward=-1000,
                  eps_decay=100, masker=Masker, triples=False):
         self.hyperAgent = hyper_agent
         self.lengthEpisode = length_episode
@@ -87,7 +86,8 @@ class Trainer:
         xp_problem = xp.problem()
         for i in range(training_start_iteration):
             print(i)
-            instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
+            instance = instanceMaker.Instance(discretisation_size=self.hyperAgent.discretisationSize,
+                                              triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             self.episode(schedule, instance, eps=1)
 
@@ -95,7 +95,8 @@ class Trainer:
 
         s = 10_000
         for i in range(training_start_iteration, num_iterations):
-            instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
+            instance = instanceMaker.Instance(discretisation_size=self.hyperAgent.discretisationSize,
+                                              triples=False, df=df, xp_problem=xp_problem)
             schedule = instance.get_schedule_tensor()
             self.eps = self.epsFun(i, num_iterations)
             self.episode(schedule, instance, self.eps)

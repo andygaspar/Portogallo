@@ -2,7 +2,6 @@ import torch
 
 import trainer
 import masker
-from Agents import hyperAgent
 from Agents import hyperAttentiveAgent
 import instanceMaker
 import pandas as pd
@@ -17,6 +16,8 @@ from ModelStructure.Costs.costFunctionDict import CostFuns
 # problem's parameters
 # from Training.noneMasker import NoneMasker
 
+DISCRETISATION_SIZE = 50
+
 num_flight_types = len(CostFuns().flightTypeDict)
 num_trades = 2
 num_airlines = 4
@@ -24,7 +25,7 @@ num_flights = 20
 
 # fixed particular instance (copied inside the trainer - trainer must be changed in the future)
 df = pd.read_csv("custom_5_5.csv")
-instance = instanceMaker.Instance(triples=True, df=df)
+instance = instanceMaker.Instance(discretisation_size=DISCRETISATION_SIZE, triples=True, df=df)
 instance.run()
 
 """
@@ -64,7 +65,7 @@ LEARNING_RATE = 1e-3
 BATCH_SIZE = 1024
 MEMORY_SIZE = 200
 
-hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
+hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(DISCRETISATION_SIZE,
                                                       weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
                                                       batch_size=BATCH_SIZE,
                                                       memory_size=MEMORY_SIZE, train_mode=True)

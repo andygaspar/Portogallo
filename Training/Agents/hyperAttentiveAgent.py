@@ -5,57 +5,53 @@ import numpy as np
 import torch
 from torch import optim
 from Training.Agents.replayMemory import ReplayMemory
-from Training.Agents import flAgent, airAgent, attentionAgent
+from Training.Agents import attentionAgent
 from Training.masker import Masker
 
 
 class AttentiveHyperAgent:
 
-    def __init__(self, num_airlines, num_flights, num_trades, weight_decay,l_rate,
+    def __init__(self, discretisation_size, weight_decay, l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
-        ETA_info_size = 1
-        time_info_size = 1
-        self.singleTradeSize = num_flights  # 2 as we are dealing with couples
-        self.currentTradeSize = self.singleTradeSize
-        self.numAirlines = num_airlines
-        self.singleFlightSize = num_airlines + num_flights
-        input_size = self.singleFlightSize * num_flights + num_trades * self.singleTradeSize + self.currentTradeSize
+        MAX_NUM_FLIGHTS = 200 # 2 as we are dealing with couples
 
-        self.numFlights = num_flights  # da sistemare
+        self.discretisationSize = discretisation_size
 
         self.weightDecay = weight_decay
 
         hidden_dim = 64
 
-        self.network = attentionAgent.attentionNet(hidden_dim, num_flights, self.numAirlines, num_trades, l_rate,
-                                                   weight_decay=weight_decay)
+        self.network = attentionAgent.AttentionNet(hidden_dim, len_discretisation=self.discretisationSize,
+                                                   l_rate=l_rate, weight_decay=weight_decay)
 
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.replayMemory = ReplayMemory(50 * 50, size=memory_size)
+        self.replayMemory = ReplayMemory(MAX_NUM_FLIGHTS, self.discretisationSize, size=memory_size)
 
-    def pick_flight(self, state, eps, masker: Masker):
+    def pick_flight(self, state, eps, masker: Masker, num_flights, num_airlines):
         actions = torch.zeros_like(masker.mask)
         if self.trainMode and np.random.rand() < eps:
             action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
             masker.set_action(action)
             actions[action] = 1
             return actions
-        actions_tensor = state[:self.singleFlightSize * self.numFlights]
-        actions_tensor = actions_tensor.reshape((self.numFlights, self.singleFlightSize))
-        scores = torch.tensor([self.network.pick_action(state, actions_tensor[i]).item() if masker.mask[i] == 1 else -float('inf')
-                            for i in range(actions_tensor.shape[0])
-                            ])
-        print(scores)
+        actions_tensor = state[:(self.discretisationSize + num_airlines) * num_flights]
+        actions_tensor = actions_tensor.reshape((num_flights, self.discretisationSize + num_airlines))
+        scores = torch.tensor(
+            [self.network.pick_action(state, actions_tensor[i], num_flights, num_airlines).item()
+             if masker.mask[i] == 1 else -float('inf') for i in range(actions_tensor.shape[0])
+             ])
         action = torch.argmax(scores)
         actions[action] = 1
         masker.set_action(action.item())
+        if not self.trainMode:
+            print(scores)
         return actions
 
-    def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
+    def step(self, schedule: torch.tensor,trade_list: torch.tensor, eps, instance,
              len_step, masker=None, last_step=False, train=True):
 
         num_flights = instance.numFlights
@@ -69,12 +65,13 @@ class AttentiveHyperAgent:
         self.replayMemory.set_initial_state(state)
 
         for _ in range(len_step - 1):
-            action = self.pick_flight(state, eps, masker)
+            mask = masker.mask.clone()
+            action = self.pick_flight(state, eps, masker, instance.numFlights, instance.numAirlines)
             current_trade += action
             state[-num_flights:] = current_trade
-            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
+            self.replayMemory.add_record(next_state=state, action=action, mask=mask, reward=0)
 
-        action = self.pick_flight(state, eps, masker)
+        action = self.pick_flight(state, eps, masker, instance.numFlights, instance.numAirlines)
         current_trade += action
         state[-num_flights:] = current_trade
 
@@ -102,3 +99,10 @@ class AttentiveHyperAgent:
     def episode_training(self, num_actions):
         batch = self.replayMemory.get_last_episode(num_actions)
         self.network.update_weights_episode(batch)
+
+    def compute_reward(self, instance):
+        shared_reward = -1000 * \
+                        (0.08 - (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))
+                         / instance.initialTotalCosts) / 0.08
+
+

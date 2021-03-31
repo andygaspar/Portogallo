@@ -37,21 +37,25 @@ class Trainer:
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         masker = self.Masker(instance, self.triples)
-        self.hyperAgent.replayMemory.init_episode(self.hyperAgent.discretisationSize,
-                                                  self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
+        self.hyperAgent.replayMemory.init_episode(self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
                                                   self.lengthEpisode)
-        trade, last_state, flight_trade_idx = None, None, []
+        trade, last_state, flight_trade_idx, reward = None, None, [], 0
         for i in range(self.lengthEpisode - 1):
             trade, last_state, _ = self.hyperAgent.step(schedule_tensor, eps, instance,
-                                                        len_step=self.lenStep, masker=masker)
+                                                        len_step=self.lenStep, reward=reward, masker=masker)
             if trade is not None:
                 flight_trade_idx += masker.actions
+                instance.set_matches(flight_trade_idx, len(flight_trade_idx) // self.lenStep, self.triples)
+                instance.run()
+                reward = -100 * \
+                        (0.08 - (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))
+                         / instance.initialTotalCosts) / 0.08
             else:
                 break
 
         if trade is not None:
-            trade, last_state, action = self.hyperAgent.step(schedule_tensor, eps, instance,
-                                                             len_step=self.lenStep, masker=masker, last_step=True)
+            trade, last_state, action = self.hyperAgent.step(schedule_tensor, eps, instance, len_step=self.lenStep,
+                                                             reward=reward, masker=masker,  last_step=True)
             if trade is not None:
                 flight_trade_idx += masker.actions
 

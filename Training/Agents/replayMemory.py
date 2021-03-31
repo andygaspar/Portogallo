@@ -7,9 +7,10 @@ import numpy as np
 
 class ReplayMemory:
 
-    def __init__(self, max_num_flights, size=1000):
-
+    def __init__(self, max_num_flights, discretisation_size, size=1000):
         size = int(size)
+        self.discretisationSize = discretisation_size
+        max_size = max_num_flights * (self.discretisationSize + 7)
         self.episodeStates = None
         self.episodeMask = None
         self.episodeActions = None
@@ -21,9 +22,9 @@ class ReplayMemory:
 
         self.currentMask = None
 
-        self.states = torch.zeros((size, max_num_flights))
-        self.nextStates = torch.zeros((size, max_num_flights))
-        self.masks = torch.zeros((size, max_num_flights))
+        self.states = torch.zeros((size, max_size))
+        self.nextStates = torch.zeros((size, max_size))
+        self.masks = torch.zeros((size, max_size))
         self.actions = torch.zeros((size, 50))
         self.num_airlines = torch.zeros(size)
         self.sizes = torch.zeros(size)
@@ -35,8 +36,9 @@ class ReplayMemory:
         self.size = size
         self.current_size = 0
 
-    def init_episode(self, discretisation_size, act_in_episode, num_flights, num_airlines, num_trades):
-        self.episodeStates = torch.zeros((act_in_episode, (discretisation_size + num_airlines) * num_flights + num_flights))
+    def init_episode(self, act_in_episode, num_flights, num_airlines, num_trades):
+        self.episodeStates = torch.zeros((act_in_episode, (self.discretisationSize + num_airlines) * num_flights +
+                                          num_flights))
         self.episodeActions = torch.zeros((act_in_episode, num_flights))
         self.episodeMask = torch.zeros((act_in_episode, num_flights))
         self.episodeRewards = torch.zeros(act_in_episode)
@@ -45,12 +47,13 @@ class ReplayMemory:
         self.episodeNumAirlines = num_airlines
         self.episode_idx = 0
 
-    def set_initial_state(self, state, mask):
+    def set_initial_state(self, state, mask, initial=True):
         instance_size = state.shape[0]
         self.episodeStates[self.episode_idx, : instance_size] = state.clone()
         self.states[self.idx, :state.shape[0]] = state
         self.current_size = min(self.current_size + 1, self.size)
-        self.currentMask = mask.clone()
+        if initial:
+            self.currentMask = mask.clone()
 
     def add_record(self, next_state, action, mask, reward, actions_in_episode=0, final=False):
         instance_size = next_state.shape[0]
@@ -61,15 +64,18 @@ class ReplayMemory:
         self.rewards[self.idx] = reward
         self.done[self.idx] = 0
         self.masks[self.idx, :mask.shape[0]] = mask
+
         self.episodeMask[self.episode_idx] = self.currentMask.clone()
         self.episodeActions[self.episode_idx] = action.clone()
+        self.episodePartialRewards[self.episode_idx] = reward
 
         self.idx = (self.idx + 1) % self.size
         self.episode_idx += 1
 
         if not final:
-            self.set_initial_state(next_state, mask)
+            self.set_initial_state(next_state, mask, initial=False)
         else:
+            self.episodePartialRewards[self.episode_idx-1] = self.episodePartialRewards[self.episode_idx-2].item()
             for i in range(1, actions_in_episode+1):
                 self.rewards[self.idx-i] = reward
                 self.episodeRewards[self.episode_idx - i] = reward
@@ -83,7 +89,8 @@ class ReplayMemory:
                 self.actions[sample_idxs], self.rewards[sample_idxs], self.done[sample_idxs]), sample_idxs
 
     def get_last_episode(self, num_actions):
-        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], self.episodeRewards[:num_actions],\
+        return self.episodeStates[:num_actions], self.episodeActions[:num_actions], \
+               self.episodePartialRewards[:num_actions], self.episodeRewards[:num_actions],\
                self.episodeMask[:num_actions], self.episodeNumFlights, self.episodeNumAirlines
 
     def update_losses(self, idxs, loss):

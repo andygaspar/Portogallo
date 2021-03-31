@@ -17,6 +17,7 @@ class AttentionNet(nn.Module):
 
         self.hidden_dim = hidden_dim
         self.flightDiscretisation = len_discretisation
+        self.fl_repr_size = 36
         self.loss = 0
         self.bestLoss = 100_000_000
 
@@ -27,23 +28,23 @@ class AttentionNet(nn.Module):
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, 20, bias=False)).to(self.device)
+                                                nn.Linear(self.hidden_dim, self.fl_repr_size, bias=False)).to(self.device)
 
-        self.attention_ff = nn.Sequential(nn.Linear(20, 20),
+        self.attention_ff = nn.Sequential(nn.Linear(self.fl_repr_size, self.fl_repr_size),
                                           nn.ReLU(),
-                                          nn.Linear(20, 20)).to(self.device)
+                                          nn.Linear(self.fl_repr_size, self.fl_repr_size)).to(self.device)
 
-        self.action_attention_ff = nn.Sequential(nn.Linear(20, 20),
+        self.action_attention_ff = nn.Sequential(nn.Linear(self.fl_repr_size, self.fl_repr_size),
                                                  nn.ReLU(),
-                                                 nn.Linear(20, 20)).to(self.device)
+                                                 nn.Linear(self.fl_repr_size, self.fl_repr_size)).to(self.device)
 
         self.action_embedding = nn.Sequential(nn.Linear(self.flightDiscretisation, self.hidden_dim, bias=False),
                                               nn.ReLU(),
                                               nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                               nn.ReLU(),
-                                              nn.Linear(self.hidden_dim, 20, bias=False)).to(self.device)
+                                              nn.Linear(self.hidden_dim, self.fl_repr_size, bias=False)).to(self.device)
 
-        self.value_net = nn.Sequential(nn.Linear(20, self.hidden_dim * 2),
+        self.value_net = nn.Sequential(nn.Linear(self.fl_repr_size, self.hidden_dim * 2),
                                        nn.ReLU(),
                                        nn.Linear(self.hidden_dim * 2, self.hidden_dim),
                                        nn.ReLU(),
@@ -56,13 +57,13 @@ class AttentionNet(nn.Module):
         # self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
         # self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
 
-        self.Wk = nn.Linear(20, 20, bias=False).to(self.device)
-        self.Wq = nn.Linear(20, 20, bias=False).to(self.device)
-        self.Wv = nn.Linear(20, 20, bias=False).to(self.device)
+        self.Wk = nn.Linear(self.fl_repr_size, 1, bias=False).to(self.device)
+        self.Wq = nn.Linear(self.fl_repr_size, 1, bias=False).to(self.device)
+        self.Wv = nn.Linear(self.fl_repr_size, 1, bias=False).to(self.device)
 
-        self.WkT = nn.Linear(20, 20, bias=False).to(self.device)
-        self.WqT = nn.Linear(20, 20, bias=False).to(self.device)
-        self.WvT = nn.Linear(20, 20, bias=False).to(self.device)
+        self.WkT = nn.Linear(self.fl_repr_size, 1, bias=False).to(self.device)
+        self.WqT = nn.Linear(self.fl_repr_size, 1, bias=False).to(self.device)
+        self.WvT = nn.Linear(self.fl_repr_size, 1, bias=False).to(self.device)
 
         params = list(self.schedule_embedding.parameters()) + list(self.attention_ff.parameters()) \
                  + list(self.action_attention_ff.parameters()) + list(self.action_embedding.parameters()) \
@@ -72,18 +73,28 @@ class AttentionNet(nn.Module):
 
         self.optimizer = optim.Adam(params, weight_decay=weight_decay, lr=l_rate)
 
-    def forward(self, state, actions, mask, num_flights, num_airlines):
+    def forward(self, state, actions, mask, num_flights, num_airlines, reward):
         state = state.reshape((-1, state.shape[-1]))
         actions = actions.reshape((-1, actions.shape[-1]))  # /302200
         schedule_len = (num_airlines+self.flightDiscretisation)*num_flights
+
+
 
         schedules = state[:, : schedule_len]
         current_trade = state[:, -num_flights:]
 
         schedules = schedules.reshape((schedules.shape[0], num_flights, self.flightDiscretisation + num_airlines))
         schedules = schedules[:, :, num_airlines:]
+
         schedules_with_current = torch.cat([schedules, current_trade.unsqueeze(-1)], dim=-1)
         embedded = self.schedule_embedding(schedules_with_current)
+        mask_non_zero = torch.nonzero(mask - 1)
+        if mask_non_zero.shape[0] > 0:
+            if mask_non_zero.shape[1] > 1:
+                embedded[mask_non_zero[0], mask_non_zero[1], :] = 0
+            else:
+                mask_non_zero = mask_non_zero.squeeze(-1)
+                embedded[0, mask_non_zero, :] = 0
         k = self.Wk(embedded)
         q = self.Wq(embedded)
         v = self.Wv(embedded)
@@ -91,7 +102,7 @@ class AttentionNet(nn.Module):
         attention_matrix = sMax(torch.matmul(k, q.transpose(1, 2)))
         self_attention = torch.matmul(attention_matrix, v).transpose(1, 2)
 
-        add_norm = self_attention + embedded
+        add_norm = self_attention.transpose(1, 2) + embedded
 
         add_norm = nn.functional.normalize(add_norm, p=2, dim=-1)
 
@@ -105,8 +116,8 @@ class AttentionNet(nn.Module):
 
         actions = actions[:, num_airlines:]
         embedded_actions = self.action_embedding(actions)
-        q = self.WqT(embedded_actions)
-        action_attention = sMax(torch.matmul(k, q.unsqueeze(-2).transpose(1, 2)))
+        q = self.WqT(embedded_actions).unsqueeze(-2)
+        action_attention = sMax(torch.matmul(q.transpose(1, 2), k.transpose(1, 2)))
 
         action_self_attention = torch.matmul(action_attention, v).transpose(1, 2).squeeze(-2)
 
@@ -118,31 +129,15 @@ class AttentionNet(nn.Module):
         post_attention += add_norm
         post_attention = nn.functional.normalize(post_attention, p=2, dim=-1)
 
-        #
-        # s = torch.mean(schedules[:, :, 4:], dim=-1)#/302200
-        # s = self.mean_schedule(s)
-
-        # #airline_eval = [s[torch.nonzero(schedules[:, :, i], as_tuple=True)] for i in range(4)]
-        #
-        # trades = [trades[:, i*self.singleTradeSize: (i+1)*self.singleTradeSize] for i in range(self.numTrades)]
-        #
-        # actions = self.action_embedding(actions)
-        # trades = torch.cat([self.trade_embedding(trade) for trade in trades], dim=-1)*100
-        # current_trade = self.trade_embedding(current_trade)*100
-        #
-        # # trades_w = torch.matmul(trades, current_trade.unsqueeze(2))
-        # # trades_w = sMax(trades_w)
-        # # trades_attention = torch.matmul(trades.transpose(1, 2), trades_w).to(self.device)
-        #
-        # joint = torch.cat([p, s, trades, current_trade], dim=-1)
         result = self.value_net(post_attention)
 
-        return result
+        return result + reward.unsqueeze(-1)
 
-    def pick_action(self, state, action, mask, num_flights, num_airlines):
+    def pick_action(self, state, action, mask, num_flights, num_airlines, reward):
+        reward = torch.tensor(reward).to(self.device)
         with torch.no_grad():
             scores = self.forward(state.to(self.device), action.to(self.device), mask.to(self.device),
-                                  num_flights, num_airlines)
+                                  num_flights, num_airlines, reward)
         return scores
 
     def update_weights(self, batch: tuple, gamma: float = 1.0):
@@ -176,7 +171,7 @@ class AttentionNet(nn.Module):
     def update_weights_episode(self, batch: tuple, gamma: float = 1.0):
         criterion = torch.nn.MSELoss()
 
-        states, actions, rewards, masks = (element.to(self.device) for element in batch[:-2])
+        states, actions, partial_rewards, rewards, masks = (element.to(self.device) for element in batch[:-2])
         num_flights, num_airlines = batch[-2], batch[-1]
         actions_tensor = states[:, :(self.flightDiscretisation + num_airlines) * num_flights]
         actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], num_flights,
@@ -185,15 +180,16 @@ class AttentionNet(nn.Module):
         actions_tensor = actions_tensor[torch.nonzero(actions, as_tuple=True)]
 
         self.zero_grad()
-        Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines)
+        Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines, partial_rewards)
         rewards = rewards.reshape((rewards.shape[0], -1))
         loss = criterion(Q, rewards)
-        self.loss = self.loss * 0.9 + 0.1 * loss.item()
         self.optimizer.zero_grad()
 
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
         self.optimizer.step()
+
+        self.loss = loss.item()
 
         # if self.loss < self.bestLoss:
         #     torch.save(self.state_dict(), "air.pt")

@@ -30,9 +30,9 @@ class AttentiveHyperAgent:
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.replayMemory = ReplayMemory(MAX_NUM_FLIGHTS * self.discretisationSize, size=memory_size)
+        self.replayMemory = ReplayMemory(MAX_NUM_FLIGHTS, self.discretisationSize, size=memory_size)
 
-    def pick_flight(self, state, eps, masker: Masker, num_flights, num_airlines):
+    def pick_flight(self, state, eps, masker: Masker, current_mask, num_flights, num_airlines, reward):
         actions = torch.zeros_like(masker.mask)
         if self.trainMode and np.random.rand() < eps:
             action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
@@ -42,7 +42,7 @@ class AttentiveHyperAgent:
         actions_tensor = state[:(self.discretisationSize+num_airlines) * num_flights]
         actions_tensor = actions_tensor.reshape((num_flights, self.discretisationSize + num_airlines))
         scores = torch.tensor(
-            [self.network.pick_action(state, actions_tensor[i], masker.mask, num_flights, num_airlines).item()
+            [self.network.pick_action(state, actions_tensor[i], current_mask, num_flights, num_airlines, reward).item()
              if masker.mask[i] == 1 else -float('inf') for i in range(actions_tensor.shape[0])
              ])
         action = torch.argmax(scores)
@@ -53,7 +53,7 @@ class AttentiveHyperAgent:
         return actions
 
     def step(self, schedule: torch.tensor, eps, instance,
-             len_step, masker=None, last_step=False, train=True):
+             len_step, reward, masker=None, last_step=False, train=True):
 
         num_flights = instance.numFlights
         current_trade = torch.zeros(num_flights)
@@ -63,22 +63,25 @@ class AttentiveHyperAgent:
         if masker.mask is None:
             return None, torch.ones_like(state) * -1, None
 
+        current_mask = masker.mask.clone()
+
         self.replayMemory.set_initial_state(state, masker.mask)
 
         for _ in range(len_step - 1):
             mask = masker.mask.clone()
-            action = self.pick_flight(state, eps, masker, instance.numFlights, instance.numAirlines)
+            action = self.pick_flight(state, eps, masker, current_mask, instance.numFlights,
+                                      instance.numAirlines, reward)
             current_trade += action
             state[-num_flights:] = current_trade
-            self.replayMemory.add_record(next_state=state, action=action, mask=mask, reward=0)
+            self.replayMemory.add_record(next_state=state, action=action, mask=mask, reward=reward)
 
-        action = self.pick_flight(state, eps, masker, instance.numFlights, instance.numAirlines)
+        action = self.pick_flight(state, eps, masker, current_mask, instance.numFlights, instance.numAirlines, reward)
         current_trade += action
         state[-num_flights:] = current_trade
 
         if not last_step:
             state[-num_flights:] = current_trade
-            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
+            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=reward)
             return current_trade, None, None
         else:
             last_state = torch.ones_like(state) * -1

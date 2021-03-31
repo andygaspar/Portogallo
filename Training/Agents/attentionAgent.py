@@ -70,7 +70,7 @@ class attentionNet(nn.Module):
 
 
 
-        schedules = schedules.reshape((schedules.shape[0], num_flights, actions.shape[-1]))
+        schedules = schedules.reshape((schedules.shape[0], num_flights, self.discretisationSize+self.numAirlines))
         schedules = self.schedule_embedding(schedules)
 
         actions = self.action_embedding(actions)
@@ -96,9 +96,9 @@ class attentionNet(nn.Module):
 
         return result
 
-    def pick_action(self, state, mask):
+    def pick_action(self, state, mask, num_flights, len_episode):
         with torch.no_grad():
-            scores = self.forward(state.to(self.device), actions=mask.to(self.device))
+            scores = self.forward(state.to(self.device), mask.to(self.device), num_flights, len_episode)
         return scores
 
     def update_weights(self, batch: tuple, gamma: float = 1.0):

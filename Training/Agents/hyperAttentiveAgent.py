@@ -38,16 +38,16 @@ class AttentiveHyperAgent:
         self.replayMemory = ReplayMemory(self.discretisationSize*MAX_NUM_FLIGHTS, self.discretisationSize,
                                          size=memory_size)
 
-    def pick_flight(self, state, eps, masker: Masker):
+    def pick_flight(self, state, eps, masker: Masker, num_flights, len_episode):
         actions = torch.zeros_like(masker.mask)
         if self.trainMode and np.random.rand() < eps:
             action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
             masker.set_action(action)
             actions[action] = 1
             return actions
-        actions_tensor = state[:self.singleFlightSize * self.numFlights]
-        actions_tensor = actions_tensor.reshape((self.numFlights, self.singleFlightSize))
-        scores = torch.tensor([self.network.pick_action(state, actions_tensor[i]).item() if masker.mask[i] == 1 else -float('inf')
+        actions_tensor = state[:(self.discretisationSize+self.numAirlines) * num_flights]
+        actions_tensor = actions_tensor.reshape((num_flights, self.discretisationSize+self.numAirlines))
+        scores = torch.tensor([self.network.pick_action(state, actions_tensor[i], num_flights, len_episode).item() if masker.mask[i] == 1 else -float('inf')
                             for i in range(actions_tensor.shape[0])
                             ])
         action = torch.argmax(scores)
@@ -56,7 +56,7 @@ class AttentiveHyperAgent:
         return actions
 
     def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
-             len_step, masker=None, last_step=False, train=True):
+             len_step, len_episode, masker=None, last_step=False, train=True):
 
         num_flights = instance.numFlights
         current_trade = torch.zeros(num_flights)
@@ -66,12 +66,12 @@ class AttentiveHyperAgent:
         self.replayMemory.set_initial_state(state)
 
         for _ in range(len_step - 1):
-            action = self.pick_flight(state, eps, masker)
+            action = self.pick_flight(state, eps, masker, num_flights, len_episode)
             current_trade += action
             state[-num_flights:] = current_trade
             self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0)
 
-        action = self.pick_flight(state, eps, masker)
+        action = self.pick_flight(state, eps, masker, num_flights, len_episode)
         current_trade += action
         state[-num_flights:] = current_trade
 

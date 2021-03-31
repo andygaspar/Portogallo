@@ -8,22 +8,16 @@ sMax = nn.Softmax(dim=1)
 
 
 class attentionNet(nn.Module):
-    def __init__(self, hidden_dim, n_flights, n_airlines, n_trades, l_rate,
+    def __init__(self, hidden_dim, discretisation_size, n_airlines, n_trades, l_rate,
                  weight_decay=1e-4):
         super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
 
         self.hidden_dim = hidden_dim
-        self.numFlights = n_flights
+        self.discretisationSize = discretisation_size
         self.numAirlines = n_airlines
-        self.singleFlightSize = self.numFlights + self.numAirlines
-
-        self.singleTradeSize = self.numFlights
-        self.numTrades = n_trades
-
-        self.scheduleLen = self.singleFlightSize * self.numFlights
-        self.tradeLen = self.scheduleLen + self.singleTradeSize * self.numTrades
+        self.singleFlightSize = self.discretisationSize + self.numAirlines
 
         self.loss = 0
         self.bestLoss = 100_000_000
@@ -31,38 +25,23 @@ class attentionNet(nn.Module):
         torch.cuda.current_device()
         print("Running on GPU:", torch.cuda.is_available())
 
-        self.mean_embedding = nn.Sequential(nn.Linear(1, 4),
-                                                nn.ReLU(),
-                                                nn.Linear(4, self.hidden_dim, bias=False),
-                                                nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, 8, bias=False)).to(self.device)
-
-        self.mean_schedule = nn.Sequential(nn.Linear(20, self.hidden_dim, bias=False),
-                                                nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
-                                                nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, 8, bias=False)).to(self.device)
 
         self.action_embedding = nn.Sequential(nn.Linear(self.singleFlightSize, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, 4, bias=False)).to(self.device)
+                                                nn.Linear(self.hidden_dim, self.hidden_dim, bias=False)).to(self.device)
 
         self.schedule_embedding = nn.Sequential(nn.Linear(self.singleFlightSize, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
                                                 nn.Linear(self.hidden_dim, self.hidden_dim, bias=False),
                                                 nn.ReLU(),
-                                                nn.Linear(self.hidden_dim, self.hidden_dim, bias=False)).to(self.device)
+                                                nn.Linear(self.hidden_dim, 1, bias=False)).to(self.device)
 
-        self.trade_embedding = nn.Sequential(nn.Linear(self.singleTradeSize, self.hidden_dim),
-                                             nn.ReLU(),
-                                             nn.Linear(self.hidden_dim, self.hidden_dim),
-                                             nn.ReLU(),
-                                             nn.Linear(self.hidden_dim, 2)).to(self.device)
+
 
         # self.value_net = nn.Sequential(nn.Linear(3*self.hidden_dim, self.hidden_dim),
-        self.value_net = nn.Sequential(nn.Linear(22, self.hidden_dim*2),
+        self.value_net = nn.Sequential(nn.Linear(self.hidden_dim, self.hidden_dim*2),
                                        nn.ReLU(),
                                        nn.Linear(self.hidden_dim*2, self.hidden_dim),
                                        nn.ReLU(),
@@ -72,42 +51,48 @@ class attentionNet(nn.Module):
                                        nn.ReLU(),
                                        nn.Linear(16, 1)).to(self.device)
 
-        self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
-        self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
+        # self.value_net[-1].weight.data = torch.abs(self.value_net[-1].weight.data)
+        # self.value_net[-1].bias.data = torch.abs(self.value_net[-1].bias.data)
 
-        params = list(self.schedule_embedding.parameters()) + list(self.trade_embedding.parameters()) \
-                 + list(self.value_net.parameters())
+        params = list(self.schedule_embedding.parameters()) + list(self.value_net.parameters())
 
         self.optimizer = optim.Adam(params, weight_decay=weight_decay, lr=l_rate)
 
-    def forward(self, state, actions):
+    def forward(self, state, actions, num_flights, num_trades):
 
         state = state.reshape((-1, state.shape[-1]))
         actions = actions.reshape((-1, actions.shape[-1]))#/302200
-        schedules = state[:, : self.scheduleLen].to(self.device)
-        trades = state[:, self.scheduleLen: self.tradeLen].to(self.device)
-        current_trade = state[:, self.tradeLen:].to(self.device)
+        schedule_len = self.singleFlightSize * num_flights
 
-        p = torch.mean(actions[:, 4:], dim=1).reshape((actions.shape[0], 1))#/302200
-        p = self.mean_embedding(p)
+        schedules = state[:, : schedule_len].to(self.device)
+        # trades = state[:, schedule_len: -num_flights].to(self.device)
+        # current_trade = state[:, -num_flights:].to(self.device)
 
-        schedules = schedules.reshape((schedules.shape[0], self.numFlights, actions.shape[-1]))
-        s = torch.mean(schedules[:, :, 4:], dim=-1)#/302200
-        s = self.mean_schedule(s)
-        #airline_eval = [s[torch.nonzero(schedules[:, :, i], as_tuple=True)] for i in range(4)]
 
-        trades = [trades[:, i*self.singleTradeSize: (i+1)*self.singleTradeSize] for i in range(self.numTrades)]
+
+        schedules = schedules.reshape((schedules.shape[0], num_flights, actions.shape[-1]))
+        schedules = self.schedule_embedding(schedules)
 
         actions = self.action_embedding(actions)
-        trades = torch.cat([self.trade_embedding(trade) for trade in trades], dim=-1)*100
-        current_trade = self.trade_embedding(current_trade)*100
+        QT = torch.matmul(actions.unsqueeze(-1), schedules.transpose(1,2))
+        QT = sMax(QT)
 
-        # trades_w = torch.matmul(trades, current_trade.unsqueeze(2))
-        # trades_w = sMax(trades_w)
-        # trades_attention = torch.matmul(trades.transpose(1, 2), trades_w).to(self.device)
+        h = torch.matmul(QT, schedules).squeeze(-1)
 
-        joint = torch.cat([p, s, trades, current_trade], dim=-1)
-        result = self.value_net(joint)
+        #airline_eval = [s[torch.nonzero(schedules[:, :, i], as_tuple=True)] for i in range(4)]
+
+        # trades = [trades[:, i*self.singleTradeSize: (i+1)*self.singleTradeSize] for i in range(num_trades)]
+        #
+        # actions = self.action_embedding(actions)
+        # trades = torch.cat([self.trade_embedding(trade) for trade in trades], dim=-1)*100
+        # current_trade = self.trade_embedding(current_trade)*100
+        #
+        # # trades_w = torch.matmul(trades, current_trade.unsqueeze(2))
+        # # trades_w = sMax(trades_w)
+        # # trades_attention = torch.matmul(trades.transpose(1, 2), trades_w).to(self.device)
+        #
+        # joint = torch.cat([p, s, trades, current_trade], dim=-1)
+        result = self.value_net(h)
 
         return result
 
@@ -144,17 +129,17 @@ class attentionNet(nn.Module):
 
         return loss
 
-    def update_weights_episode(self, batch: tuple, gamma: float = 1.0):
+    def update_weights_episode(self, batch: tuple, num_flights, num_trades, gamma: float = 1.0):
         criterion = torch.nn.MSELoss()
 
         states, actions, rewards = (element.to(self.device) for element in batch)
-        actions_tensor = states[:, :self.singleFlightSize * self.numFlights]
-        actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], self.numFlights, self.singleFlightSize))
+        actions_tensor = states[:, :self.singleFlightSize * num_flights]
+        actions_tensor = actions_tensor.reshape((actions_tensor.shape[0], num_flights, self.singleFlightSize))
 
         actions_tensor = actions_tensor[torch.nonzero(actions, as_tuple=True)]
 
         self.zero_grad()
-        Q = self.forward(states, actions_tensor)
+        Q = self.forward(states, actions_tensor, num_flights, num_trades)
         rewards = rewards.reshape((rewards.shape[0], -1))
         loss = criterion(Q, rewards)
         self.loss = self.loss * 0.9 + 0.1 * loss.item()
@@ -164,8 +149,8 @@ class attentionNet(nn.Module):
         torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
         self.optimizer.step()
 
-        if self.loss < self.bestLoss:
-            torch.save(self.state_dict(), "air.pt")
+        # if self.loss < self.bestLoss:
+        #     torch.save(self.state_dict(), "air.pt")
 
         return loss
 

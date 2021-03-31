@@ -7,6 +7,7 @@ class IstopFlight(fl.Flight):
 
         super().__init__(line, airline, slots)
 
+        self.netInput = None
         self.priority = line["priority"]
 
         self.preference = None

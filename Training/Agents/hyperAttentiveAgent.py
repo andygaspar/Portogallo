@@ -12,32 +12,31 @@ from Training.masker import Masker
 
 class AttentiveHyperAgent:
 
-    def __init__(self, num_airlines, num_flights, num_trades,discretisation_size, weight_decay,l_rate,
+    def __init__(self, num_airlines, num_flights, num_trades, discretisation_size, weight_decay,l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
-        MAX_DISCRETISATION_SIZE = 100
         MAX_NUM_FLIGHTS = 200
 
         self.singleTradeSize = num_flights  # 2 as we are dealing with couples
         self.currentTradeSize = self.singleTradeSize
         self.numAirlines = num_airlines
+        self.discretisationSize = discretisation_size
         self.singleFlightSize = num_airlines + num_flights
-        input_size = self.singleFlightSize * num_flights + num_trades * self.singleTradeSize + self.currentTradeSize
 
-        self.numFlights = num_flights  # da sistemare
-
+        self.numFlights = num_flights
         self.weightDecay = weight_decay
 
         hidden_dim = 64
 
-        self.network = attentionAgent.attentionNet(hidden_dim, num_flights, self.numAirlines, num_trades, l_rate,
-                                                   weight_decay=weight_decay)
+        self.network = attentionAgent.attentionNet(hidden_dim, discretisation_size, self.numAirlines, num_trades,
+                                                   l_rate, weight_decay=weight_decay)
 
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.replayMemory = ReplayMemory(MAX_DISCRETISATION_SIZE*MAX_NUM_FLIGHTS, size=memory_size)
+        self.replayMemory = ReplayMemory(self.discretisationSize*MAX_NUM_FLIGHTS, self.discretisationSize,
+                                         size=memory_size)
 
     def pick_flight(self, state, eps, masker: Masker):
         actions = torch.zeros_like(masker.mask)
@@ -94,6 +93,6 @@ class AttentiveHyperAgent:
             loss = self.network.update_weights(batch)
             self.replayMemory.update_losses(idxs, loss)
 
-    def episode_training(self):
+    def episode_training(self, num_flights, num_trades):
         batch = self.replayMemory.get_last_episode()
-        self.network.update_weights_episode(batch)
+        self.network.update_weights_episode(batch, num_flights, num_trades)

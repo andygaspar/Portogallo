@@ -7,16 +7,18 @@ import numpy as np
 
 class ReplayMemory:
 
-    def __init__(self, max_num_flights, size=1000):
+    def __init__(self, max_schedule_input_size, discretisation_size, size=1000):
+
         size = int(size)
+        self.discretisationSize = discretisation_size
         self.episodeStates = None
         self.episodeActions = None
         self.episodeRewards = None
         self.episode_idx = None
 
-        self.states = torch.zeros((size, max_num_flights))
-        self.nextStates = torch.zeros((size, max_num_flights))
-        self.masks = torch.zeros((size, max_num_flights))
+        self.states = torch.zeros((size, max_schedule_input_size))
+        self.nextStates = torch.zeros((size, max_schedule_input_size))
+        self.masks = torch.zeros((size, max_schedule_input_size))
         self.actions = torch.zeros((size, 50))
         self.num_airlines = torch.zeros(size)
         self.sizes = torch.zeros(size)
@@ -29,7 +31,7 @@ class ReplayMemory:
         self.current_size = 0
 
     def init_episode(self, act_in_episode, num_flights, num_airlines, num_trades):
-        self.episodeStates = torch.zeros((act_in_episode, (num_flights + num_airlines + num_trades+1) * num_flights))
+        self.episodeStates = torch.zeros((act_in_episode, (self.discretisationSize + num_airlines + num_trades+1) * num_flights))
         self.episodeActions = torch.zeros((act_in_episode, num_flights))
         self.episodeRewards = torch.zeros(act_in_episode)
         self.episode_idx = 0

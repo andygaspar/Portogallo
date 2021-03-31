@@ -60,7 +60,7 @@ class Trainer:
         shared_reward = -1000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
         self.hyperAgent.assign_end_episode_reward(last_state, action, masker.mask, shared_reward,
                                                   self.actionsInEpisodes)
-        self.hyperAgent.episode_training()
+        self.hyperAgent.episode_training(instance.numFlights, self.lengthEpisode)
 
     def test_episode(self, schedule_tensor: torch.tensor, instance, eps):
         self.hyperAgent.trainMode = False

@@ -12,7 +12,7 @@ from Training.masker import Masker
 
 class AttentiveHyperAgent:
 
-    def __init__(self, num_airlines, num_flights, num_trades, weight_decay,l_rate,
+    def __init__(self, num_airlines, num_flights, num_trades,discretisation_size, weight_decay,l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
         MAX_DISCRETISATION_SIZE = 100

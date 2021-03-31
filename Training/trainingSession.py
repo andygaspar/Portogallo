@@ -64,6 +64,7 @@ BATCH_SIZE = 1024
 MEMORY_SIZE = 200
 
 hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
+                                                      discretisation_size=DISCRETISATION_SIZE,
                                                       weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
                                                       batch_size=BATCH_SIZE,
                                                       memory_size=MEMORY_SIZE, train_mode=True)

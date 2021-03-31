@@ -27,16 +27,6 @@ class Masker:
         self.selectedTrade = None
 
     def set_initial_mask(self):
-        # print("\n",self.selectedTrade)
-        # <>
-        # trade_indexes = self.tradeDict[str(self.selectedTrade)]
-        # # print(trade_indexes)
-        # for i in range(len(trade_indexes[0])):
-        #     # print("ciao ", self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]])
-        #     self.maskDict[trade_indexes[0][i]][trade_indexes[1][i]] = []
-        #     non_empty = sum([1 if len(trade) > 0 else 0 for trade in self.maskDict[trade_indexes[0][i]]])
-        #     if non_empty == 0:
-        #         del self.maskDict[trade_indexes[0][i]]
 
         keys_to_delete = []
         if self.actions is not None:
@@ -64,7 +54,6 @@ class Masker:
                 del self.maskDict[key]
 
         if len(self.maskDict) == 0:
-            print("arrivato")
             self.mask = None
             return
 

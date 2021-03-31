@@ -39,7 +39,6 @@ class ReplayMemory:
     def set_initial_state(self, state):
         instance_size = state.shape[0]
         self.episodeStates[self.episode_idx, : instance_size] = state
-
         self.states[self.idx, :state.shape[0]] = state
         self.current_size = min(self.current_size + 1, self.size)
 
@@ -52,9 +51,7 @@ class ReplayMemory:
         self.rewards[self.idx] = reward
         self.done[self.idx] = 0
         self.masks[self.idx, :mask.shape[0]] = mask
-
         self.episodeActions[self.episode_idx] = action.clone()
-
         self.idx = (self.idx + 1) % self.size
         self.episode_idx += 1
 

@@ -5,7 +5,7 @@ from torch import optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-sMax = nn.Softmax(dim=1)
+sMax = nn.Softmax(dim=-1)
 
 
 class AttentionNet(nn.Module):
@@ -178,18 +178,19 @@ class AttentionNet(nn.Module):
                                                  self.flightDiscretisation + num_airlines))
 
         actions_tensor = actions_tensor[torch.nonzero(actions, as_tuple=True)]
+        loss = 0
+        for i in range(100):
+            self.zero_grad()
+            Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines, partial_rewards)
+            rewards = rewards.reshape((rewards.shape[0], -1))
+            loss = criterion(Q, rewards)
+            self.optimizer.zero_grad()
 
-        self.zero_grad()
-        Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines, partial_rewards)
-        rewards = rewards.reshape((rewards.shape[0], -1))
-        loss = criterion(Q, rewards)
-        self.optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
+            self.optimizer.step()
 
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
-        self.optimizer.step()
-
-        self.loss = loss.item()
+            self.loss = loss.item()
 
         # if self.loss < self.bestLoss:
         #     torch.save(self.state_dict(), "air.pt")

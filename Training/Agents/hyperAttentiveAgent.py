@@ -34,8 +34,12 @@ class AttentiveHyperAgent:
 
     def pick_flight(self, state, eps, masker: Masker, current_mask, num_flights, num_airlines, reward):
         actions = torch.zeros_like(masker.mask)
-        if self.trainMode and np.random.rand() < eps:
+        if self.trainMode and 2 < eps: #np.random.rand()
             action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
+            for i in range(len(masker.mask)):
+                if masker.mask[i].item() == 1:
+                    action = i
+                    break
             masker.set_action(action)
             actions[action] = 1
             return actions

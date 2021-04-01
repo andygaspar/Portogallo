@@ -90,7 +90,7 @@ eps_fun = lambda i, num_iterations: 1 - i/num_iterations
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY, triples=True)
-train.run(5000, df, training_start_iteration=START_TRAINING, train_t=10)
+train.run(20000, df, training_start_iteration=START_TRAINING, train_t=10)
 
 
 #

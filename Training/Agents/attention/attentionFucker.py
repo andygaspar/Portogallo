@@ -8,12 +8,13 @@ from Training.Agents.attention.attentionCodec import AttentionCodec
 from Training.Agents import attentionAgent
 from Training.Agents.replayMemory import ReplayMemory
 from Training.masker import Masker
+
 sMax = torch.nn.Softmax(dim=-1)
 
 
 class AttentiveHyperAgent:
 
-    def __init__(self, num_airlines, num_flights, num_trades, discretisation_size, weight_decay,l_rate,
+    def __init__(self, num_airlines, num_flights, num_trades, discretisation_size, weight_decay, l_rate,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
         MAX_NUM_FLIGHTS = 200
@@ -28,39 +29,41 @@ class AttentiveHyperAgent:
         self.weightDecay = weight_decay
 
         hidden_dim = 64
+        self._hidden_dim = hidden_dim
+        self._context_dim = self._hidden_dim + 20*3
+        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=8, n_attention_layers=6, context_dim=None)
+        self.context = None
+        self.actions_embeddings=None
 
-        self.network = attentionAgent.attentionNet(hidden_dim, discretisation_size, self.numAirlines, num_trades,
-                                                   l_rate, weight_decay=weight_decay)
 
+        ##TRAINING DA VEDERE
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.replayMemory = ReplayMemory(self.discretisationSize*MAX_NUM_FLIGHTS, self.discretisationSize,
+        self.replayMemory = ReplayMemory(self.discretisationSize * MAX_NUM_FLIGHTS, self.discretisationSize,
                                          size=memory_size)
+        ######################
 
-    def pick_flight(self, state, eps, masker: Masker, num_flights, len_episode):
+    def pick_flight(self, state, masker: Masker, num_flights):
         actions = torch.zeros_like(masker.mask)
-        if self.trainMode and np.random.rand() < eps:
-            action = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
-            masker.set_action(action)
-            actions[action] = 1
-            return actions
-        actions_tensor = state[:(self.discretisationSize+self.numAirlines) * num_flights]
-        actions_tensor = actions_tensor.reshape((num_flights, self.discretisationSize+self.numAirlines))
+        actions_tensor = state[:(self.discretisationSize + self.numAirlines) * num_flights]
+        actions_tensor = actions_tensor.reshape((num_flights, self.discretisationSize + self.numAirlines))
 
-        scores = torch.tensor([self.network.pick_action(state, actions_tensor[i], num_flights, len_episode).item() if masker.mask[i] == 1 else -float('inf')
-                            for i in range(actions_tensor.shape[0])
-                            ])
-
-        action = torch.argmax(scores)
+        probs = self._codec.get_action_probs(self.context, actions_tensor, masker.mask)
+        if self.trainMode:
+            action = np.random.choice(range(probs.shape[0]), p=probs.to_numpy())
+        else:
+            action = np.argmax(probs.to_numpy())
         actions[action] = 1
         masker.set_action(action.item())
         return actions
 
-    def init_step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
-             len_step, len_episode, masker=None, last_step=False, train=True):
-        self.step(schedule, trade_list, eps, instance, len_step, len_episode, masker, last_step, train)
+    def init_step(self, schedule, trade_list, current_trade):
+        self.actions_embeddings = self._codec.encode(schedule)
+        self.context = torch.zeros(1, self._context_dim)
+        self.context[0, :self._hidden_dim] = torch.mean(self.actions_embeddings, dim=0)
+
 
     def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
              len_step, len_episode, masker=None, last_step=False, train=True):

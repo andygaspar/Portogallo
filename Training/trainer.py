@@ -40,7 +40,13 @@ class Trainer:
         flight_trade_idx = []
         self.hyperAgent.replayMemory.init_episode(self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
                                                   self.lengthEpisode)
-        for i in range(self.lengthEpisode - 1):
+
+        trade = self.hyperAgent.init_step(schedule_tensor, trade_list, eps, instance,
+                                     len_step=self.lenStep, len_episode=self.lengthEpisode, masker=masker)
+        trade_list[: instance.numFlights] = trade
+        flight_trade_idx += masker.actions
+
+        for i in range(1, self.lengthEpisode - 1):
             trade = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
                                          len_step=self.lenStep, len_episode=self.lengthEpisode, masker=masker)
             trade_list[i * instance.numFlights: (i + 1) * instance.numFlights] = trade

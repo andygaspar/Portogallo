@@ -101,7 +101,6 @@ class ReplayMemory:
             self.rewards[self.idx - i] = partial_reward
             self.episodePartialRewards[self.episode_idx - i] = partial_reward
 
-
     def end_short_episode(self, reward, instance_size, actions_in_episode):
         self.nextStates[self.idx, :instance_size] = -torch.ones(instance_size) * 1
         for i in range(1, actions_in_episode + 1):

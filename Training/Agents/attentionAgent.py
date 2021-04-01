@@ -17,7 +17,7 @@ class AttentionNet(nn.Module):
 
         self.hidden_dim = hidden_dim
         self.flightDiscretisation = len_discretisation
-        self.fl_repr_size = 36
+        self.fl_repr_size = 128
         self.loss = 0
         self.bestLoss = 100_000_000
 
@@ -44,9 +44,11 @@ class AttentionNet(nn.Module):
                                               nn.ReLU(),
                                               nn.Linear(self.hidden_dim, self.fl_repr_size, bias=False)).to(self.device)
 
-        self.value_net = nn.Sequential(nn.Linear(self.fl_repr_size, self.hidden_dim * 2),
+        self.value_net = nn.Sequential(nn.Linear(self.fl_repr_size, self.hidden_dim),
                                        nn.ReLU(),
-                                       nn.Linear(self.hidden_dim * 2, self.hidden_dim),
+                                       nn.Linear(self.hidden_dim, self.hidden_dim * 4),
+                                       nn.ReLU(),
+                                       nn.Linear(self.hidden_dim * 4, self.hidden_dim),
                                        nn.ReLU(),
                                        nn.Linear(self.hidden_dim, 16),
                                        nn.ReLU(),
@@ -118,7 +120,6 @@ class AttentionNet(nn.Module):
         embedded_actions = self.action_embedding(actions)
         q = self.WqT(embedded_actions).unsqueeze(-2)
         action_attention = sMax(torch.matmul(q.transpose(1, 2), k.transpose(1, 2)))
-
         action_self_attention = torch.matmul(action_attention, v).transpose(1, 2).squeeze(-2)
 
         add_norm = action_self_attention + embedded_actions
@@ -178,19 +179,18 @@ class AttentionNet(nn.Module):
                                                  self.flightDiscretisation + num_airlines))
 
         actions_tensor = actions_tensor[torch.nonzero(actions, as_tuple=True)]
-        loss = 0
-        for i in range(100):
-            self.zero_grad()
-            Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines, partial_rewards)
-            rewards = rewards.reshape((rewards.shape[0], -1))
-            loss = criterion(Q, rewards)
-            self.optimizer.zero_grad()
 
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
-            self.optimizer.step()
+        self.zero_grad()
+        Q = self.forward(states, actions_tensor, masks,num_flights, num_airlines, partial_rewards)
+        rewards = rewards.reshape((rewards.shape[0], -1))
+        loss = criterion(Q, rewards)
+        self.optimizer.zero_grad()
 
-            self.loss = loss.item()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.parameters(), 10)
+        self.optimizer.step()
+
+        self.loss = loss.item()
 
         # if self.loss < self.bestLoss:
         #     torch.save(self.state_dict(), "air.pt")

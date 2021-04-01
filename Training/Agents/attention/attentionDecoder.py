@@ -24,8 +24,8 @@ class AttentionDecoder(nn.Module):
 
     def forward(self, context, actions):
         queries = [q_i(context) for q_i in self._queries]
-        keys = [k_i(context) for k_i in self._keys]
-        values = [v_i(context) for v_i in self._values]
+        keys = [k_i(actions) for k_i in self._keys]
+        values = [v_i(actions) for v_i in self._values]
 
         u_vals = [torch.matmul(k, q.reshape((-1, self._action_dim, 1))) / torch.sqrt(self._hidden_dim) for k, q in zip(queries, keys)]
 

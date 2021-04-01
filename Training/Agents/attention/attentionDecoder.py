@@ -30,7 +30,7 @@ class AttentionDecoder(nn.Module):
         u_vals = [torch.matmul(k, q.reshape((-1, self._action_dim, 1))) / torch.sqrt(self._hidden_dim) for k, q in zip(queries, keys)]
 
         c_embeddings = [torch.matmul(torch.transpose(u, 1, 2), v) for u, v in zip(u_vals, values)]
-        c_enbeddings = torch.cat(*c_embeddings, 1)
+        c_embeddings = torch.cat(*c_embeddings, 1)
 
         p_queries = self._prob_queries(c_embeddings)
         p_keys = self._prob_keys(actions)

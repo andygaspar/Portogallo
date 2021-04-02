@@ -24,7 +24,7 @@ class AttentionCodec(nn.Module):
         score = self._decoder(context, actions)
         non_zeros = torch.nonzero(mask - 1, as_tuple=True)
         if len(non_zeros) > 0:
-            score[non_zeros, :] = 0
+            score[non_zeros, :] = -float('inf')
         return sMax(score)
 
 

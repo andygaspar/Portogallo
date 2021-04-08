@@ -3,11 +3,12 @@ import torch
 
 from Training.Agents.attention.attentionDecoder import AttentionDecoder
 from Training.Agents.attention.attentionEncoder import AttentionEncoder
-sMax = nn.Softmax(dim=-1)
+sMax = nn.Softmax(dim=0)
+
 
 class AttentionCodec(nn.Module):
     def __init__(self, action_dim, hidden_dim, n_heads, n_attention_layers, context_dim):
-
+        super().__init__()
         self._action_dim = action_dim
         self._hidden_dim = hidden_dim
         self._n_heads = n_heads
@@ -18,13 +19,14 @@ class AttentionCodec(nn.Module):
         self._decoder = AttentionDecoder(self._context_dim, self._hidden_dim, self._n_heads)
 
     def encode(self, schedule):
-        self._encoder(schedule)
+        return self._encoder(schedule)
 
     def get_action_probs(self, context, actions, mask):
         score = self._decoder(context, actions)
-        non_zeros = torch.nonzero(mask - 1, as_tuple=True)
+        non_zeros = torch.nonzero(mask - 1)
         if len(non_zeros) > 0:
             score[non_zeros, :] = -float('inf')
-        return sMax(score)
+        probs = sMax(score)
+        return probs
 
 

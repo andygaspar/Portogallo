@@ -14,8 +14,8 @@ class AttentionDecoder(nn.Module):
         self._hidden_dim = int(self._action_dim / self._n_heads)
 
         self._queries = nn.ModuleList([nn.Linear(self._context_dim, self._hidden_dim, bias=False) for _ in range(self._n_heads)])
-        self._keys = nn.ModuleList([nn.Linear(self._actions, self._hidden_dim, bias=False) for _ in range(self._n_heads)])
-        self._values = nn.ModuleList([nn.Linear(self._actions, self._hidden_dim, bias=False) for _ in range(self._n_heads)])
+        self._keys = nn.ModuleList([nn.Linear(self._action_dim, self._hidden_dim, bias=False) for _ in range(self._n_heads)])
+        self._values = nn.ModuleList([nn.Linear(self._action_dim, self._hidden_dim, bias=False) for _ in range(self._n_heads)])
 
         self._prob_queries = nn.Linear(self._action_dim, self._action_dim, bias=False)
         self._prob_keys = nn.Linear(self._action_dim, self._action_dim, bias=False)
@@ -25,11 +25,11 @@ class AttentionDecoder(nn.Module):
         keys = [k_i(actions) for k_i in self._keys]
         values = [v_i(actions) for v_i in self._values]
 
-        u_vals = [torch.matmul(k, q.reshape((-1, self._action_dim, 1))) / np.sqrt(self._hidden_dim)
+        u_vals = [torch.matmul(k, q.transpose(-2, -1)) / np.sqrt(self._hidden_dim)
                   for k, q in zip(queries, keys)]
 
-        c_embeddings = [torch.matmul(torch.transpose(u, -2, -1), v) for u, v in zip(u_vals, values)]
-        c_embeddings = torch.cat(*c_embeddings, dim=-1)
+        c_embeddings = [torch.matmul(u, v) for u, v in zip(u_vals, values)]
+        c_embeddings = torch.cat(c_embeddings, dim=-1)
 
         p_queries = self._prob_queries(c_embeddings)
         p_keys = self._prob_keys(actions)

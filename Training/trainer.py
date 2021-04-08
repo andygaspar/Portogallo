@@ -5,6 +5,7 @@ import numpy as np
 import math as mt
 
 from Training import instanceMaker
+from Training.Agents.attention.attentionFucker import AttentionFucker
 from Training.Agents.hyperAttentiveAgent import AttentiveHyperAgent
 
 import torch
@@ -17,7 +18,7 @@ from Training.masker import Masker
 
 class Trainer:
 
-    def __init__(self, hyper_agent: Union[AttentiveHyperAgent], length_episode, eps_fun, min_reward=-1000,
+    def __init__(self, hyper_agent: Union[AttentionFucker], length_episode, eps_fun, min_reward=-1000,
                  eps_decay=100, masker=Masker, triples=False):
         self.hyperAgent = hyper_agent
         self.lengthEpisode = length_episode
@@ -41,18 +42,13 @@ class Trainer:
         self.hyperAgent.replayMemory.init_episode(self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
                                                   self.lengthEpisode)
 
-        trade = self.hyperAgent.init_step(schedule_tensor, trade_list, eps, instance,
-                                     len_step=self.lenStep, len_episode=self.lengthEpisode, masker=masker)
-        trade_list[: instance.numFlights] = trade
-        flight_trade_idx += masker.actions
-
-        for i in range(1, self.lengthEpisode - 1):
-            trade = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
-                                         len_step=self.lenStep, len_episode=self.lengthEpisode, masker=masker)
+        for i in range(self.lengthEpisode - 1):
+            trade = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,len_step=self.lenStep,
+                                         len_episode=self.lengthEpisode, masker=masker, initial=(i == 0))
             trade_list[i * instance.numFlights: (i + 1) * instance.numFlights] = trade
             flight_trade_idx += masker.actions
 
-        trade, last_state, action = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
+        trade, last_state, action, prob = self.hyperAgent.step(schedule_tensor, trade_list, eps, instance,
                                                          len_step=self.lenStep,len_episode=self.lengthEpisode,
                                                          masker=masker, last_step=True)
         flight_trade_idx += masker.actions
@@ -65,7 +61,7 @@ class Trainer:
         #                        instance.initialTotalCosts + self.a) + self.b
         # print(shared_reward)
         shared_reward = -1000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
-        self.hyperAgent.assign_end_episode_reward(last_state, action, masker.mask, shared_reward,
+        self.hyperAgent.assign_end_episode_reward(last_state, action, prob, masker.mask, shared_reward,
                                                   self.actionsInEpisodes)
         self.hyperAgent.episode_training(instance.numFlights, self.lengthEpisode)
 
@@ -90,7 +86,7 @@ class Trainer:
             schedule = instance.get_schedule_tensor()
             self.eps = self.epsFun(i, num_iterations)
             self.episode(schedule, instance, self.eps)
-            print("{0} {1:2f} {2:2f}".format(i, self.hyperAgent.network.loss, self.eps))
+            print("{0} {1:2f} {2:2f}".format(i, self.hyperAgent.loss, self.eps))
             if i % train_t == 0:
                 print("\n TEST")
                 self.test_episode(schedule, instance, self.eps)

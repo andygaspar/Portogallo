@@ -4,7 +4,7 @@ import torch
 
 import trainer
 import masker
-from Agents import hyperAttentiveAgent
+from Training.Agents.attention.attentionFucker import AttentionFucker
 import instanceMaker
 import pandas as pd
 from ModelStructure.Costs.costFunctionDict import CostFuns
@@ -65,11 +65,9 @@ LEARNING_RATE = 1e-3
 BATCH_SIZE = 1024
 MEMORY_SIZE = 200
 
-hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
-                                                      discretisation_size=DISCRETISATION_SIZE,
-                                                      weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
-                                                      batch_size=BATCH_SIZE,
-                                                      memory_size=MEMORY_SIZE, train_mode=True)
+hyper_agent = AttentionFucker(num_airlines, num_flights, num_trades, discretisation_size=DISCRETISATION_SIZE,weight_decay=WEIGHT_DECAY,
+                              l_rate=LEARNING_RATE, trainings_per_step=10,
+                              batch_size=BATCH_SIZE,memory_size=MEMORY_SIZE, train_mode=True)
 #hyper_agent = hyperAgent.HyperAgent(num_flight_types, num_airlines, num_flights, num_trades, num_combs,
 #                                    weight_decay=weight_decay, batch_size=batch_size,
 #                                    memory_size=memory_size, train_mode=True)
@@ -89,7 +87,7 @@ eps_fun = lambda i, num_iterations: 1 - i/num_iterations
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY, triples=True)
-train.run(5000, df, training_start_iteration=START_TRAINING, train_t=10)
+train.run(1000000, df, training_start_iteration=START_TRAINING, train_t=10)
 #
 # for g in hyper_agent.AirAgent.optimizer.param_groups:
 #     g['lr'] = 0.001

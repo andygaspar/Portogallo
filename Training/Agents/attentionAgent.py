@@ -80,8 +80,6 @@ class AttentionNet(nn.Module):
         actions = actions.reshape((-1, actions.shape[-1]))  # /302200
         schedule_len = (num_airlines+self.flightDiscretisation)*num_flights
 
-
-
         schedules = state[:, : schedule_len]
         current_trade = state[:, -num_flights:]
 

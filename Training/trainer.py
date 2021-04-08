@@ -90,10 +90,10 @@ class Trainer:
         idx = 0
         instance = None
         schedule = None
+        instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
         for k in range(N):
             for j in range(5):
                 for i in range(10):
-                    instance = instanceMaker.Instance(triples=False, df=df, xp_problem=xp_problem)
                     schedule = instance.get_schedule_tensor()
                     self.eps = self.epsFun(idx, num_iterations)
                     self.episode(schedule, instance, self.eps)

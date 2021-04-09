@@ -60,7 +60,7 @@ class Trainer:
         # shared_reward = mt.log(1 - instance.compute_costs(instance.flights, which="final") /
         #                        instance.initialTotalCosts + self.a) + self.b
         # print(shared_reward)
-        shared_reward = -1000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
+        shared_reward = 1000 * (instance.compute_costs(instance.flights, which="final")/instance.initialTotalCosts)
         self.hyperAgent.assign_end_episode_reward(last_state, action, prob, masker.mask, shared_reward,
                                                   self.actionsInEpisodes)
         self.hyperAgent.episode_training(instance.numFlights, self.lengthEpisode)

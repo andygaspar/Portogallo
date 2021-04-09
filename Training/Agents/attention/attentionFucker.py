@@ -104,7 +104,8 @@ class AttentionFucker:
         self.optimizer.zero_grad()
 
         _, _, rewards, probs = self.replayMemory.get_last_episode()
-        loss = torch.matmul(rewards.detach(), torch.log(probs.T))
+        loss = -rewards.detach() * torch.log(probs.T)
+        loss = loss.mean()
         with torch.autograd.set_detect_anomaly(True):
             loss.backward()
         self.optimizer.step()

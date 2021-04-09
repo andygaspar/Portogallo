@@ -59,6 +59,10 @@ class Instance(istop.Istop):
         _, self.matches_vect = self.offerChecker.all_couples_check(self.airlines_pairs)
         self.reverseAirDict = dict(zip(list(self.airDict.keys()), list(self.airDict.values())))
 
+    def reset_pb(self):
+        with HiddenPrints():
+            self.xp_problem.reset()
+
     def set_matches(self, matches, num_trades, triples=False):
         self.matches = []
         size = 4 if not triples else 6

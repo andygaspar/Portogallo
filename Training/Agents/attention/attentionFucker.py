@@ -18,6 +18,7 @@ class AttentionFucker:
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
 
         MAX_NUM_FLIGHTS = 200
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.singleTradeSize = num_flights  # 2 as we are dealing with couples
         self.currentTradeSize = self.singleTradeSize
@@ -29,11 +30,11 @@ class AttentionFucker:
         self.weightDecay = weight_decay
         self.loss = 0
 
-        hidden_dim = 128
+        hidden_dim = 64
         self._hidden_dim = hidden_dim
         self._context_dim = self._hidden_dim + 20*3
-        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=8,
-                                     n_attention_layers=1, context_dim=self._context_dim)
+        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=4,
+                                     n_attention_layers=4, context_dim=self._context_dim)
         self.context = None
         self.actions_embeddings = None
 
@@ -45,7 +46,7 @@ class AttentionFucker:
         self.replayMemory = ReplayMemoryFucker(self.discretisationSize * MAX_NUM_FLIGHTS, self.discretisationSize,
                                                size=memory_size)
 
-        self.optimizer = torch.optim.Adam(self._codec.parameters())
+        self.optimizer = torch.optim.Adam(self._codec.parameters(), lr=l_rate)
         ######################
 
     def pick_flight(self, masker: Masker, state):
@@ -58,21 +59,21 @@ class AttentionFucker:
         return actions, probs[action]
 
     def init_embeddings(self, schedule, num_flights):
-        schedule = schedule.reshape((num_flights, -1))
+        schedule = schedule.reshape((num_flights, -1)).to(self.device)
         self.actions_embeddings = self._codec.encode(schedule)
-        self.context = torch.mean(self.actions_embeddings, dim=0).unsqueeze(0)
+        self.context = torch.mean(self.actions_embeddings, dim=0).unsqueeze(0).to(self.device)
         #self.context = torch.zeros(1, self._context_dim)
         #self.context[0, :self._hidden_dim] = torch.mean(self.actions_embeddings, dim=0)
 
     def step(self, schedule: torch.tensor, trade_list: torch.tensor, eps, instance,
              len_step, len_episode, initial=False, masker=None, last_step=False, train=True):
+        schedule = schedule.to(self.device)
         num_flights = instance.numFlights
         if initial:
             self.init_embeddings(schedule, num_flights)
 
-
         current_trade = torch.zeros(num_flights)
-        trades = torch.cat([trade_list, current_trade], dim=-1)
+        trades = torch.cat([trade_list, current_trade], dim=-1).to(self.device)
         state = torch.cat([schedule, trades], dim=-1)
         masker.set_initial_mask()
 

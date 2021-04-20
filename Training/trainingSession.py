@@ -3,6 +3,7 @@ import torch
 import trainer
 import masker
 from Agents import hyperAttentiveAgent
+from Agents.attention import attentionFucker
 import instanceMaker
 import pandas as pd
 from ModelStructure.Costs.costFunctionDict import CostFuns
@@ -70,11 +71,16 @@ LEARNING_RATE = 1e-3
 BATCH_SIZE = 1024
 MEMORY_SIZE = 200
 
-hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
-                                                      weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
-                                                      batch_size=BATCH_SIZE, discretisation_size=DISCRETISATION_SIZE,
-                                                      memory_size=MEMORY_SIZE, train_mode=True)
+# hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
+#                                                       weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
+#                                                       batch_size=BATCH_SIZE, discretisation_size=DISCRETISATION_SIZE,
+#                                                       memory_size=MEMORY_SIZE, train_mode=True)
 
+
+hyper_agent = attentionFucker.AttentionFucker( num_airlines, num_flights, num_trades,
+                                               discretisation_size=DISCRETISATION_SIZE, weight_decay=WEIGHT_DECAY,
+                                               l_rate=LEARNING_RATE, trainings_per_step=10,
+                                               batch_size=200, memory_size=10000, train_mode=False)
 
 # trainer parameters
 START_TRAINING = 1

@@ -123,3 +123,8 @@ class Instance(istop.Istop):
             if self.slots[i].time <= time < self.slots[i+1].time:
                 return flight.costVect[i]
         return flight.costVect[-1]
+
+    def reset_and_run(self):
+        with HiddenPrints():
+            self.xp_problem.reset()
+            self.run()

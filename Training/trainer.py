@@ -50,9 +50,10 @@ class Trainer:
             instance.reset_and_run()
             # instance.print_performance()
 
-            shared_reward = 100 -100 * \
-                            (0.08 - (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))
-                             / instance.initialTotalCosts) / 0.08
+            # shared_reward = 100 -100 * \
+            #                 (0.08 - (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))
+            #                  / instance.initialTotalCosts) / 0.08
+            shared_reward = (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))*1000/ instance.initialTotalCosts
 
             self.hyperAgent.assign_end_episode_reward(last_state, action, act_prob, masker.mask, shared_reward,
                                                       6)

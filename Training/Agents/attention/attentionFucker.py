@@ -15,7 +15,7 @@ sMax = torch.nn.Softmax(dim=-1)
 class AttentionFucker:
 
     def __init__(self, num_airlines, num_flights, num_trades, discretisation_size, weight_decay, l_rate,
-                 trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=False):
+                 trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=True):
 
         MAX_NUM_FLIGHTS = 200
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -33,8 +33,8 @@ class AttentionFucker:
         hidden_dim = 64
         self._hidden_dim = hidden_dim
         self._context_dim = self._hidden_dim + self.numFlights
-        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=4,
-                                     n_attention_layers=4, context_dim=self._context_dim)
+        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=2,
+                                     n_attention_layers=2, context_dim=self._context_dim)
         self.context = None
         self.actions_embeddings = None
 
@@ -52,7 +52,10 @@ class AttentionFucker:
     def pick_flight(self, masker: Masker, state):
         actions = torch.zeros_like(masker.mask)
         probs = self._codec.get_action_probs(state, self.actions_embeddings, masker.mask)
-        action = torch.multinomial(probs.squeeze(), 1)
+        if self.trainMode:
+            action = torch.multinomial(probs.squeeze(), 1)
+        else:
+            action = torch.argmax(probs)
 
         actions[action] = 1
         masker.set_action(action.item())
@@ -101,9 +104,13 @@ class AttentionFucker:
         self.optimizer.zero_grad()
 
         _, _, rewards, probs = self.replayMemory.get_last_episode()
-        loss = -rewards.detach() * torch.log(probs.T)
-        loss = loss.mean()
+        # probs = probs[probs < 0.99]
+        loss = (rewards.detach()[-1]-46.68) * torch.log(probs.T)
+        loss = loss.sum()
+        print(loss.item(), probs, rewards.detach()[-1])
         with torch.autograd.set_detect_anomaly(True):
             loss.backward()
         self.optimizer.step()
         self.loss = loss.item()
+
+#solution: [[FA8, FA16],[FB10, FB13],[FC7, FC15]]]

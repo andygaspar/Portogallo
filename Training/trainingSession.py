@@ -22,6 +22,7 @@ num_flights = 20
 df = pd.read_csv("custom_5_5.csv")
 instance = instanceMaker.Instance(triples=True, df=df)
 instance.run()
+print("ciccio",(instance.initialTotalCosts-instance.m.getObjVal())*1000/instance.initialTotalCosts)
 
 
 
@@ -80,7 +81,7 @@ MEMORY_SIZE = 200
 hyper_agent = attentionFucker.AttentionFucker( num_airlines, num_flights, num_trades,
                                                discretisation_size=DISCRETISATION_SIZE, weight_decay=WEIGHT_DECAY,
                                                l_rate=LEARNING_RATE, trainings_per_step=10,
-                                               batch_size=200, memory_size=10000, train_mode=False)
+                                               batch_size=200, memory_size=10000, train_mode=True)
 
 # trainer parameters
 START_TRAINING = 1

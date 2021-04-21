@@ -178,6 +178,8 @@ class Istop(mS.ModelStructure):
 
             k += 1
 
+        self.m.addConstraint(xp.Sum(self.c[k] for k in range(len(self.matches))) <= 1 )
+
     def set_objective(self):
 
         # self.m.setObjective(
@@ -276,3 +278,52 @@ class Istop(mS.ModelStructure):
                 if self.m.getSolution(xpSolution[flight.slot.index, slot.index]) > 0.5:
                     flight.newSlot = slot
 
+    def run_single(self):
+        flights = self.flights_in_matches
+
+        x = np.array([[xp.var(vartype=xp.binary) for _ in flights] for _ in flights], dtype=xp.npvar)
+
+
+        self.m.addVariable(x)
+
+        for flight in self.flights:
+            if not self.f_in_matched(flight):
+                self.m.addConstraint(self.x[flight.slot.index, flight.slot.index] == 1)
+            else:
+                self.m.addConstraint(xp.Sum(self.x[flight.slot.index, j.index] for j in flight.compatibleSlots) == 1)
+
+        for j in self.slots:
+            self.m.addConstraint(xp.Sum(self.x[i.index, j.index] for i in self.slots) <= 1)
+
+        # for flight in self.flights:
+        #     for j in flight.notCompatibleSlots:
+        #         self.m.addConstraint(self.x[flight.slot.index, j.index] == 0)
+
+
+        for flight in self.flights_in_matches:
+            self.m.addConstraint(
+                                 xp.Sum(self.x[flight.slot.index, slot.index]
+                                        for slot in self.slots if slot != flight.slot) \
+                                 <= xp.Sum([self.c[j] for j in self.get_match_for_flight(flight)]))
+
+            self.m.addConstraint(xp.Sum([self.c[j] for j in self.get_match_for_flight(flight)]) <= 1)
+
+
+
+        k = 0
+        for match in self.matches:
+            flights = [flight for pair in match for flight in pair]
+            self.m.addConstraint(xp.Sum(xp.Sum(self.x[i.slot.index, j.slot.index] for i in pair for j in flights)
+                                        for pair in match) >= (self.c[k]) * len(flights))
+
+
+            for pair in match:
+                self.m.addConstraint(
+                    xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, j.slot) for i in pair for j in flights)
+                    <= xp.Sum(self.x[i.slot.index, j.slot.index] * i.costFun(i, i.slot) for i in pair for j in flights) - \
+                    self.epsilon)
+
+
+            k += 1
+
+        self.m.addConstraint(xp.Sum(self.c[k] for k in range(len(self.matches))) <= 1 )

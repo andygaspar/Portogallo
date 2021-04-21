@@ -26,7 +26,7 @@ class Instance(istop.Istop):
                 schedule_df = df
 
         self.reductionFactor = reduction_factor
-        self.costFun = CostFuns().costFun["realistic"]
+        self.costFun = CostFuns().costFun["linear"]
         self.flightTypeDict = CostFuns().flightTypeDict
         self.discretisationSize = discretisation_size
 
@@ -107,11 +107,10 @@ class Instance(istop.Istop):
     def get_schedule_tensor(self) -> torch.tensor:
         flights: List[IstopFlight]
         flights = self.flights
-        schedule_tensor = torch.zeros((self.numFlights, 50 + self.numAirlines))
+        schedule_tensor = torch.zeros((self.numFlights, 2))
         for i in range(self.numFlights):
-            schedule_tensor[i, self.flights[i].airline.index] = 1
-            schedule_tensor[i, -50:] = torch.tensor(flights[i].netInput)
-        return schedule_tensor.flatten()
+            schedule_tensor[i] = torch.tensor([flights[i].slot.index, flights[i].cost])
+        return schedule_tensor
 
     def set_flight_net_input(self, discretisation_size):
         for flight in self.flights:

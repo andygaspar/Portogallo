@@ -29,7 +29,7 @@ class Trainer:
         self.epsFun = eps_fun
         self.triples = triples
         self.lenStep = 4 if not self.triples else 6
-        self.actionsInEpisodes = 4 * self.lengthEpisode if not self.triples else 6 * self.lengthEpisode
+        self.actionsInEpisodes = 4 if not self.triples else 6
 
         self.Masker = masker
 
@@ -39,7 +39,7 @@ class Trainer:
 
     def episode(self, schedule_tensor: torch.tensor, instance, eps):
         masker = self.Masker(instance, self.triples)
-        self.hyperAgent.replayMemory.init_episode(6, instance.numFlights, instance.numAirlines,
+        self.hyperAgent.replayMemory.init_episode(self.actionsInEpisodes, instance.numFlights, instance.numAirlines,
                                                   self.lengthEpisode)
 
         trade, last_state, action, act_prob = self.hyperAgent.step(schedule_tensor, eps, instance,
@@ -56,7 +56,7 @@ class Trainer:
             shared_reward = (instance.initialTotalCosts - instance.compute_costs(instance.flights, which="final"))*1000/ instance.initialTotalCosts
 
             self.hyperAgent.assign_end_episode_reward(last_state, action, act_prob, masker.mask, shared_reward,
-                                                      6)
+                                                      self.actionsInEpisodes)
             self.hyperAgent.episode_training()
 
     def test_episode(self, schedule_tensor: torch.tensor, instance, eps):

@@ -6,6 +6,7 @@ import torch
 from torch import optim
 from Training.Agents.attention.attentionCodec import AttentionCodec
 from Training.Agents import attentionAgent
+from Training.Agents.attention.simpleNetTest import AgentNetwork
 from Training.Agents.replayMemory import ReplayMemory, ReplayMemoryFucker
 from Training.masker import Masker
 
@@ -38,6 +39,8 @@ class AttentionFucker:
         self.context = None
         self.actions_embeddings = None
 
+        self.network = AgentNetwork(weight_decay, num_flights)
+
         ##TRAINING DA VEDERE
         self.trainMode = train_mode
         self.trainingsPerStep = trainings_per_step
@@ -46,12 +49,17 @@ class AttentionFucker:
         self.replayMemory = ReplayMemoryFucker(self.discretisationSize * MAX_NUM_FLIGHTS, self.discretisationSize,
                                                size=memory_size)
 
-        self.optimizer = torch.optim.Adam(self._codec.parameters(), lr=l_rate)
+        self.optimizer = torch.optim.Adam(self.network.parameters(), lr=l_rate)
         ######################
 
     def pick_flight(self, masker: Masker, state):
         actions = torch.zeros_like(masker.mask)
-        probs = self._codec.get_action_probs(state, self.actions_embeddings, masker.mask)
+        # probs = self._codec.get_action_probs(state, self.actions_embeddings, masker.mask)
+        with torch.autograd.set_detect_anomaly(True):
+            probs = self.network.forward(state)
+            non_zeros = torch.nonzero(masker.mask - 1)
+            if len(non_zeros) > 0:
+                probs[non_zeros] = 0
         if self.trainMode:
             action = torch.multinomial(probs.squeeze(), 1)
         else:
@@ -59,7 +67,7 @@ class AttentionFucker:
 
         actions[action] = 1
         masker.set_action(action.item())
-        return actions.to(self.device), probs[action]
+        return actions.to(self.device), probs[action], action
 
     def init_embeddings(self, schedule, num_flights):
         schedule = schedule.reshape((num_flights, -1)).to(self.device)
@@ -70,28 +78,25 @@ class AttentionFucker:
 
     def step(self, schedule: torch.tensor, eps, instance,
              len_step, initial=False, masker=None, last_step=False, train=True):
-        self.init_embeddings(schedule, instance.numFlights)
+        # self.init_embeddings(schedule, instance.numFlights)
         schedule = schedule.to(self.device)
         num_flights = instance.numFlights
-        if initial:
-            self.init_embeddings(schedule, num_flights)
+        # if initial:
+        #     self.init_embeddings(schedule, num_flights)
 
-        current_trade = torch.zeros(num_flights).to(self.device)
-        c_trades = current_trade.to(self.device)
-        state = torch.cat([schedule, current_trade], dim=-1)
+        current_trade = torch.zeros((5, 2)).to(self.device)
+        state = torch.cat([schedule.flatten(), current_trade.flatten()], dim=-1)
         masker.set_initial_mask()
 
         self.replayMemory.set_initial_state(state)
 
-        for _ in range(len_step - 1):
-            action, act_prob = self.pick_flight(masker, torch.cat([self.context, c_trades.reshape((1, -1))], dim=-1))
-            current_trade += action
-            state[-num_flights:] = current_trade
-            self.replayMemory.add_record(next_state=state, action=action, mask=masker.mask, reward=0, prob=act_prob)
+        for i in range(len_step - 1):
+            actions, act_prob, action = self.pick_flight(masker, state)
+            current_trade[i] = torch.tensor([instance.flights[action].slot.index, instance.flights[action].cost])
+            state[num_flights*2:] = current_trade.flatten()
+            self.replayMemory.add_record(next_state=state.flatten(), action=actions, mask=masker.mask, reward=0, prob=act_prob)
 
-        action, act_prob = self.pick_flight(masker, torch.cat([self.context, c_trades.reshape((1, -1))], dim=-1))
-        current_trade += action
-        state[-num_flights:] = current_trade
+        actions, act_prob, action = self.pick_flight(masker, state)
 
         last_state = state
         return current_trade, last_state, action, act_prob

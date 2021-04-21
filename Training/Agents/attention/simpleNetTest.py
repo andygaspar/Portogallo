@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
-sMax = torch.nn.Softmax(dim=-1)
+sMax = torch.nn.Softmax(dim=0)
 
 
 class AgentNetwork(nn.Module):
@@ -30,10 +30,15 @@ class AgentNetwork(nn.Module):
 
         #self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
 
-    def forward(self, state):
+    def forward(self, state, masker):
         score = self._fff(state)
         score = self._ff(score)
-        probs = sMax(score)
+        probs = torch.zeros_like(score)
+        non_zeros = torch.nonzero(masker.mask)
+        if len(non_zeros) > 0:
+            score = score[non_zeros]
+        probs_valid = sMax(score)
+        probs[non_zeros] = probs_valid
         return probs
 
     def pick_action(self, state):

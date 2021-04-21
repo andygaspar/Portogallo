@@ -56,10 +56,7 @@ class AttentionFucker:
         actions = torch.zeros_like(masker.mask)
         # probs = self._codec.get_action_probs(state, self.actions_embeddings, masker.mask)
         with torch.autograd.set_detect_anomaly(True):
-            probs = self.network.forward(state)
-            non_zeros = torch.nonzero(masker.mask - 1)
-            if len(non_zeros) > 0:
-                probs[non_zeros] = 0
+            probs = self.network.forward(state, masker)
         if self.trainMode:
             action = torch.multinomial(probs.squeeze(), 1)
         else:
@@ -94,7 +91,7 @@ class AttentionFucker:
             actions, act_prob, action = self.pick_flight(masker, state)
             current_trade[i] = torch.tensor([instance.flights[action].slot.index, instance.flights[action].cost])
             state[num_flights*2:] = current_trade.flatten()
-            self.replayMemory.add_record(next_state=state.flatten(), action=actions, mask=masker.mask, reward=0, prob=act_prob)
+            self.replayMemory.add_record(next_state=state, action=actions, mask=masker.mask, reward=0, prob=act_prob)
 
         actions, act_prob, action = self.pick_flight(masker, state)
 

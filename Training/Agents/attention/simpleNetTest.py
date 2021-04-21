@@ -18,10 +18,6 @@ class AgentNetwork(nn.Module):
         self._hidden_dim = 64
         self.loss = 0
 
-        self._fff = nn.Sequential(nn.Linear(num_flights * 2 + 2 * 5, self._hidden_dim),
-                                 nn.ReLU(),
-                                 nn.Linear(self._hidden_dim, num_flights * 2 + 2 * 5)).to(self.device)
-
         self._ff = nn.Sequential(nn.Linear(num_flights * 2 + 2 * 5, self._hidden_dim),
                                  nn.ReLU(),
                                  nn.Linear(self._hidden_dim, self._hidden_dim),
@@ -31,8 +27,7 @@ class AgentNetwork(nn.Module):
         #self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
 
     def forward(self, state, masker):
-        score = self._fff(state)
-        score = self._ff(score)
+        score = self._ff(state)
         probs = torch.zeros_like(score)
         non_zeros = torch.nonzero(masker.mask)
         if len(non_zeros) > 0:

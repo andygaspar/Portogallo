@@ -83,6 +83,7 @@ class AttentionFucker:
 
         current_trade = torch.zeros((5, 2)).to(self.device)
         state = torch.cat([schedule.flatten(), current_trade.flatten()], dim=-1)
+        state.requires_grad = True
         masker.set_initial_mask()
 
         self.replayMemory.set_initial_state(state)

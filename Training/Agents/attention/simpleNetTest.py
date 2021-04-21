@@ -28,12 +28,10 @@ class AgentNetwork(nn.Module):
 
     def forward(self, state, masker):
         score = self._ff(state)
-        probs = torch.zeros_like(score)
-        non_zeros = torch.nonzero(masker.mask)
-        if len(non_zeros) > 0:
-            score = score[non_zeros]
-        probs_valid = sMax(score)
-        probs[non_zeros] = probs_valid
+        mask = torch.tensor([0 if el==1 else -float("inf") for el in masker.mask]).to(self.device)
+        valid_score = score + mask
+
+        probs = sMax(valid_score)
         return probs
 
     def pick_action(self, state):

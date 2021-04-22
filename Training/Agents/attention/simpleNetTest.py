@@ -20,19 +20,17 @@ class AgentNetwork(nn.Module):
 
         self._ff = nn.Sequential(nn.Linear(num_flights * 2 + 2 * 5, self._hidden_dim),
                                  nn.ReLU(),
-                                 nn.Linear(self._hidden_dim, self._hidden_dim),
+                                 nn.Linear(self._hidden_dim, self._hidden_dim*2),
+                                 nn.ReLU(),
+                                 nn.Linear(self._hidden_dim*2, self._hidden_dim),
                                  nn.ReLU(),
                                  nn.Linear(self._hidden_dim, num_flights)).to(self.device)
 
-        #self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
+        self.optimizer = optim.Adam(self.parameters(), weight_decay=weight_decay)
 
-    def forward(self, state, masker):
+    def forward(self, state):
         score = self._ff(state)
-        mask = torch.tensor([0 if el==1 else -float("inf") for el in masker.mask]).to(self.device)
-        valid_score = score + mask
-
-        probs = sMax(valid_score)
-        return probs
+        return score
 
     def pick_action(self, state):
         with torch.no_grad():
@@ -42,49 +40,32 @@ class AgentNetwork(nn.Module):
 
         return action
 
-    def update_weights(self, batch: tuple, gamma: float=0.9):
+    def update_weights(self, batch: tuple, gamma: float = 1):
         criterion = torch.nn.MSELoss()
 
-        states, next_states, actions, rewards, dones = (element.to(self.device) for element in batch)
+        states, next_states, masks, actions, rewards, dones= (element.to(self.device) for element in batch)
 
-        for i in range(10):
-            self.zero_grad()
-            curr_Q = self.forward(states)
-            curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
-            next_Q =self.forward(next_states)
-            max_next_Q = torch.max(next_Q, 1)[0]
-            expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 
-            loss = criterion(curr_Q, expected_Q)  #.detach()
-            self.loss = loss.item()
-            self.optimizer.zero_grad()
+        self.zero_grad()
+        curr_Q = self.forward(states)
+        curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
+        next_Q =self.forward(next_states)
+        max_next_Q = torch.max(next_Q, 1)[0]
+        expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 
-            loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
-            self.optimizer.step()
-    #
-    #   super().__init__()
-    #   self.convSchedule = nn.Linear(21, 4)
-    #   self.
-    #   self.convSchedule = nn.Linear(5, 1)
-    #
-    #   self.tradesConv1 = nn.Linear()
-    #
-    #   self.fc1 = nn.Linear(20, 64)
-    #   self.fc2 = nn.Linear(64, 4)
-    #
-    # def forward(self, air, others, trades):
-    #
-    #   first_conv_out = torch.split(air, [17 for _ in range(5)], dim=-1)
-    #   second_conv_out = [F.relu(self.convAir1(t)) for t in first_conv_out]
-    #   to_merge = torch.cat([F.relu(self.convAir2(t)) for t in second_conv_out], dim=-1)
-    #
-    #   first_conv_out = torch.split(others, [21 for _ in range(15)], dim=-1)
-    #   second_conv_out = [F.relu(self.convOthers1(t)) for t in first_conv_out]
-    #   to_merge1 = torch.cat([F.relu(self.convOthers2(t)) for t in second_conv_out], dim=-1)
-    #
-    #   merged_tensor = torch.cat((to_merge, to_merge1), dim=-1)
-    #
-    #   out = F.relu(self.fc1(merged_tensor))
-    #
-    #   # return self.fc2(out)
+        loss = criterion(curr_Q, expected_Q)  #.detach()
+        self.loss = loss.item()
+        self.optimizer.zero_grad()
+
+        loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.network.parameters(), 1)
+        self.optimizer.step()
+
+   #solution: [[array([FA8, FA17], dtype=object), array([FB13, FB10], dtype=object), array([FC4, FC11], dtype=object)]]
+
+#FD0,       FA1,      FD2,        FB6,     FC7,     FD5,     FB12,   FC4,
+# #[40.5156, 40.2933, 40.4314,    -inf, 45.9346, 44.2575, 41.6733, 44.0008,
+#          FA9,       FA8,      FB13,   FC15,   FB3,    FB10,     FD14,    FC19,
+#         41.6020, 41.2491, 41.9072, 44.4279, 42.6854, 44.4565, 43.7079, 44.7275,
+#          FA17,    FA16,    FD18,    FC11]
+#         41.2276, 45.0535, 45.5708, 46.2582]

@@ -72,7 +72,7 @@ class AgentNetwork(nn.Module):
     def update_weights(self, batch: tuple, gamma: float=0.9):
         criterion = torch.nn.MSELoss()
 
-        states, next_states, actions, rewards, dones = (element.to(self.device) for element in batch)
+        states, next_states, masks, actions, rewards, dones = (element.to(self.device) for element in batch)
 
         for i in range(10):
             self.zero_grad()
@@ -80,6 +80,7 @@ class AgentNetwork(nn.Module):
             curr_Q  = curr_Q.gather(1, actions.argmax(dim=1).view(-1, 1)).flatten()
             next_Q =self.forward(next_states)
             max_next_Q = torch.max(next_Q, 1)[0]
+            next_Q[masks == 0] = -100
             expected_Q = (rewards.flatten() + (1 - dones.flatten()) * gamma * max_next_Q)
 
             loss = criterion(curr_Q, expected_Q)  #.detach()

@@ -7,7 +7,7 @@ from torch import optim
 from Training.Agents.attention.attentionCodec import AttentionCodec
 from Training.Agents import attentionAgent
 from Training.Agents.attention.simpleNetTest import AgentNetwork
-from Training.Agents.replayMemory import ReplayMemory, ReplayMemoryFucker
+from Training.Agents.replayMemory import ReplayMemory
 from Training.masker import Masker
 
 sMax = torch.nn.Softmax(dim=-1)
@@ -46,40 +46,35 @@ class AttentionFucker:
         self.trainingsPerStep = trainings_per_step
         self.batchSize = batch_size
 
-        self.replayMemory = ReplayMemoryFucker(self.discretisationSize * MAX_NUM_FLIGHTS, self.discretisationSize,
+        self.replayMemory = ReplayMemory(self.discretisationSize * MAX_NUM_FLIGHTS, self.discretisationSize,
                                                size=memory_size)
 
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=l_rate)
         ######################
 
-    def pick_flight(self, masker: Masker, state):
+    def pick_flight(self, masker: Masker, state, eps):
         actions = torch.zeros_like(masker.mask)
-        # probs = self._codec.get_action_probs(state, self.actions_embeddings, masker.mask)
-        with torch.autograd.set_detect_anomaly(True):
-            probs = self.network.forward(state, masker)
-        if self.trainMode:
-            action = torch.multinomial(probs.squeeze(), 1)
-        else:
-            action = torch.argmax(probs)
+        if self.trainMode and np.random.rand() < eps:
+            action_idx = np.random.choice([i for i in range(len(masker.mask)) if round(masker.mask[i].item()) == 1])
+            masker.set_action(action_idx)
+            actions[action_idx] = 1
+            return actions, action_idx
+        with torch.no_grad():
+            scores = self.network.forward(state)
+        scores += torch.tensor([0 if el == 1 else -float("inf") for el in masker.mask]).to(self.device)
+        action_idx = torch.argmax(scores)
+        actions[action_idx] = 1
+        masker.set_action(action_idx.item())
 
-        actions[action] = 1
-        masker.set_action(action.item())
-        return actions.to(self.device), probs[action], action
+        if not self.trainMode:
+            print(scores)
 
-    def init_embeddings(self, schedule, num_flights):
-        schedule = schedule.reshape((num_flights, -1)).to(self.device)
-        self.actions_embeddings = self._codec.encode(schedule)
-        self.context = torch.mean(self.actions_embeddings, dim=0).unsqueeze(0).to(self.device)
-        #self.context = torch.zeros(1, self._context_dim)
-        #self.context[0, :self._hidden_dim] = torch.mean(self.actions_embeddings, dim=0)
+        return actions.to(self.device), action_idx
 
     def step(self, schedule: torch.tensor, eps, instance,
              len_step, initial=False, masker=None, last_step=False, train=True):
-        # self.init_embeddings(schedule, instance.numFlights)
         schedule = schedule.to(self.device)
         num_flights = instance.numFlights
-        # if initial:
-        #     self.init_embeddings(schedule, num_flights)
 
         current_trade = torch.zeros((5, 2)).to(self.device)
         state = torch.cat([schedule.flatten(), current_trade.flatten()], dim=-1)
@@ -88,31 +83,40 @@ class AttentionFucker:
         self.replayMemory.set_initial_state(state)
 
         for i in range(len_step - 1):
-            actions, act_prob, action = self.pick_flight(masker, state)
-            current_trade[i] = torch.tensor([instance.flights[action].slot.index, instance.flights[action].cost])
+            actions, action_idx = self.pick_flight(masker, state, eps)
+            current_trade[i] = torch.tensor([instance.flights[action_idx].slot.index,
+                                             instance.flights[action_idx].cost])
             state[num_flights*2:] = current_trade.flatten()
-            self.replayMemory.add_record(next_state=state, action=actions, mask=masker.mask, reward=0, prob=act_prob)
+            self.replayMemory.add_record(next_state=state, action=actions, mask=masker.mask, reward=0)
 
-        actions, act_prob, action = self.pick_flight(masker, state)
+        actions, _ = self.pick_flight(masker, state, eps)
+        self.replayMemory.add_record(next_state=state, action=actions, mask=masker.mask, reward=0)
+        last_state = torch.ones_like(state) * -1
 
-        last_state = state
-        return current_trade, last_state, action, act_prob
+        return last_state, actions
 
-    def assign_end_episode_reward(self, last_state, action, prob, mask, shared_reward, actions_in_episode):
+    def assign_end_episode_reward(self, last_state, action, mask, shared_reward):
         self.replayMemory.add_record(next_state=last_state, action=action, mask=mask,
-                                     reward=shared_reward, prob=prob, actions_in_episode=actions_in_episode, final=True)
+                                     reward=shared_reward, final=True)
 
     def episode_training(self):
-        self.optimizer.zero_grad()
+        if self.replayMemory.idx >= self.batchSize:
+            for i in range(1):
+                batch = self.replayMemory.sample(self.batchSize)
+                self.network.update_weights(batch)
+                self.loss = self.network.loss
+        # self.optimizer.zero_grad()
 
-        _, _, rewards, probs = self.replayMemory.get_last_episode()
-        # probs = probs[probs < 0.99]
-        loss = (rewards.detach()[-1]-46.68) * torch.log(probs.T)
-        loss = loss.sum()
-        print(loss.item(), probs, rewards.detach()[-1])
-        with torch.autograd.set_detect_anomaly(True):
-            loss.backward()
-        self.optimizer.step()
-        self.loss = loss.item()
+
+        # _, _, rewards, probs = self.replayMemory.get_last_episode()
+        # # probs = probs[probs < 0.99]
+        # loss = (rewards.detach()[-1]-46.68) * torch.log(probs.T)
+        # loss = loss.sum()
+        # print(loss.item(), probs, rewards.detach()[-1])
+        # with torch.autograd.set_detect_anomaly(True):
+        #     loss.backward()
+        # self.optimizer.step()
+        # self.loss = loss.item()
+
 
 #solution: [[FA8, FA16],[FB10, FB13],[FC7, FC15]]]

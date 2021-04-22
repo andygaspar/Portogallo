@@ -69,8 +69,8 @@ print("solution:", instance.offers_selected)
 # hyper agent parameters
 WEIGHT_DECAY = 1e-4
 LEARNING_RATE = 1e-3
-BATCH_SIZE = 1024
-MEMORY_SIZE = 200
+BATCH_SIZE = 500
+MEMORY_SIZE = 1000
 
 # hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
 #                                                       weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
@@ -81,7 +81,7 @@ MEMORY_SIZE = 200
 hyper_agent = attentionFucker.AttentionFucker( num_airlines, num_flights, num_trades,
                                                discretisation_size=DISCRETISATION_SIZE, weight_decay=WEIGHT_DECAY,
                                                l_rate=LEARNING_RATE, trainings_per_step=10,
-                                               batch_size=200, memory_size=10000, train_mode=True)
+                                               batch_size=BATCH_SIZE, memory_size=MEMORY_SIZE, train_mode=True)
 
 # trainer parameters
 START_TRAINING = 1
@@ -91,13 +91,13 @@ MIN_REWARD = -100000
 
 #eps_fun = lambda i, num_iterations: max(0.05, 1 - i / 10_000)  # np.exp(- 4*i/num_iterations)
 # eps_fun = lambda i, num_iterations: 0.1 if i > START_TRAINING else 1
-eps_fun = lambda i, num_iterations: 1 - i/num_iterations
+eps_fun = lambda i, num_iterations: 0.1#lambda i, num_iterations: 1 - i/num_iterations
 
 # masker = NoneMasker
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY, triples=True)
-train.run(20000, df, training_start_iteration=START_TRAINING, train_t=10)
+train.run(500000, df, training_start_iteration=START_TRAINING, train_t=10)
 
 
 #

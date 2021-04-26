@@ -1,3 +1,5 @@
+import argparse
+import pickle
 import torch
 
 import trainer
@@ -52,8 +54,7 @@ solution: [[[FD2, FD5],[FA1, FA8], [FC4, FC11])], [[FA17, FA16],[FB13, FB3],[FC7
 
 or
 
-solution: [[[FD2, FD5],[FA1, FA8], [FC4, FC19])], [[FA17, FA16],[FB13, FB3],[FC7, FC15]]]
-"""
+solution: [[[FD2, FD5],[FA1, FA8], [FC4, FC19])], [[FA17, FA16],[FB13, FB3],[FC7, FC15]]]"""
 
 
 print(instance.airlines)
@@ -71,6 +72,28 @@ WEIGHT_DECAY = 1e-2
 LEARNING_RATE = 1e-6
 BATCH_SIZE = 1024
 MEMORY_SIZE = 200
+HIDDEN_DIM=32
+N_HEADS=4
+N_ATTENTION_LAYERS=1
+
+# PARSE CLI ARGUMENTS TO HANDLE CONFIGURATION DICTS
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--configDict', nargs='?', const=None, default=None, help='Path to configuration dict file')
+args = parser.parse_args()
+if (args.configDict):
+    with open(args.configDict, 'rb') as handle:
+        print("Reading config dict...")
+        config_dict = pickle.load(handle)
+        DISCRETIZATION_SIZE = config_dict['discretization_size']
+        WEIGHT_DECAY = config_dict['weight_decay']
+        LEARNING_RATE = config_dict['learning_rate']
+        BATCH_SIZE = config_dict['batch_size']
+        MEMORY_SIZE = config_dict['memory_size']
+        HIDDEN_DIM = config_dict['hidden_dim']
+        N_HEADS = config_dict['n_heads']
+        N_ATTENTION_LAYERS = config_dict['n_attention_layers']
+######
 
 # hyper_agent = hyperAttentiveAgent.AttentiveHyperAgent(num_airlines, num_flights, num_trades,
 #                                                       weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE,
@@ -78,10 +101,7 @@ MEMORY_SIZE = 200
 #                                                       memory_size=MEMORY_SIZE, train_mode=True)
 
 
-hyper_agent = attentionFucker.AttentionFucker( num_airlines, num_flights, num_trades,
-                                               discretisation_size=DISCRETISATION_SIZE, weight_decay=WEIGHT_DECAY,
-                                               l_rate=LEARNING_RATE, trainings_per_step=10,
-                                               batch_size=200, memory_size=10000, train_mode=True)
+hyper_agent = attentionFucker.AttentionFucker( num_airlines, num_flights, num_trades, discretisation_size=DISCRETISATION_SIZE, weight_decay=WEIGHT_DECAY, l_rate=LEARNING_RATE, trainings_per_step=10, hidden_dim=HIDDEN_DIM, n_heads=N_HEADS, n_attention_layers=N_ATTENTION_LAYERS, batch_size=200, memory_size=10000, train_mode=True)
 
 # trainer parameters
 START_TRAINING = 1

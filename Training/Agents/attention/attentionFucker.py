@@ -15,6 +15,7 @@ sMax = torch.nn.Softmax(dim=-1)
 class AttentionFucker:
 
     def __init__(self, num_airlines, num_flights, num_trades, discretisation_size, weight_decay, l_rate,
+                 hidden_dim=32, n_heads=4, n_attention_layers=1,
                  trainings_per_step=10, batch_size=200, memory_size=10000, train_mode=True):
 
         MAX_NUM_FLIGHTS = 200
@@ -32,11 +33,12 @@ class AttentionFucker:
 
         self._best_reward = 0;
 
-        hidden_dim = 32
         self._hidden_dim = hidden_dim
+        self._n_heads = n_heads
+        self._n_attention_layers=n_attention_layers
         self._context_dim = self._hidden_dim + self.numFlights
-        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=4,
-                                     n_attention_layers=1, context_dim=self._context_dim)
+        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads= self._n_heads,
+                                     n_attention_layers=self._n_attention_layers, context_dim=self._context_dim)
         self.context = None
         self.actions_embeddings = None
 

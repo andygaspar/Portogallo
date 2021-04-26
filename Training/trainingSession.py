@@ -50,7 +50,7 @@ FC15 19
 
 solution: [[[FD2, FD5],[FA1, FA8], [FC4, FC11])], [[FA17, FA16],[FB13, FB3],[FC7, FC15]]]
 
-or 
+or
 
 solution: [[[FD2, FD5],[FA1, FA8], [FC4, FC19])], [[FA17, FA16],[FB13, FB3],[FC7, FC15]]]
 """
@@ -67,8 +67,8 @@ print("solution:", instance.offers_selected)
 
 
 # hyper agent parameters
-WEIGHT_DECAY = 1e-4
-LEARNING_RATE = 1e-3
+WEIGHT_DECAY = 1e-2
+LEARNING_RATE = 1e-6
 BATCH_SIZE = 1024
 MEMORY_SIZE = 200
 
@@ -97,7 +97,7 @@ eps_fun = lambda i, num_iterations: 1 - i/num_iterations
 
 train = trainer.Trainer(hyper_agent, length_episode=num_trades,
                         eps_fun=eps_fun, min_reward=MIN_REWARD,  eps_decay=EPS_DECAY, triples=True)
-train.run(20000, df, training_start_iteration=START_TRAINING, train_t=10)
+train.run(3000, df, training_start_iteration=START_TRAINING, train_t=10)
 
 
 #

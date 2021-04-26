@@ -30,11 +30,13 @@ class AttentionFucker:
         self.weightDecay = weight_decay
         self.loss = 0
 
-        hidden_dim = 64
+        self._best_reward = 0;
+
+        hidden_dim = 32
         self._hidden_dim = hidden_dim
         self._context_dim = self._hidden_dim + self.numFlights
-        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=2,
-                                     n_attention_layers=2, context_dim=self._context_dim)
+        self._codec = AttentionCodec(self.discretisationSize + self.numAirlines, self._hidden_dim, n_heads=4,
+                                     n_attention_layers=1, context_dim=self._context_dim)
         self.context = None
         self.actions_embeddings = None
 
@@ -105,11 +107,19 @@ class AttentionFucker:
 
         _, _, rewards, probs = self.replayMemory.get_last_episode()
         # probs = probs[probs < 0.99]
-        loss = (rewards.detach()[-1]-46.68) * torch.log(probs.T)
+
+
+        loss = -(rewards[-1]-self._best_reward).detach() * torch.log(probs.T)
         loss = loss.sum()
-        print(loss.item(), probs, rewards.detach()[-1])
+
+
+        self._best_reward = max(self._best_reward, torch.max(rewards).detach())
+
+
+        #print(loss.item(), probs, rewards.detach()[-1])
         with torch.autograd.set_detect_anomaly(True):
             loss.backward()
+        torch.nn.utils.clip_grad_norm_(self._codec.parameters(), 10)
         self.optimizer.step()
         self.loss = loss.item()
 

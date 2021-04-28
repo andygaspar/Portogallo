@@ -43,7 +43,7 @@ class Trainer:
                                                   self.lengthEpisode)
 
         trade, last_state, action, act_prob = self.hyperAgent.step(schedule_tensor, eps, instance,
-                                                        len_step=self.lenStep, masker=masker, last_step= False, train= True)
+                                                        len_step=self.lenStep, masker=masker, initial = True, last_step= False, train= True)
         if trade is not None:
             flight_trade_idx = masker.actions
             instance.set_matches(flight_trade_idx, len(flight_trade_idx) // self.lenStep, self.triples)

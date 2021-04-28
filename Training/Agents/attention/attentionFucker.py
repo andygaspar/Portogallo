@@ -74,7 +74,6 @@ class AttentionFucker:
 
     def step(self, schedule: torch.tensor, eps, instance,
              len_step, initial=False, masker=None, last_step=False, train=True):
-        self.init_embeddings(schedule, instance.numFlights)
         schedule = schedule.to(self.device)
         num_flights = instance.numFlights
         if initial:
